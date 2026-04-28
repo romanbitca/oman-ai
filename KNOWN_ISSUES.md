@@ -12,3 +12,13 @@ Workaround: `sandbox: false` in `webPreferences`. `contextIsolation: true` and `
 
 To re-enable `sandbox: true` later, either: (a) emit preload as CommonJS (`.cjs`) by overriding electron-vite's preload output, or (b) drop `"type": "module"` from `package.json` and let everything default to CJS in main/preload. Revisit during P12 (distribution) when hardening.
 
+---
+
+## 2026-04-28 — better-sqlite3 ABI rebuild required after every install
+
+`better-sqlite3` ships prebuilt binaries for Node, not Electron. With Electron 33 (different `NODE_MODULE_VERSION`), a fresh `npm install` followed by `npm run dev` would otherwise fail with a native-binding mismatch the first time the main process imports the module.
+
+Workaround: `"postinstall": "electron-builder install-app-deps"` in `package.json`. This invokes `@electron/rebuild` against the configured Electron version automatically after every `npm install`.
+
+If a fresh clone ever errors with "was compiled against a different Node.js version" / `NODE_MODULE_VERSION`, the postinstall didn't run (e.g. `--ignore-scripts`); fix with `npx electron-builder install-app-deps`. Will need re-running whenever Electron's major version is bumped.
+
