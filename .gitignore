@@ -1,0 +1,30 @@
+node_modules/
+dist/
+out/
+build/
+.DS_Store
+*.log
+.env
+.env.local
+.vscode/
+.idea/
+*.dmg
+*.exe
+*.deb
+*.AppImage
+release/
+coverage/
+
+# native build artifacts
+native/mac/AudioCapture/.build/
+native/mac/AudioCapture/.swiftpm/
+native/win/**/bin/
+native/win/**/obj/
+
+# whisper models (downloaded at runtime)
+resources/whisper-models/
+
+# user data
+*.db
+*.db-shm
+*.db-wal
