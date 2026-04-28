@@ -28,7 +28,7 @@ Acceptance:
 
 ---
 
-## P2: SQLite and workspaces [TODO]
+## P2: SQLite and workspaces [DONE 2026-04-28]
 
 Add better-sqlite3 with multi-workspace support.
 

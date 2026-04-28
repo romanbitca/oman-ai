@@ -1,5 +1,7 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
+import { registerIpc } from './ipc'
+import { closeCurrent, initWorkspaces } from './services/workspace-manager'
 import { createTray, destroyTray } from './tray'
 
 let mainWindow: BrowserWindow | null = null
@@ -55,6 +57,8 @@ function toggleWindow(): void {
 }
 
 app.whenReady().then(() => {
+  initWorkspaces()
+  registerIpc()
   createWindow()
   createTray(toggleWindow)
 
@@ -68,4 +72,5 @@ app.on('window-all-closed', () => {})
 
 app.on('before-quit', () => {
   destroyTray()
+  closeCurrent()
 })
