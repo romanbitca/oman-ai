@@ -1,0 +1,32 @@
+appId: com.romanbitca.oman
+productName: oman
+directories:
+  output: release
+  buildResources: build
+files:
+  - "out/**/*"
+  - "package.json"
+extraResources:
+  - from: resources
+    to: .
+    filter:
+      - "**/*"
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  category: public.app-category.productivity
+  identity: null
+  gatekeeperAssess: false
+  hardenedRuntime: false
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+publish:
+  - provider: github
+    owner: romanbitca
+    repo: oman-ai

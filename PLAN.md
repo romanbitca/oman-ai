@@ -4,7 +4,7 @@ Phased roadmap. Mark each phase with status: [TODO], [IN PROGRESS], [DONE date],
 
 ---
 
-## P1: Skeleton [IN PROGRESS]
+## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.
 

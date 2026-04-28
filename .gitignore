@@ -28,3 +28,10 @@ resources/whisper-models/
 *.db
 *.db-shm
 *.db-wal
+
+# typescript incremental build cache
+*.tsbuildinfo
+
+# claude code per-machine settings
+.claude/settings.local.json
+
