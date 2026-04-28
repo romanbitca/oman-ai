@@ -27,4 +27,6 @@ Date-stamped log of what each work session accomplished.
 - ESLint 8 + Prettier; rules forbid `any`, ignore underscore-prefixed unused vars
 - Verified: `npm run typecheck` passes, `npm run lint` passes, `npm run build` produces `out/{main,preload,renderer}` cleanly, `npm run dev` launches Electron and main window with no console errors
 - Gotcha discovered: `sandbox: true` + ESM preload fails silently. Documented in KNOWN_ISSUES.md; using `sandbox: false` for now
+- P1 verified working on user's Mac: window opens, tray icon renders and toggles the window, no console errors
+- 7 implementation decisions formalized in DECISIONS.md (sandbox flag, app ID, mac identity, tailwind/eslint versions, tray template image, window-close behavior, external link handling)
 - Next: P2 — SQLite + workspaces
