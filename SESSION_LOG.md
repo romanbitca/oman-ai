@@ -11,6 +11,11 @@ Date-stamped log of what each work session accomplished.
 - Stack and v1 scope locked
 - Next: run Phase 1 (Skeleton) with Claude Code
 
+## 2026-04-29 — P2 verified by user
+
+- Confirmed on user's Mac: app launches, `personal.db` auto-created at correct path, workspace switcher works, creating new workspaces produces new `.db` files, all schema tables present, settings seeded correctly, typecheck and lint pass, no console errors
+- P2 closed. Next: P3 — Mac audio recording
+
 ## 2026-04-28 — P2 SQLite + workspaces implemented
 
 - `better-sqlite3` 11.5 + `@types/better-sqlite3` installed; native module rebuilt for Electron 33's arm64 ABI via `electron-builder install-app-deps` (added as `postinstall` script so future installs stay correct)
