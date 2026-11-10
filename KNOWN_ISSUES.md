@@ -4,6 +4,32 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-10 — Compose: Insert where text can't go loses the draft
+
+Insert sends Cmd+V and closes the panel. If nothing editable has focus, the paste does nothing, and macOS gives no way to detect that, so the draft is gone and has to be regenerated.
+
+---
+
+## 2026-11-10 — Cmd+C and Cmd+V use the physical C and V keys
+
+`KeyEvents` posts key codes 8 and 9. QWERTY-based layouts and Cyrillic work. Dvorak-style layouts would send the wrong shortcut. Fix with a layout lookup if it ever matters.
+
+---
+
+## 2026-11-10 — Electron apps use the clipboard route
+
+Slack and other Electron apps don't expose selected text through Accessibility unless accessibility mode is forced on, which we avoid. The selection is read with a synthetic Cmd+C and the clipboard is restored straight after, but a clipboard history app can still record that brief copy. The paste itself is marked transient, so those apps skip it.
+
+---
+
+## 2026-11-10 — Tooling gotchas for this repo
+
+- Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.
+- `swift test` builds every test target, so concurrent module work needs separate worktrees or one module's half-written code breaks the others.
+- The computer-use tools can't see oman because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "oman"), and allow for scripted clicks lagging under heavy CPU load.
+
+---
+
 ## 2026-04-28 — Renderer `sandbox: false` (ESM preload constraint)
 
 The preload script is emitted as ESM (`out/preload/index.mjs`) because `package.json` has `"type": "module"`. Electron 33's renderer sandbox does not load ESM preload scripts — combining `sandbox: true` with an `.mjs` preload makes the renderer fail to start (Electron exits silently shortly after window creation).
