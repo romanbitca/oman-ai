@@ -200,6 +200,8 @@ private func eventually(timeout: Duration = .seconds(5), _ condition: () -> Bool
         put("user clipboard")
         let route = makeRoute()
         let pasting = Task { await route.paste("new text") }
+        // On a busy machine the paste can take a while to begin, so wait for the key press itself.
+        #expect(await eventually { app.pastes == 1 })
 
         // Well past the hold. Giving the clipboard back on a timer alone would hand this app the old contents.
         try await Task.sleep(for: .milliseconds(150))
