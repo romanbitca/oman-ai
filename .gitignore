@@ -14,6 +14,9 @@ mac/Oman.xcodeproj/
 # swift build output
 mac/OmanKit/.build/
 mac/OmanKit/.swiftpm/
+# Xcode and swift test each rewrite this file their own way. Both libraries are pinned to commits in
+# Package.swift and project.yml, so it isn't needed as a lock file.
+mac/OmanKit/Package.resolved
 DerivedData/
 *.xcuserstate
 

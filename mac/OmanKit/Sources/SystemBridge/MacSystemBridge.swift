@@ -5,11 +5,10 @@ import ServiceManagement
 
 @MainActor
 public final class MacSystemBridge: SystemBridging {
-    private static let pollIntervalMilliseconds = 10
-    private static let activationTimeoutMilliseconds = 400
-    private static let keyWindowSettleMilliseconds = 120
+    private static let pollInterval = Duration.milliseconds(10)
+    private static let activationTimeout = Duration.milliseconds(400)
+    private static let keyWindowSettle = Duration.milliseconds(120)
 
-    private let pasteboard = NSPasteboard.general
     private let clipboard = ClipboardRoute(
         pasteboard: .general,
         postCopy: KeyEvents.postCopy,
@@ -99,7 +98,7 @@ public final class MacSystemBridge: SystemBridging {
     public func replaceSelection(expected: String, with text: String, in app: SourceApp) async -> InsertOutcome {
         guard AXIsProcessTrusted() else { return .permissionMissing }
         guard await ensureFrontmost(app) else { return .sourceUnavailable }
-        await pause(milliseconds: Self.keyWindowSettleMilliseconds)
+        await Waiting.pause(Self.keyWindowSettle)
 
         let focused = SelectionReader.focusedElement(processID: app.processID)
         guard let current = await readSelection(focused: focused, bundleID: app.bundleID),
@@ -122,7 +121,7 @@ public final class MacSystemBridge: SystemBridging {
                 return .sourceUnavailable
             }
         }
-        await pause(milliseconds: Self.keyWindowSettleMilliseconds)
+        await Waiting.pause(Self.keyWindowSettle)
         if let app {
             let focused = SelectionReader.focusedElement(processID: app.processID)
             guard insertionTarget.confirm(focused, processID: app.processID) else { return .focusMoved }
@@ -137,11 +136,10 @@ public final class MacSystemBridge: SystemBridging {
         clipboard.copy(text)
     }
 
-    public var hasClipboardText: Bool { pasteboard.offersPlainText }
+    public var hasClipboardText: Bool { clipboard.offersText }
 
     public func clipboardText() -> String? {
-        guard pasteboard.offersPlainText else { return nil }
-        return SelectionComparison.nonBlank(pasteboard.string(forType: .string))
+        SelectionComparison.nonBlank(clipboard.text())
     }
 
     // MARK: Screen
@@ -169,26 +167,10 @@ public final class MacSystemBridge: SystemBridging {
         if isFrontmost(app) { return true }
         guard let running = NSRunningApplication(processIdentifier: app.processID) else { return false }
         running.activate(options: [])
-        return await poll(timeoutMilliseconds: Self.activationTimeoutMilliseconds) { isFrontmost(app) }
+        return await Waiting.poll(every: Self.pollInterval, for: Self.activationTimeout) { isFrontmost(app) }
     }
 
     private func isFrontmost(_ app: SourceApp) -> Bool {
         NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processID
-    }
-
-    private func poll(timeoutMilliseconds: Int, until condition: () -> Bool) async -> Bool {
-        let deadline = ContinuousClock.now.advanced(by: .milliseconds(timeoutMilliseconds))
-        while ContinuousClock.now < deadline {
-            if condition() { return true }
-            await pause(milliseconds: Self.pollIntervalMilliseconds)
-        }
-        return condition()
-    }
-
-    /// Detached so that cancelling the caller cannot cut a wait short.
-    private func pause(milliseconds: Int) async {
-        await Task.detached {
-            try? await Task.sleep(for: .milliseconds(milliseconds))
-        }.value
     }
 }

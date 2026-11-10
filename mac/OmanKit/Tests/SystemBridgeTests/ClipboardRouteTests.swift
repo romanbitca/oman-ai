@@ -230,20 +230,65 @@ private func eventually(timeout: Duration = .seconds(5), _ condition: () -> Bool
         #expect(clipboard == "copied meanwhile")
     }
 
-    @Test func aCopyDuringAPasteGivesTheClipboardBackFirst() async {
+    @Test func aCopyDuringAPasteWaitsForItsTurn() async {
         defer { pasteboard.releaseGlobally() }
         put("user clipboard")
+        let pasteboard = pasteboard
+        let app = app
+        app.onPaste = { app.pasted.append(pasteboard.string(forType: .string)) }
+        app.onCopy = {
+            // By the time the copy runs, the paste has finished and given the clipboard back.
+            app.pasted.append(pasteboard.string(forType: .string))
+            pasteboard.clearContents()
+            pasteboard.setString("the selection", forType: .string)
+        }
         let route = makeRoute()
         let pasting = Task { await route.paste("new text") }
         #expect(await eventually { app.pastes == 1 })
 
-        app.onCopy = { put("the selection") }
         let copied = await route.copySelection()
+        await pasting.value
 
+        #expect(app.pasted == ["new text", "user clipboard"])
         #expect(copied == "the selection")
         #expect(clipboard == "user clipboard")
-        await pasting.value
+    }
+
+    @Test func twoCopiesStartedTogetherEachSeeOnlyTheirOwn() async {
+        defer { pasteboard.releaseGlobally() }
+        put("user clipboard")
+        let pasteboard = pasteboard
+        // The app takes a moment over each ⌘C, as a real one does, so the two requests overlap.
+        app.onCopy = {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(10))
+                pasteboard.clearContents()
+                pasteboard.setString("the selection", forType: .string)
+            }
+        }
+        var patient = timing
+        patient.copyWait = .seconds(5)
+        let route = makeRoute(patient)
+
+        let first = Task { await route.copySelection() }
+        let second = Task { await route.copySelection() }
+
+        #expect(await first.value == "the selection")
+        #expect(await second.value == "the selection")
         #expect(clipboard == "user clipboard")
+        #expect(app.copies == 2)
+    }
+
+    @Test func textIsOfferedAndReadOnlyWhenItIsOrdinary() {
+        defer { pasteboard.releaseGlobally() }
+        let route = makeRoute()
+        put("hello")
+        #expect(route.offersText)
+        #expect(route.text() == "hello")
+
+        pasteboard.writeTransientString("passing through")
+        #expect(route.offersText == false)
+        #expect(route.text() == nil)
     }
 
     @Test func thePersonsOwnCopyDuringAPasteIsKept() async {

@@ -397,6 +397,32 @@ import Testing
         #expect(harness.writing.requests.isEmpty)
     }
 
+    @Test func aSavedKeyThatCannotBeReadSaysSo() {
+        struct LockedKeys: APIKeyStore {
+            func hasAPIKey() throws -> Bool { true }
+            func loadAPIKey() throws -> String? { throw FakeFailure("denied") }
+            func saveAPIKey(_ key: String) throws {}
+            func deleteAPIKey() throws {}
+        }
+        let harness = Harness()
+        let services = AppServices(
+            writing: harness.writing,
+            styles: harness.styles,
+            settings: harness.settings,
+            apiKeys: LockedKeys(),
+            system: harness.system
+        )
+        let model = PanelViewModel(services: services, presenter: harness.presenter)
+        model.begin(with: selection)
+        #expect(model.screen == .home)
+
+        model.rewrite()
+        #expect(model.screen == .failed)
+        #expect(model.errorMessage == WritingError.unreadableAPIKey.localizedDescription)
+        #expect(model.offersSettings)
+        #expect(harness.writing.requests.isEmpty)
+    }
+
     @Test func closingThePanelCancelsTheRun() async {
         let harness = Harness()
         harness.writing.script(deltas: ["partial"], staysOpen: true)

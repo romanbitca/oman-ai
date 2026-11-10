@@ -24,6 +24,13 @@ import Testing
         #expect(ResultCleaner.clean(text, source: nil) == .init(text: text, removedHiddenCharacters: false))
     }
 
+    @Test func aBlackFlagCannotHideOtherText() {
+        // A black flag followed by tag characters that spell "hi", closed like a real flag.
+        let disguised = "\u{1F3F4}\u{E0068}\u{E0069}\u{E007F}"
+        let cleaned = ResultCleaner.clean("ok \(disguised)", source: nil)
+        #expect(cleaned == .init(text: "ok \u{1F3F4}", removedHiddenCharacters: true))
+    }
+
     @Test func emojiJoinersAndDirectionMarksSurvive() {
         // A family emoji needs zero-width joiners, and right-to-left text uses direction marks.
         let text = "👨‍👩‍👧 שלום\u{200F} می‌خواهم"

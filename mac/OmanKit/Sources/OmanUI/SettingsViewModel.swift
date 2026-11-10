@@ -51,6 +51,7 @@ public final class SettingsViewModel {
         selectedModel = (try? services.settings.selectedModel()) ?? .default
         preferences = (try? services.settings.preferences()) ?? AppPreferences()
         installsUpdatesAutomatically = services.updates?.installsUpdatesAutomatically ?? false
+        failedShortcuts.formUnion(reservedShortcuts)
         refreshPermissions()
         do {
             styles = try services.styles.loadStyles()
@@ -189,7 +190,7 @@ public final class SettingsViewModel {
             preferences.setCombo(nil, for: .style(id))
             if preferences.defaultStyleID == id { preferences.defaultStyleID = nil }
             savePreferences()
-            failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+            registerShortcuts()
         } catch {
             styleError = error.localizedDescription
         }
@@ -245,7 +246,7 @@ public final class SettingsViewModel {
     func cancelRecording() {
         guard recordingAction != nil else { return }
         recordingAction = nil
-        failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+        registerShortcuts()
     }
 
     func finishRecording(with combo: KeyCombo) {
@@ -253,7 +254,7 @@ public final class SettingsViewModel {
         recordingAction = nil
         guard !combo.isCopyOrPaste else {
             shortcutNotice = "\(combo.displayString) is how OmanAI copies and pastes, so it can't be a shortcut."
-            failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+            registerShortcuts()
             return
         }
         assign(combo, to: action)
@@ -265,6 +266,17 @@ public final class SettingsViewModel {
         assign(nil, to: action)
     }
 
+    /// A ⌘C or ⌘V shortcut saved by an earlier version is never registered, so it is listed as one that failed.
+    private var reservedShortcuts: Set<ShortcutAction> {
+        Set(preferences.shortcuts.compactMap { key, combo in
+            combo.isCopyOrPaste ? ShortcutAction(storageKey: key) : nil
+        })
+    }
+
+    private func registerShortcuts() {
+        failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts).union(reservedShortcuts)
+    }
+
     private func assign(_ combo: KeyCombo?, to action: ShortcutAction) {
         if let combo,
            let otherKey = preferences.shortcuts.first(where: { $0.value == combo && $0.key != action.storageKey })?.key,
@@ -274,7 +286,7 @@ public final class SettingsViewModel {
         }
         preferences.setCombo(combo, for: action)
         savePreferences()
-        failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+        registerShortcuts()
     }
 
     func updateName(_ name: String) {
@@ -322,7 +334,8 @@ public final class SettingsViewModel {
         let writingModel = (try? services.settings.selectedModel()) ?? .default
         guard let apiKey = writingModel.isLocal ? "" : loadAPIKey() else {
             isTrying = false
-            tryItError = WritingError.missingAPIKey.localizedDescription
+            let isSaved = (try? services.apiKeys.hasAPIKey()) ?? false
+            tryItError = (isSaved ? WritingError.unreadableAPIKey : WritingError.missingAPIKey).localizedDescription
             return
         }
         let request = WritingRequest(

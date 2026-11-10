@@ -4,6 +4,12 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — A copy made within a second of a failed capture can be undone
+
+When ⌘C brings nothing back in time, OmanAI watches the clipboard for one more second and undoes a text copy that arrives, because it is almost always the app's late answer. A copy you make yourself in that second, for example with ⌘C inside the panel, is undone too. The panel's Copy button is not affected.
+
+---
+
 ## 2026-11-11 — Editors that copy a whole line when nothing is selected
 
 VS Code and some other editors copy the current line when ⌘C is pressed with no selection. In an Electron editor, OmanAI reads the selection with ⌘C, so that line shows up as the selected text, and Replace would paste at the cursor instead of over the line. Select the text first. Detecting this copy needs the editor's own clipboard format and is not done yet.

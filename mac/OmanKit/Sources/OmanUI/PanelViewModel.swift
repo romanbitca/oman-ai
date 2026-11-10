@@ -401,7 +401,8 @@ public final class PanelViewModel {
         terminalPasteConfirmed = false
         rememberScreenBeforeRun()
         guard let apiKey = request.model.isLocal ? "" : loadAPIKey() else {
-            fail(with: WritingError.missingAPIKey)
+            let isSaved = (try? services.apiKeys.hasAPIKey()) ?? false
+            fail(with: isSaved ? WritingError.unreadableAPIKey : WritingError.missingAPIKey)
             return
         }
         draft = ""
@@ -442,7 +443,7 @@ public final class PanelViewModel {
         draft = ""
         errorMessage = error.localizedDescription
         let writingError = error as? WritingError
-        offersSettings = writingError == .missingAPIKey || writingError == .invalidAPIKey
+        offersSettings = [.missingAPIKey, .unreadableAPIKey, .invalidAPIKey].contains(writingError)
         screen = .failed
     }
 

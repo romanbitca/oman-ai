@@ -110,7 +110,7 @@ The signed app ends up in `mac/build/release/export`. `release.sh` empties its o
 
 ## Pinned build tools and libraries
 
-- GRDB and Sparkle are pinned to exact commits, in `mac/OmanKit/Package.swift` and `mac/project.yml`. To move to a newer version, change the commit there, run the tests and commit the updated `Package.resolved`.
+- GRDB and Sparkle are pinned to exact commits, in `mac/OmanKit/Package.swift` and `mac/project.yml`. To move to a newer version, change the commit there and run the tests. `Package.resolved` is not committed, because Xcode and `swift test` each rewrite it their own way.
 - The workflows download one XcodeGen release and check its SHA-256. `mac/scripts/install-xcodegen.sh` holds the version and the checksum, and says how to change them.
 - The actions in `.github/workflows` are pinned to commits.
 

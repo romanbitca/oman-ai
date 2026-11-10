@@ -130,4 +130,6 @@ These follow a security review of the whole app and its release pipeline.
 - Sparkle checks an update's EdDSA signature before unpacking it (`SUVerifyUpdateBeforeExtraction`) and requires a signed feed (`SURequireSignedFeed`). The update key stays on GitHub, inside a protected environment. Signing the feed on the maintainer's Mac would be stronger and can come later
 - The release workflow has three jobs: check, build and publish. Secrets live in a `release` environment that needs the maintainer's approval and only accepts `v*` tags. Build and publish each ask for approval, because they run on separate machines so that the build can't reach the update key
 - GRDB and Sparkle are pinned to commits, and the workflows install one XcodeGen release by checksum
+- Clipboard operations run one at a time. A second one waits for the first, so a double-click on the menu bar icon can't make two captures read each other's writes
+- `mac/OmanKit/Package.resolved` is no longer committed. Xcode and `swift test` each rewrite it their own way, and both libraries are pinned to commits in the manifests
 - The signing certificate is still imported with `-A` in the workflow. Any process on the runner could call `codesign` itself, so narrowing the key's access list would add little, and the change could not be tested without a release

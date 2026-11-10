@@ -74,8 +74,8 @@ gh api --method PUT "repos/$REPO/environments/$ENVIRONMENT" --input - >/dev/null
   "deployment_branch_policy": { "protected_branches": false, "custom_branch_policies": true }
 }
 EOF
-if ! gh api "repos/$REPO/environments/$ENVIRONMENT/deployment-branch-policies" --jq '.branch_policies[].name' |
-    grep -qxF 'v*'; then
+POLICIES="$(gh api "repos/$REPO/environments/$ENVIRONMENT/deployment-branch-policies" --jq '.branch_policies[].name')"
+if ! grep -qxF 'v*' <<<"$POLICIES"; then
     gh api --method POST "repos/$REPO/environments/$ENVIRONMENT/deployment-branch-policies" \
         -f name='v*' -f type=tag >/dev/null
 fi

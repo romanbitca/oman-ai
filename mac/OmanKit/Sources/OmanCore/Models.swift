@@ -342,6 +342,8 @@ public struct AppPreferences: Codable, Equatable, Sendable {
 
 public enum WritingError: Error, Equatable, Sendable {
     case missingAPIKey
+    /// A key is saved, but macOS did not hand it over.
+    case unreadableAPIKey
     case invalidAPIKey
     case accessDenied(String)
     case billing
@@ -362,6 +364,8 @@ extension WritingError: LocalizedError {
         switch self {
         case .missingAPIKey:
             "Add your Anthropic API key in Settings."
+        case .unreadableAPIKey:
+            "macOS didn't let OmanAI read your saved API key. Allow it when macOS asks, or save the key again in Settings."
         case .invalidAPIKey:
             "Anthropic rejected this API key. Check it in Settings."
         case .accessDenied(let message):

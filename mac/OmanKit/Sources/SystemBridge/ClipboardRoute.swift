@@ -24,19 +24,14 @@ final class ClipboardRoute {
         let task: Task<Void, Never>
     }
 
-    private struct ActivePaste {
-        let id: Int
-        let snapshot: PasteboardSnapshot
-        let writtenCount: Int
-    }
-
     private let pasteboard: NSPasteboard
     private let timing: Timing
     private let postCopy: () -> Void
     private let postPaste: () -> Void
     private var lateCopyWatch: LateCopyWatch?
-    private var activePaste: ActivePaste?
+    private var lastOperation: Task<Void, Never>?
     private var pasteCount = 0
+    private var activePasteID: Int?
 
     init(
         pasteboard: NSPasteboard,
@@ -53,14 +48,18 @@ final class ClipboardRoute {
     // MARK: Reading the selection
 
     func copySelection() async -> String? {
-        giveBackBorrowedClipboard()
+        await inTurn { await self.copySelectionNow() }
+    }
+
+    private func copySelectionNow() async -> String? {
+        settleLateCopy()
         let snapshot = PasteboardSnapshot(of: pasteboard)
         let originalCount = pasteboard.changeCount
         postCopy()
 
         var copied: String?
         // An app can clear the pasteboard before it finishes writing, so wait for the text itself.
-        _ = await poll(for: timing.copyWait) {
+        _ = await Waiting.poll(every: timing.pollInterval, for: timing.copyWait) {
             guard pasteboard.changeCount != originalCount else { return false }
             copied = pasteboard.string(forType: .string)
             return copied != nil
@@ -80,7 +79,7 @@ final class ClipboardRoute {
         let baseline = pasteboard.changeCount
         let task = Task { [weak self] in
             guard let self else { return }
-            _ = await self.poll(for: self.timing.lateCopyWatch) {
+            _ = await Waiting.poll(every: self.timing.pollInterval, for: self.timing.lateCopyWatch) {
                 Task.isCancelled || self.pasteboard.changeCount != baseline
             }
             guard !Task.isCancelled else { return }
@@ -104,68 +103,69 @@ final class ClipboardRoute {
     // MARK: Pasting
 
     func paste(_ text: String) async {
-        giveBackBorrowedClipboard()
+        await inTurn { await self.pasteNow(text) }
+    }
+
+    private func pasteNow(_ text: String) async {
+        settleLateCopy()
         let snapshot = PasteboardSnapshot(of: pasteboard)
         let receipt = pasteboard.writeTransientString(text)
         let writtenCount = pasteboard.changeCount
         pasteCount += 1
         let id = pasteCount
-        activePaste = ActivePaste(id: id, snapshot: snapshot, writtenCount: writtenCount)
+        activePasteID = id
         postPaste()
 
-        await pause(timing.pasteHold)
+        await Waiting.pause(timing.pasteHold)
         if !receipt.wasRead {
             // The app has not asked for the text yet. Giving the clipboard back now would make it
             // paste the old contents instead, so wait until it asks, up to a limit.
-            _ = await poll(for: timing.slowPasteWait) {
+            _ = await Waiting.poll(every: timing.pollInterval, for: timing.slowPasteWait) {
                 receipt.wasRead || pasteboard.changeCount != writtenCount
             }
             if receipt.wasRead {
-                await pause(timing.afterReadGrace)
+                await Waiting.pause(timing.afterReadGrace)
             }
         }
 
-        // Another clipboard operation may have started meanwhile and already given the clipboard back.
-        guard activePaste?.id == id else { return }
-        activePaste = nil
+        // The person may have pressed Copy meanwhile. Their copy stays.
+        guard activePasteID == id else { return }
+        activePasteID = nil
         snapshot.restore(to: pasteboard, ifChangeCountIs: writtenCount)
     }
 
-    // MARK: The person's own copy
+    // MARK: The person's own clipboard
 
-    /// Replaces whatever was being borrowed, so nothing is given back over it.
+    /// The person's own copy replaces whatever was being borrowed, so nothing is given back over it.
     func copy(_ text: String) {
         lateCopyWatch?.task.cancel()
         lateCopyWatch = nil
-        activePaste = nil
+        activePasteID = nil
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
     }
 
+    /// Decided from the types alone, so nothing is read until the person asks.
+    var offersText: Bool { pasteboard.offersPlainText }
+
+    func text() -> String? {
+        guard pasteboard.offersPlainText else { return nil }
+        return pasteboard.string(forType: .string)
+    }
+
     // MARK: Private
 
-    /// A new operation has to start from the person's own clipboard, not from text that is passing through.
-    private func giveBackBorrowedClipboard() {
-        settleLateCopy()
-        if let paste = activePaste {
-            activePaste = nil
-            paste.snapshot.restore(to: pasteboard, ifChangeCountIs: paste.writtenCount)
+    /// One copy or paste at a time. Two that overlap would each mistake the other's writes for the app's,
+    /// as when the menu bar icon is clicked twice in a row.
+    private func inTurn<Result: Sendable>(_ operation: @escaping @MainActor () async -> Result) async -> Result {
+        let previous = lastOperation
+        let task = Task { @MainActor in
+            await previous?.value
+            return await operation()
         }
-    }
-
-    private func poll(for duration: Duration, until condition: () -> Bool) async -> Bool {
-        let deadline = ContinuousClock.now.advanced(by: duration)
-        while ContinuousClock.now < deadline {
-            if condition() { return true }
-            await pause(timing.pollInterval)
+        lastOperation = Task { @MainActor in
+            _ = await task.value
         }
-        return condition()
-    }
-
-    /// Detached so that cancelling the caller cannot cut a wait short and give the clipboard back too early.
-    private func pause(_ duration: Duration) async {
-        await Task.detached {
-            try? await Task.sleep(for: duration)
-        }.value
+        return await task.value
     }
 }

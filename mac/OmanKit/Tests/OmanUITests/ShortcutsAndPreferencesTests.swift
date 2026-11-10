@@ -344,6 +344,21 @@ import Testing
         #expect(harness.system.registered == [.compose: combo])
     }
 
+    @Test func aCopyOrPasteShortcutFromAnEarlierVersionIsShownAsFailed() throws {
+        let harness = preparedHarness()
+        try setPreferences(harness) {
+            $0.setCombo(KeyCombo(keyCode: 9, modifiers: KeyCombo.command), for: .proofread)
+            $0.setCombo(combo, for: .rewrite)
+        }
+        let settings = harness.makeSettings()
+        settings.reload()
+        #expect(settings.failedShortcuts == [.proofread])
+
+        settings.clearShortcut(for: .proofread)
+        #expect(settings.failedShortcuts.isEmpty)
+        #expect(harness.system.registered == [.rewrite: combo])
+    }
+
     @Test func aRejectedShortcutIsReported() {
         let harness = preparedHarness()
         harness.system.rejected = [.rewrite]
