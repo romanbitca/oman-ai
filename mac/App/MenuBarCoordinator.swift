@@ -35,8 +35,9 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         }
 
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "wand.and.sparkles", accessibilityDescription: "oman")
+            button.image = NSImage(named: "MenuBarIcon")
             button.image?.isTemplate = true
+            button.image?.accessibilityDescription = "oman"
             button.target = self
             button.action = #selector(statusItemClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -175,10 +176,6 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
             window.title = "oman Settings"
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
-            // Same floating glass as the panel: the window itself is invisible.
-            window.isOpaque = false
-            window.backgroundColor = .clear
-            window.hasShadow = false
             window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsRootView(model: model))

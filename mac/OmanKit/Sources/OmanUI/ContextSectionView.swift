@@ -31,7 +31,7 @@ struct ContextSectionView: View {
                 ScreenshotThumbnail(screenshot: screenshot) {
                     model.setIncludeScreen(false)
                 }
-                .transition(.scale(scale: 0.9, anchor: .top).combined(with: .opacity))
+                .transition(.opacity)
             }
 
             if model.isContextExpanded {
@@ -52,7 +52,7 @@ struct ContextSectionView: View {
                                 .allowsHitTesting(false)
                         }
                     }
-                    .transition(.scale(scale: 0.9, anchor: .top).combined(with: .opacity))
+                    .transition(.opacity)
             }
         }
         .animation(Liquid.morph, value: model.isContextExpanded)
@@ -76,7 +76,7 @@ private struct ContextChip: View {
             .frame(height: 32)
             .foregroundStyle(isOn ? Color.white : Color.secondary)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), tint: isOn ? Liquid.accent : nil, interactive: true)
+            .liquidGlass(in: Capsule(), tint: isOn ? Liquid.accent : nil)
         }
         .buttonStyle(LiquidPressStyle())
         .animation(Liquid.press, value: isOn)

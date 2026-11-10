@@ -1,0 +1,43 @@
+{
+  "fill": {
+    "linear-gradient": [
+      "display-p3:1.00000,0.54118,0.12157,1.00000",
+      "display-p3:0.86275,0.04314,0.33333,1.00000"
+    ],
+    "orientation": {
+      "start": {
+        "x": 0.25,
+        "y": 0
+      },
+      "stop": {
+        "x": 0.75,
+        "y": 1
+      }
+    }
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "mark.svg",
+          "name": "mark",
+          "glass": true
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.55
+      },
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.58
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "macOS"
+    ]
+  }
+}

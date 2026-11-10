@@ -21,6 +21,7 @@ struct SettingsTile<Content: View>: View {
         }
         .padding(17)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background { WindowDragArea() }
         .liquidGlass(in: PanelShape.tile)
     }
 }

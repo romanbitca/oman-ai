@@ -65,7 +65,7 @@ struct PanelHomeView: View {
             .padding(.horizontal, 15)
             .frame(height: 42)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), interactive: true, id: LiquidID.actions)
+            .liquidGlass(in: Capsule(), id: LiquidID.actions)
         }
         .buttonStyle(LiquidPressStyle())
     }

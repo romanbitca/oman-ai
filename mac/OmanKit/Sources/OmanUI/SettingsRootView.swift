@@ -50,6 +50,20 @@ public struct SettingsRootView: View {
         }
         .environment(\.liquidSpace, space)
         .frame(width: Self.windowSize.width, height: Self.windowSize.height, alignment: .topLeading)
+        .background { windowBackground }
+    }
+
+    private var windowBackground: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+            // A faint wash gives the glass tiles something to pick up.
+            LinearGradient(
+                colors: [Liquid.accent.opacity(0.12), Color.clear, Liquid.iridescence[4].opacity(0.08)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            WindowDragArea()
+        }
     }
 
     private var navigation: some View {
@@ -64,6 +78,7 @@ public struct SettingsRootView: View {
         .padding(10)
         .frame(width: 186)
         .frame(maxHeight: .infinity, alignment: .top)
+        .background { WindowDragArea() }
         .liquidGlass(in: PanelShape.tile)
     }
 
@@ -107,8 +122,9 @@ public struct SettingsRootView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background { WindowDragArea() }
             .id(page)
-            .transition(.opacity.combined(with: .offset(y: 10)))
+            .transition(.opacity)
         }
         .scrollIndicators(.never)
         .scrollBounceBehavior(.basedOnSize)

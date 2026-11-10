@@ -59,7 +59,6 @@ struct ActionCard: View {
     let title: String
     let symbol: String
     let action: () -> Void
-    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
@@ -67,15 +66,13 @@ struct ActionCard: View {
                 Image(systemName: symbol)
                     .font(.system(size: 21, weight: .regular))
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.bounce, value: isHovering)
                 Text(title).font(.system(size: 13, weight: .semibold))
             }
             .frame(maxWidth: .infinity, minHeight: 80)
             .contentShape(PanelShape.tile)
-            .liquidGlass(in: PanelShape.tile, interactive: true)
+            .liquidGlass(in: PanelShape.tile)
         }
         .buttonStyle(LiquidPressStyle())
-        .onHover { isHovering = $0 }
     }
 }
 
@@ -214,7 +211,7 @@ struct StyleChipsView: View {
             .frame(height: 32)
             .foregroundStyle(isSelected ? Color.white : Color.primary)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), tint: isSelected ? Liquid.accent : nil, interactive: true)
+            .liquidGlass(in: Capsule(), tint: isSelected ? Liquid.accent : nil)
         }
         .buttonStyle(LiquidPressStyle())
     }

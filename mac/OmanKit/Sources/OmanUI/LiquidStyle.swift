@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 
 enum Liquid {
-    static let morph = Animation.spring(response: 0.46, dampingFraction: 0.78)
-    static let press = Animation.spring(response: 0.26, dampingFraction: 0.62)
+    static let morph = Animation.smooth(duration: 0.28)
+    static let press = Animation.easeOut(duration: 0.12)
     static let accent = Color(red: 0.40, green: 0.34, blue: 1.0)
     static let iridescence: [Color] = [
         Color(red: 0.40, green: 0.34, blue: 1.0),
@@ -34,15 +34,48 @@ struct WindowDragArea: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
-struct PanelDragHandle: View {
+private struct CornerArc: Shape {
+    let radius: CGFloat
+    let leadIn: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.maxX - radius, y: rect.minY + radius)
+        var path = Path()
+        path.move(to: CGPoint(x: center.x - leadIn, y: rect.minY))
+        path.addLine(to: CGPoint(x: center.x, y: rect.minY))
+        path.addRelativeArc(center: center, radius: radius, startAngle: .degrees(-90), delta: .degrees(90))
+        path.addLine(to: CGPoint(x: rect.maxX, y: center.y + leadIn))
+        return path
+    }
+}
+
+/// A curved grip that follows the top-right corner of the panel, just outside it.
+struct PanelCornerHandle: View {
+    static let outset: CGFloat = 11
+    static let hitWidth: CGFloat = 14
+    /// How far the handle's frame reaches past the corner of the tile it wraps.
+    static let reach = outset + hitWidth / 2
+
+    private let arc = CornerArc(radius: PanelMetrics.tileRadius + outset, leadIn: 13)
+    private let side = PanelMetrics.tileRadius + outset + 13
+    @State private var isHovering = false
+
     var body: some View {
-        Capsule()
-            .fill(Color.primary.opacity(0.42))
-            .frame(width: 34, height: 4)
-            .frame(width: 88, height: 20)
-            .background(WindowDragArea())
-            .liquidGlass(in: Capsule())
-            .help("Drag to move")
+        ZStack {
+            // Fully clear pixels let clicks fall through to the app behind, so the grip needs a trace of alpha.
+            arc.stroke(Color.white.opacity(0.02), style: StrokeStyle(lineWidth: Self.hitWidth, lineCap: .round))
+            arc.stroke(
+                Color(nsColor: .systemGray).opacity(isHovering ? 1 : 0.7),
+                style: StrokeStyle(lineWidth: 5, lineCap: .round)
+            )
+        }
+        .frame(width: side, height: side)
+        .padding(Self.hitWidth / 2)
+        .background(WindowDragArea())
+        .help("Drag to move")
+        .onHover { hovering in
+            withAnimation(Liquid.press) { isHovering = hovering }
+        }
     }
 }
 
@@ -63,7 +96,6 @@ struct LiquidContainer<Content: View>: View {
 private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     let shape: S
     let tint: Color?
-    let interactive: Bool
     let id: String?
     @Environment(\.liquidSpace) private var space
 
@@ -84,65 +116,52 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
 
     @available(macOS 26.0, *)
     private var glass: Glass {
-        var glass = Glass.regular
-        if let tint { glass = glass.tint(tint) }
-        if interactive { glass = glass.interactive() }
-        return glass
+        tint.map { Glass.regular.tint($0) } ?? Glass.regular
     }
 }
 
 extension View {
-    func liquidGlass<S: Shape>(
-        in shape: S,
-        tint: Color? = nil,
-        interactive: Bool = false,
-        id: String? = nil
-    ) -> some View {
-        modifier(LiquidGlassModifier(shape: shape, tint: tint, interactive: interactive, id: id))
+    func liquidGlass<S: Shape>(in shape: S, tint: Color? = nil, id: String? = nil) -> some View {
+        modifier(LiquidGlassModifier(shape: shape, tint: tint, id: id))
     }
 }
 
 struct LiquidPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .opacity(configuration.isPressed ? 0.7 : 1)
             .animation(Liquid.press, value: configuration.isPressed)
     }
 }
 
+/// Drawn by hand because the system glass button styles flex and bounce when pressed.
 struct LiquidButton: View {
     let title: String
     var symbol: String?
     var prominent = false
     let action: () -> Void
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         Button(action: action) {
-            if let symbol {
-                Label(title, systemImage: symbol)
-            } else {
-                Text(title)
-            }
+            label
+                .font(.system(size: 13, weight: .medium))
+                .padding(.horizontal, 16)
+                .frame(height: 36)
+                .foregroundStyle(prominent ? Color.white : Color.primary)
+                .contentShape(Capsule())
+                .liquidGlass(in: Capsule(), tint: prominent ? Liquid.accent : nil)
+                .opacity(isEnabled ? 1 : 0.45)
         }
-        .modifier(LiquidButtonChrome(prominent: prominent))
+        .buttonStyle(LiquidPressStyle())
     }
-}
 
-private struct LiquidButtonChrome: ViewModifier {
-    let prominent: Bool
-
-    func body(content: Content) -> some View {
-        let sized = content.controlSize(.large).font(.system(size: 13, weight: .medium))
-        if #available(macOS 26.0, *) {
-            if prominent {
-                sized.buttonStyle(.glassProminent).tint(Liquid.accent)
-            } else {
-                sized.buttonStyle(.glass)
-            }
-        } else if prominent {
-            sized.buttonStyle(.borderedProminent).tint(Liquid.accent)
+    @ViewBuilder
+    private var label: some View {
+        if let symbol {
+            Label(title, systemImage: symbol)
         } else {
-            sized.buttonStyle(.bordered)
+            Text(title)
         }
     }
 }
