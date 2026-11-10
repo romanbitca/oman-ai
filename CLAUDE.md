@@ -25,6 +25,7 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Generate the Xcode project: `cd mac && xcodegen generate`
 - Build the app: `cd mac && xcodebuild -project Oman.xcodeproj -scheme Oman -configuration Debug build`
 - Install for real use: build with `-configuration Release`, quit oman, then `ditto <built oman.app> /Applications/oman.app`. Privacy permissions need an installed copy; see KNOWN_ISSUES.md
+- Signed and notarized build for other people: `mac/scripts/release.sh`
 
 ## Style
 

@@ -88,3 +88,7 @@ Supersedes the 2026-04-28 Stack and Scope entries for active work. The Electron 
 - Settings use the same floating glass tiles as the panel, in a transparent window
 - A pinned panel is a floating window: it can be dragged, stays where it is dropped, and the menu bar icon loads the current selection into it instead of closing it
 - Password AutoFill heuristics are turned off for the whole app with `NSAutoFillHeuristicsEnabled`, because they froze the main thread walking SwiftUI's key views
+- App icon: the `flow` concept, a rough line that becomes one smooth wave through a lens. Sources are in `design/icon/`
+- Motion is smooth with no overshoot. Custom buttons replace the system glass button styles, which flex when pressed
+- Settings is an ordinary opaque window so it can be dragged anywhere. Only the panel floats as bare glass tiles
+- Distribution signing: Developer ID under the personal Apple Developer account, team S72639F3BR, using Xcode's cloud-managed certificate. `mac/scripts/release.sh` signs and notarizes through the account signed in to Xcode
