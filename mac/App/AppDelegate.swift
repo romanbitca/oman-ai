@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             coordinator = MenuBarCoordinator(services: services)
         } catch {
             let alert = NSAlert(error: error)
-            alert.messageText = "oman couldn't open its database."
+            alert.messageText = "OmanAI couldn't open its database."
             alert.runModal()
             NSApp.terminate(nil)
         }
@@ -32,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func installMainMenu() {
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        appMenu.addItem(withTitle: "Quit oman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "Quit OmanAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
         let appItem = NSMenuItem()
         appItem.submenu = appMenu
 

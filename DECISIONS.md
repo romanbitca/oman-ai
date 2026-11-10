@@ -92,3 +92,9 @@ Supersedes the 2026-04-28 Stack and Scope entries for active work. The Electron 
 - Motion is smooth with no overshoot. Custom buttons replace the system glass button styles, which flex when pressed
 - Settings is an ordinary opaque window so it can be dragged anywhere. Only the panel floats as bare glass tiles
 - Distribution signing: Developer ID under the personal Apple Developer account, team S72639F3BR, using Xcode's cloud-managed certificate. `mac/scripts/release.sh` signs and notarizes through the account signed in to Xcode
+
+## 2026-11-10 — Name, corner grip and a still Settings screen
+
+- The app is named OmanAI everywhere a person can see it, including the app bundle. The bundle ID `com.romanbitca.oman`, the Keychain service, the `oman` database folder and the Swift module names stay, so permissions, the API key and saved styles carry over
+- The pinned panel's drag grip is a dark curve with a thin glass border, wrapped around the top-right corner and concentric with the tile. The window's side margin grew from 18 to 30 points to hold it and its shadow
+- Settings has no animation at all: no page fade, no sliding highlights, no press or hover fades, no window-open animation and no spinner. A hand-drawn switch replaces the system one, which animates its knob. The panel keeps its short fades

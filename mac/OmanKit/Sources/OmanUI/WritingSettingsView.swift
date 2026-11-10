@@ -63,7 +63,7 @@ struct WritingSettingsView: View {
     private func modelCard(_ option: WritingModel) -> some View {
         let isSelected = option == model.selectedModel
         return Button {
-            withAnimation(Liquid.press) { model.setModel(option) }
+            model.setModel(option)
         } label: {
             VStack(alignment: .leading, spacing: 3) {
                 Text(option.displayName).font(.system(size: 13, weight: .semibold))

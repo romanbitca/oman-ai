@@ -18,6 +18,8 @@ enum Liquid {
 extension EnvironmentValues {
     @Entry var liquidSpace: Namespace.ID?
     @Entry var panelIsFloating = false
+    /// Turned off for Settings, which has no animation at all.
+    @Entry var liquidMotion = true
 }
 
 /// Moves the window when dragged. Placed behind controls, so they keep working.
@@ -34,48 +36,55 @@ struct WindowDragArea: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
+/// The centre line of the corner grip, concentric with the corner of the tile.
 private struct CornerArc: Shape {
     let radius: CGFloat
     let leadIn: CGFloat
+    /// Distance from the top and right of the frame to the line.
+    let inset: CGFloat
 
     func path(in rect: CGRect) -> Path {
-        let center = CGPoint(x: rect.maxX - radius, y: rect.minY + radius)
+        let center = CGPoint(x: rect.maxX - inset - radius, y: rect.minY + inset + radius)
         var path = Path()
-        path.move(to: CGPoint(x: center.x - leadIn, y: rect.minY))
-        path.addLine(to: CGPoint(x: center.x, y: rect.minY))
+        path.move(to: CGPoint(x: center.x - leadIn, y: center.y - radius))
+        path.addLine(to: CGPoint(x: center.x, y: center.y - radius))
         path.addRelativeArc(center: center, radius: radius, startAngle: .degrees(-90), delta: .degrees(90))
-        path.addLine(to: CGPoint(x: rect.maxX, y: center.y + leadIn))
+        path.addLine(to: CGPoint(x: center.x + radius, y: center.y + leadIn))
         return path
     }
 }
 
-/// A curved grip that follows the top-right corner of the panel, just outside it.
-struct PanelCornerHandle: View {
-    static let outset: CGFloat = 11
-    static let hitWidth: CGFloat = 14
-    /// How far the handle's frame reaches past the corner of the tile it wraps.
-    static let reach = outset + hitWidth / 2
+private struct ArcBand: Shape {
+    let arc: CornerArc
+    let width: CGFloat
 
-    private let arc = CornerArc(radius: PanelMetrics.tileRadius + outset, leadIn: 13)
-    private let side = PanelMetrics.tileRadius + outset + 13
-    @State private var isHovering = false
+    func path(in rect: CGRect) -> Path {
+        arc.path(in: rect).strokedPath(StrokeStyle(lineWidth: width, lineCap: .round))
+    }
+}
+
+/// A dark curve with a thin glass border, wrapped around the top-right corner of the panel.
+struct PanelCornerHandle: View {
+    private static let thickness = PanelMetrics.gripThickness
+    private static let barThickness: CGFloat = 5
+    private static let leadIn: CGFloat = 8
+    private static let radius = PanelMetrics.tileRadius + PanelMetrics.gap + thickness / 2
+    private static let arc = CornerArc(radius: radius, leadIn: leadIn, inset: thickness / 2)
+    private static let band = ArcBand(arc: arc, width: thickness)
+
+    static let side = thickness + radius + leadIn
 
     var body: some View {
-        ZStack {
-            // Fully clear pixels let clicks fall through to the app behind, so the grip needs a trace of alpha.
-            arc.stroke(Color.white.opacity(0.02), style: StrokeStyle(lineWidth: Self.hitWidth, lineCap: .round))
-            arc.stroke(
-                Color(nsColor: .systemGray).opacity(isHovering ? 1 : 0.7),
-                style: StrokeStyle(lineWidth: 5, lineCap: .round)
-            )
-        }
-        .frame(width: side, height: side)
-        .padding(Self.hitWidth / 2)
-        .background(WindowDragArea())
-        .help("Drag to move")
-        .onHover { hovering in
-            withAnimation(Liquid.press) { isHovering = hovering }
-        }
+        Self.arc
+            .stroke(Color.primary.opacity(0.42), style: StrokeStyle(lineWidth: Self.barThickness, lineCap: .round))
+            // A SwiftUI shape above the drag area takes the click and does nothing with it.
+            .allowsHitTesting(false)
+            .frame(width: Self.side, height: Self.side)
+            .background(WindowDragArea())
+            // Glass in a custom shape adds no alpha to the window, so without this a click goes to the app behind.
+            .background(Self.band.fill(Color.white.opacity(0.02)))
+            .liquidGlass(in: Self.band)
+            .help("Drag to move")
     }
 }
 
@@ -126,11 +135,21 @@ extension View {
     }
 }
 
+private struct LiquidPressBody<Label: View>: View {
+    let isPressed: Bool
+    let label: Label
+    @Environment(\.liquidMotion) private var hasMotion
+
+    var body: some View {
+        label
+            .opacity(isPressed ? 0.7 : 1)
+            .animation(hasMotion ? Liquid.press : nil, value: isPressed)
+    }
+}
+
 struct LiquidPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .opacity(configuration.isPressed ? 0.7 : 1)
-            .animation(Liquid.press, value: configuration.isPressed)
+        LiquidPressBody(isPressed: configuration.isPressed, label: configuration.label)
     }
 }
 

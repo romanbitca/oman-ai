@@ -37,7 +37,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         if let button = statusItem.button {
             button.image = NSImage(named: "MenuBarIcon")
             button.image?.isTemplate = true
-            button.image?.accessibilityDescription = "oman"
+            button.image?.accessibilityDescription = "OmanAI"
             button.target = self
             button.action = #selector(statusItemClicked)
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -86,7 +86,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         let menu = NSMenu()
         menu.addItem(withTitle: "Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit oman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit OmanAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
         statusItem.menu = nil
@@ -108,8 +108,8 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         else { return }
 
         let width = panel.frame.width
-        // The window's own side margins are transparent, so they may hang off the screen edge.
-        let inset: CGFloat = 8 - PanelRootView.windowSideMargin
+        // The window's side margins are transparent and may hang off the screen, unless the grip is showing in one.
+        let inset: CGFloat = isPinned ? 0 : 8 - PanelRootView.windowSideMargin
         let x = min(max(buttonRect.midX - width / 2, visible.minX + inset), visible.maxX - width - inset)
         panel.setFrameTopLeftPoint(NSPoint(x: x, y: buttonRect.minY - 5))
     }
@@ -159,7 +159,17 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     }
 
     func setPanelPinned(_ pinned: Bool) {
+        let isNewlyPinned = pinned && !isPinned
         isPinned = pinned
+        if isNewlyPinned, panel.isVisible {
+            keepGripOnScreen()
+        }
+    }
+
+    private func keepGripOnScreen() {
+        guard let visible = panel.screen?.visibleFrame, panel.frame.maxX > visible.maxX else { return }
+        panel.setFrameOrigin(NSPoint(x: visible.maxX - panel.frame.width, y: panel.frame.minY))
+        placedOrigin = panel.frame.origin
     }
 
     func openSettings() {
@@ -173,11 +183,12 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "oman Settings"
+            window.title = "OmanAI Settings"
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
             window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
+            window.animationBehavior = .none
             window.contentView = NSHostingView(rootView: SettingsRootView(model: model))
             window.center()
             settingsWindow = window

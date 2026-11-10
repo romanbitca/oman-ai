@@ -59,7 +59,7 @@ public struct SourceApp: Equatable, Sendable {
 }
 
 public struct SelectionCapture: Equatable, Sendable {
-    /// Nil when oman itself was frontmost, so there is no other app to write into.
+    /// Nil when OmanAI itself was frontmost, so there is no other app to write into.
     public let app: SourceApp?
     /// Nil when nothing was selected or the app did not expose the selection.
     public let text: String?
@@ -285,7 +285,7 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var remembersStylePerApp = true
     public var includesScreenByDefault = false
     public var keepsPanelOpen = false
-    /// Global shortcuts start empty so oman never takes a combination another app is using.
+    /// Global shortcuts start empty so OmanAI never takes a combination another app is using.
     public var shortcuts: [String: KeyCombo] = [
         ShortcutAction.acceptResult.storageKey: KeyCombo(keyCode: 36, modifiers: KeyCombo.command),
         ShortcutAction.copyResult.storageKey: KeyCombo(keyCode: 8, modifiers: KeyCombo.command | KeyCombo.shift),

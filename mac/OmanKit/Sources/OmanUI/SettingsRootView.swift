@@ -33,8 +33,6 @@ public struct SettingsRootView: View {
 
     private let model: SettingsViewModel
     @State private var page: SettingsPage = .general
-    @Namespace private var space
-    @Namespace private var pageHighlight
 
     public init(model: SettingsViewModel) {
         self.model = model
@@ -48,7 +46,7 @@ public struct SettingsRootView: View {
             }
             .padding(SettingsMetrics.outer)
         }
-        .environment(\.liquidSpace, space)
+        .environment(\.liquidMotion, false)
         .frame(width: Self.windowSize.width, height: Self.windowSize.height, alignment: .topLeading)
         .background { windowBackground }
     }
@@ -85,7 +83,7 @@ public struct SettingsRootView: View {
     private func navigationRow(_ item: SettingsPage) -> some View {
         let isSelected = item == page
         return Button {
-            withAnimation(Liquid.press) { page = item }
+            page = item
         } label: {
             HStack(spacing: 9) {
                 Image(systemName: item.symbol)
@@ -97,13 +95,7 @@ public struct SettingsRootView: View {
             .padding(.horizontal, 11)
             .frame(height: 34)
             .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Liquid.accent)
-                        .matchedGeometryEffect(id: "selected", in: pageHighlight)
-                }
-            }
+            .background(isSelected ? Liquid.accent : Color.clear, in: Capsule())
             .contentShape(Capsule())
         }
         .buttonStyle(LiquidPressStyle())
@@ -124,11 +116,9 @@ public struct SettingsRootView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background { WindowDragArea() }
             .id(page)
-            .transition(.opacity)
         }
         .scrollIndicators(.never)
         .scrollBounceBehavior(.basedOnSize)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(Liquid.morph, value: page)
     }
 }

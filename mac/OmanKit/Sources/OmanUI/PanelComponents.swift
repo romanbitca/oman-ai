@@ -7,7 +7,11 @@ enum PanelMetrics {
     static let gap: CGFloat = 8
     /// Below `gap`, so tiles stay separate at rest and only flow together while they move.
     static let blend: CGFloat = 6
-    static let sideMargin: CGFloat = 18
+    static let gripThickness: CGFloat = 12
+    /// Clear space outside the glass, so the window edge doesn't cut off its shadow.
+    static let shadowRoom: CGFloat = 10
+    /// Room beside the tiles for the corner grip: one tile gap, the grip and its shadow.
+    static let sideMargin = gap + gripThickness + shadowRoom
     static let bottomMargin: CGFloat = 24
     static let maxHeight: CGFloat = 640
     static let tileRadius: CGFloat = 22
@@ -81,6 +85,7 @@ struct PanelIconButton: View {
     let label: String
     let action: () -> Void
     @State private var isHovering = false
+    @Environment(\.liquidMotion) private var hasMotion
 
     var body: some View {
         Button(action: action) {
@@ -95,7 +100,7 @@ struct PanelIconButton: View {
         .help(label)
         .accessibilityLabel(label)
         .onHover { hovering in
-            withAnimation(.easeOut(duration: 0.14)) { isHovering = hovering }
+            withAnimation(hasMotion ? .easeOut(duration: 0.14) : nil) { isHovering = hovering }
         }
     }
 }

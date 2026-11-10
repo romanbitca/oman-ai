@@ -474,7 +474,7 @@ public final class PanelViewModel {
             notice = "\(capture.app?.name ?? "The app") is no longer available. Use Copy instead."
         case .permissionMissing:
             presenter?.showPanel()
-            notice = "oman needs Accessibility permission to paste."
+            notice = "OmanAI needs Accessibility permission to paste."
         }
     }
 
@@ -498,7 +498,7 @@ public final class PanelViewModel {
         guard services.system.isScreenCaptureGranted else {
             services.system.requestScreenCapture()
             includeScreen = false
-            screenHint = "Allow Screen Recording for oman in System Settings, then turn this on again."
+            screenHint = "Allow Screen Recording for OmanAI in System Settings, then turn this on again."
             return
         }
         includeScreen = true

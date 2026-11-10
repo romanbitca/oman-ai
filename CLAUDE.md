@@ -2,7 +2,7 @@
 
 ## Project context
 
-oman is a native macOS menu bar writing tool (Swift and SwiftUI), modelled on Apple's Writing Tools. It rewrites selected text or composes new text through the Anthropic API or Apple's on-device model, in styles built from the user's own messages. All UI opens from the menu bar icon; nothing appears in or near the text field being edited.
+OmanAI is a native macOS menu bar writing tool (Swift and SwiftUI), modelled on Apple's Writing Tools. It rewrites selected text or composes new text through the Anthropic API or Apple's on-device model, in styles built from the user's own messages. All UI opens from the menu bar icon; nothing appears in or near the text field being edited.
 
 The earlier Electron meeting recorder (`electron/`, `src/`, `shared/`) is parked. See PLAN.md.
 
@@ -24,8 +24,7 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Tests: `cd mac/OmanKit && swift test`
 - Generate the Xcode project: `cd mac && xcodegen generate`
 - Build the app: `cd mac && xcodebuild -project Oman.xcodeproj -scheme Oman -configuration Debug build`
-- Install for real use: build with `-configuration Release`, quit oman, then `ditto <built oman.app> /Applications/oman.app`. Privacy permissions need an installed copy; see KNOWN_ISSUES.md
-- Signed and notarized build for other people: `mac/scripts/release.sh`
+- Install for real use or for other people: `mac/scripts/release.sh`, quit OmanAI, then `ditto <notarized OmanAI.app> /Applications/OmanAI.app`. Use only this build for the installed copy, because a different signature makes macOS ignore the Accessibility switch; see KNOWN_ISSUES.md
 
 ## Style
 

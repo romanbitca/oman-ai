@@ -6,7 +6,7 @@ struct PanelSetupView: View {
     var body: some View {
         GlassTile(id: LiquidID.body, padding: 16) {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Set up oman").font(.system(size: 15, weight: .semibold))
+                Text("Set up OmanAI").font(.system(size: 15, weight: .semibold))
 
                 VStack(alignment: .leading, spacing: 9) {
                     stepTitle(model.usesLocalModel ? "Apple on-device model" : "Anthropic API key", isDone: model.isKeyStepDone)
@@ -46,7 +46,7 @@ struct PanelSetupView: View {
                             LiquidButton(title: "Allow", prominent: model.isKeyStepDone) { model.allowAccessibility() }
                         }
                     }
-                    NoticeText(text: "oman needs this to read your selection and paste the result.")
+                    NoticeText(text: "OmanAI needs this to read your selection and paste the result.")
                 }
             }
         }

@@ -6,7 +6,7 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ## 2026-11-10 — Freeze in AppKit's Password AutoFill check
 
-The main thread spun at 100% in `NSAutoFillHeuristicController`, walking SwiftUI's key views (`FocusNavigationSequence.next`). It showed up after focus changes such as taking a screenshot, and buttons then looked broken. Worked around in `OmanMain.swift` with the `NSAutoFillHeuristicsEnabled` default. It could not be reproduced on demand, so if the app freezes again, run `sample $(pgrep -x oman) 2` to see where it is stuck.
+The main thread spun at 100% in `NSAutoFillHeuristicController`, walking SwiftUI's key views (`FocusNavigationSequence.next`). It showed up after focus changes such as taking a screenshot, and buttons then looked broken. Worked around in `OmanMain.swift` with the `NSAutoFillHeuristicsEnabled` default. It could not be reproduced on demand, so if the app freezes again, run `sample $(pgrep -x OmanAI) 2` to see where it is stuck.
 
 ---
 
@@ -42,7 +42,7 @@ macOS records the permission request, but the lookup by bundle ID fails (`kLSApp
 
 ## 2026-11-10 — Changing the signature breaks privacy grants
 
-Accessibility is tied to the code signature. Going between an Apple Development build and a Developer ID build can leave oman switched on in System Settings but not trusted. Remove it from the list and allow it again. The saved API key may also ask for Keychain access once. `mac/scripts/release.sh` and the Install command in CLAUDE.md produce different signatures, so keep to one of them for the copy in `/Applications`.
+Accessibility is tied to the code signature. Going between an Apple Development build and a Developer ID build can leave OmanAI switched on in System Settings but not trusted, and pressing Allow then does nothing. The `tccd` log shows `Failed to match existing code requirement`. Remove it from the list with the minus button and allow it again, and do the same for Screen Recording. The saved API key may also ask for Keychain access once. Only install builds from `mac/scripts/release.sh`, which all share one signature requirement.
 
 ---
 
@@ -50,8 +50,12 @@ Accessibility is tied to the code signature. Going between an Apple Development 
 
 - Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.
 - `swift test` builds every test target, so concurrent module work needs separate worktrees or one module's half-written code breaks the others.
+- A SwiftUI shape drawn above a `WindowDragArea` takes the click and does nothing with it, so mark it `.allowsHitTesting(false)`.
+- Fully clear pixels in the panel pass clicks to the app behind. Liquid Glass in a custom `Shape` counts as clear, unlike glass in a capsule or rounded rectangle, and so did a dark bar drawn on it. A 2% white fill in the same shape, behind the drag area, makes it clickable. Unit tests can't see this: check with real mouse events.
+- `log` is a zsh builtin, so reading the system log needs `/usr/bin/log`.
+- Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
-- The computer-use tools can't see oman because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "oman"), and allow for scripted clicks lagging under heavy CPU load.
+- The computer-use tools can't see OmanAI because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "OmanAI"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---
 

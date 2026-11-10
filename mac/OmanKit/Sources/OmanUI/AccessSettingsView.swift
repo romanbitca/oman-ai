@@ -94,7 +94,7 @@ struct AboutSettingsView: View {
     var body: some View {
         SettingsTile {
             VStack(alignment: .leading, spacing: 5) {
-                Text("oman").font(.system(size: 26, weight: .semibold))
+                Text("OmanAI").font(.system(size: 26, weight: .semibold))
                 Text("Your words, in your own voice.")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
@@ -105,7 +105,7 @@ struct AboutSettingsView: View {
         }
 
         SettingsTile {
-            SettingsRow(title: "Quit oman", detail: "The menu bar icon goes away until you open the app again.") {
+            SettingsRow(title: "Quit OmanAI", detail: "The menu bar icon goes away until you open the app again.") {
                 LiquidButton(title: "Quit") { NSApp.terminate(nil) }
             }
         }

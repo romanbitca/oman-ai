@@ -11,7 +11,7 @@ struct StylesSettingsView: View {
                     styleChip(style)
                 }
                 Button {
-                    withAnimation(Liquid.morph) { model.createStyle() }
+                    model.createStyle()
                 } label: {
                     Label("New style", systemImage: "plus")
                         .font(.system(size: 12, weight: .medium))
@@ -66,7 +66,7 @@ struct StylesSettingsView: View {
     private func styleChip(_ style: WritingStyle) -> some View {
         let isSelected = style.id == model.selectedStyleID
         return Button {
-            withAnimation(Liquid.morph) { model.selectStyle(style.id) }
+            model.selectStyle(style.id)
         } label: {
             Text(style.displayName)
                 .font(.system(size: 12, weight: .medium))
@@ -104,7 +104,7 @@ private struct StyleEditorView: View {
                 }
                 Spacer(minLength: 0)
                 PanelIconButton(symbol: "trash", label: "Delete style") {
-                    withAnimation(Liquid.morph) { model.deleteSelectedStyle() }
+                    model.deleteSelectedStyle()
                 }
             }
         }
@@ -152,7 +152,7 @@ private struct StyleEditorView: View {
                     .disabled(model.tryItText.trimmed.isEmpty || model.isTrying)
             }
             if model.isTrying, model.tryItResult.isEmpty {
-                ProgressView().controlSize(.small)
+                Text("Writing…").font(.system(size: 12)).foregroundStyle(.secondary)
             }
             if !model.tryItResult.isEmpty {
                 Text(model.tryItResult)

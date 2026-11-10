@@ -20,6 +20,9 @@ Date-stamped log of what each work session accomplished.
 - Second design pass from the user's feedback: curved drag grip at the panel's top-right corner, an opaque draggable Settings window, no bouncing motion. Installed the flow icon and menu bar glyph
 - Signing: Developer ID works with the personal Apple Developer account (team S72639F3BR). Added `mac/scripts/release.sh` for sign and notarize
 - First notarized build: Gatekeeper reports `Notarized Developer ID`, the ticket is stapled, and it is installed in `/Applications`. The signature changed, so Accessibility has to be allowed again. Selection reading and paste have not been re-tested on this build
+- The app is now named OmanAI. The bundle ID, Keychain service and database folder did not change, so saved styles and the API key carry over
+- Third design pass: the pinned panel's grip is a dark curve with a thin glass border, and Settings has no animation at all, including a hand-drawn switch. The first curved grip could not drag for two reasons, both found with real mouse events: shapes above the drag area took the click, and Liquid Glass in a custom shape counts as clear to the window server. Real drags moved the installed panel from the middle and both ends of the curve. The final build only removed an extra grab area that did not catch clicks
+- Accessibility has been refused since the move from the Apple Development build to Developer ID, because the existing grant is tied to the old signature. It needs the user to remove OmanAI from the list and allow it again. Selection reading and paste still need re-testing on the Developer ID build, and the new Settings has been checked offscreen only
 - Next: the push to `romanbitca/oman-ai` and the landing page
 
 ## 2026-04-28 — Project bootstrap

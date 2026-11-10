@@ -13,7 +13,7 @@ enum WindowCaptureError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .permissionMissing:
-            "oman needs Screen Recording permission to include the screen."
+            "OmanAI needs Screen Recording permission to include the screen."
         case .windowNotFound:
             "Couldn't find the window you're writing in."
         case .encodingFailed:

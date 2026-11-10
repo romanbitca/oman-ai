@@ -1,12 +1,12 @@
 #!/bin/bash
-# Builds oman, signs it with Developer ID, notarizes it, and leaves a stapled oman.app in the output folder.
+# Builds OmanAI, signs it with Developer ID, notarizes it, and leaves a stapled OmanAI.app in the output folder.
 # Uses the Apple account signed in to Xcode. Usage: scripts/release.sh [output-folder]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 TEAM=S72639F3BR
 OUT="${1:-build/release}"
-ARCHIVE="$OUT/oman.xcarchive"
+ARCHIVE="$OUT/OmanAI.xcarchive"
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
@@ -44,7 +44,7 @@ for attempt in $(seq 1 40); do
     sleep 30
 done
 
-APP="$OUT/notarized/oman.app"
+APP="$OUT/notarized/OmanAI.app"
 xcrun stapler validate "$APP"
 spctl --assess --type execute --verbose=2 "$APP"
 echo "Ready: $APP"

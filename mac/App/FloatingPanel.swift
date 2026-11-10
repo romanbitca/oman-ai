@@ -7,7 +7,7 @@ final class PanelHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-/// Takes keyboard input without activating oman, so the source app keeps its selection.
+/// Takes keyboard input without activating OmanAI, so the source app keeps its selection.
 final class FloatingPanel: NSPanel {
     var onEscape: (() -> Void)?
     var onKeyCombo: ((KeyCombo) -> Bool)?
@@ -38,7 +38,7 @@ final class FloatingPanel: NSPanel {
         onEscape?()
     }
 
-    // The panel is key while oman stays inactive, so editing shortcuts can't rely on the main menu.
+    // The panel is key while OmanAI stays inactive, so editing shortcuts can't rely on the main menu.
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if onKeyCombo?(KeyCombo(keyCode: event.keyCode, modifiers: event.modifierFlags.rawValue)) == true {
             return true

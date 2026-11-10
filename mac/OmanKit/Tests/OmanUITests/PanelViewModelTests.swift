@@ -465,7 +465,7 @@ import Testing
         model.applyResult()
         await finish(model)
         #expect(harness.presenter.showCount == 1)
-        #expect(model.notice == "oman needs Accessibility permission to paste.")
+        #expect(model.notice == "OmanAI needs Accessibility permission to paste.")
     }
 
     @Test func composeInsertsAtCursor() async throws {

@@ -56,10 +56,33 @@ struct SettingsToggleRow: View {
     var body: some View {
         SettingsRow(title: title, detail: detail) {
             Toggle(title, isOn: isOn)
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .tint(Liquid.accent)
+                .toggleStyle(StillSwitchStyle())
+                .accessibilityLabel(title)
         }
+    }
+}
+
+/// Drawn by hand because the system switch animates its knob.
+private struct StillSwitchStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            configuration.isOn.toggle()
+        } label: {
+            Capsule()
+                .fill(configuration.isOn ? Liquid.accent : Color.primary.opacity(0.18))
+                .frame(width: 38, height: 22)
+                .overlay(alignment: configuration.isOn ? .trailing : .leading) {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 18, height: 18)
+                        .shadow(color: Color.black.opacity(0.18), radius: 1, y: 0.5)
+                        .padding(2)
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityValue(configuration.isOn ? "On" : "Off")
     }
 }
 
@@ -68,27 +91,20 @@ struct LiquidSegmented<Option: Hashable>: View {
     let selection: Option
     let title: (Option) -> String
     let onSelect: (Option) -> Void
-    @Namespace private var highlight
 
     var body: some View {
         HStack(spacing: 2) {
             ForEach(options, id: \.self) { option in
                 let isSelected = option == selection
                 Button {
-                    withAnimation(Liquid.press) { onSelect(option) }
+                    onSelect(option)
                 } label: {
                     Text(title(option))
                         .font(.system(size: 12, weight: .medium))
                         .padding(.horizontal, 15)
                         .frame(height: 30)
                         .foregroundStyle(isSelected ? Color.white : Color.primary)
-                        .background {
-                            if isSelected {
-                                Capsule()
-                                    .fill(Liquid.accent)
-                                    .matchedGeometryEffect(id: "selected", in: highlight)
-                            }
-                        }
+                        .background(isSelected ? Liquid.accent : Color.clear, in: Capsule())
                         .contentShape(Capsule())
                 }
                 .buttonStyle(LiquidPressStyle())

@@ -8,7 +8,7 @@ struct GeneralSettingsView: View {
         SettingsTile(title: "Startup") {
             SettingsToggleRow(
                 title: "Open at login",
-                detail: "Keeps oman ready in your menu bar after a restart.",
+                detail: "Keeps OmanAI ready in your menu bar after a restart.",
                 isOn: Binding(get: { model.isLaunchAtLogin }, set: { model.setLaunchAtLogin($0) })
             )
             if let error = model.launchAtLoginError {

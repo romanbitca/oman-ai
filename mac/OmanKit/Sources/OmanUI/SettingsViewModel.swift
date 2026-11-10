@@ -205,7 +205,7 @@ public final class SettingsViewModel {
 
     func title(for action: ShortcutAction) -> String {
         switch action {
-        case .openPanel: "Open oman"
+        case .openPanel: "Open OmanAI"
         case .proofread: "Proofread selection"
         case .rewrite: "Rewrite selection"
         case .compose: "Compose"

@@ -22,14 +22,16 @@ public struct PanelRootView: View {
                 // Behind the tiles, so the pin and settings buttons in the corner keep their clicks.
                 if model.isPinned {
                     PanelCornerHandle()
-                        .offset(x: PanelCornerHandle.reach, y: -PanelCornerHandle.reach)
+                        .padding(.top, PanelMetrics.shadowRoom)
+                        .padding(.trailing, PanelMetrics.shadowRoom)
                         .transition(.opacity)
                 }
                 content
+                    .frame(width: PanelMetrics.width)
+                    .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
+                    .padding(.top, model.isPinned ? PanelMetrics.sideMargin : 0)
+                    .padding(.horizontal, PanelMetrics.sideMargin)
             }
-            .frame(width: PanelMetrics.width)
-            .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
-            .padding(.top, model.isPinned ? PanelCornerHandle.reach : 0)
         }
         .environment(\.liquidSpace, space)
         .environment(\.panelIsFloating, model.isPinned)
@@ -41,7 +43,6 @@ public struct PanelRootView: View {
             MoveKeyframe(0)
             LinearKeyframe(1, duration: 0.12)
         }
-        .padding(.horizontal, PanelMetrics.sideMargin)
         .padding(.bottom, PanelMetrics.bottomMargin)
         .frame(
             width: Self.windowSize.width,
