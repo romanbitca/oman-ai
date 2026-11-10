@@ -15,6 +15,13 @@ build/
 release/
 coverage/
 
+# swift app (the xcodeproj is generated from mac/project.yml)
+mac/Oman.xcodeproj/
+mac/OmanKit/.build/
+mac/OmanKit/.swiftpm/
+DerivedData/
+*.xcuserstate
+
 # native build artifacts
 native/mac/AudioCapture/.build/
 native/mac/AudioCapture/.swiftpm/

@@ -57,3 +57,24 @@ Append-only log of architectural choices. Never delete entries; supersede with n
 - WAL journal mode (`PRAGMA journal_mode = WAL`) on each workspace DB: better concurrency, standard for desktop SQLite. Adds `*-shm` / `*-wal` sidecar files; already covered by `*.db-shm` / `*.db-wal` in `.gitignore`
 - `postinstall: electron-builder install-app-deps`: better-sqlite3 ships native bindings for Node, but Electron 33 has a different ABI. install-app-deps invokes @electron/rebuild against the configured Electron version. Without it, `import 'better-sqlite3'` throws `NODE_MODULE_VERSION` mismatch at runtime
 - IPC surface lives at `electron/ipc.ts` with a single `registerIpc()` entry point; renderer-facing types (`OmanApi`, `WorkspaceMeta`) live in `shared/types.ts` so both sides import the same shape. `Window.omanApi` is declared globally in shared/types.ts
+
+## 2026-11-10 — Pivot to a menu bar writing tool in native Swift
+
+Supersedes the 2026-04-28 Stack and Scope entries for active work. The Electron meeting recorder is parked, not deleted.
+
+- Product: macOS menu bar writing tool modelled on Apple's Writing Tools. All UI opens from the menu bar icon as a drop-down panel, plus a Settings window. Nothing appears in or near the text field being edited
+- Stack: native Swift and SwiftUI, with AppKit for the status item and the non-activating panel. Chosen over Electron plus a Swift helper and over Tauri because reading and replacing text, the focus-safe panel and window capture are all Apple APIs. Mac-only for now; a Windows version would be a separate app
+- Provider: Anthropic API key only. No Apple on-device model and no local models for now
+- Model: Haiku 5.5 by default, selectable in Settings (Haiku 5.5, Sonnet 5.5, Opus 5.5). All requests use effort `low` for latency
+- API: direct HTTPS streaming with URLSession, because Anthropic has no official Swift SDK. `anthropic-version: 2026-10-21`. Sonnet and Opus requests opt into server-side refusal fallback (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`); Haiku 5.5 has no server-side fallback
+- Actions in v1: Proofread, Rewrite, user styles, free-text instruction, Compose. Summary, Key Points, List and Table are left out
+- Refinements are stateless single-turn requests that carry the previous draft in the prompt, so no thinking blocks need replaying
+- Style samples sit in a system block with a 1-hour prompt cache breakpoint, after the static rules and before anything that changes per request
+- Storage: SQLite through GRDB at `~/Library/Application Support/oman/writing.sqlite`, one database with no workspaces. API key in Keychain, not in SQLite
+- Layout: `mac/OmanKit` Swift package (OmanCore, ClaudeAPI, OmanStorage, SystemBridge, OmanUI) plus the app target in `mac/App`, generated with XcodeGen from `mac/project.yml`. The generated `.xcodeproj` is not committed
+- Swift files use PascalCase per Swift convention. The kebab-case rule stays for the parked TypeScript code
+- Signing: Apple Development certificate, so Accessibility and Keychain grants survive rebuilds. Developer ID and notarization only if the app is ever distributed
+- Reading the selection: Accessibility API first, then a synthetic Cmd+C with the clipboard snapshotted and restored. Accessibility mode is not forced on in Electron apps, to avoid slowing them down; they use the clipboard route
+- Replacing text: always a synthetic Cmd+V, because setting text through Accessibility silently fails in many apps and a paste keeps Cmd+Z working. The selection is re-checked first and nothing is pasted if it changed
+- Screen context: only the window being written in, off by default, with a thumbnail of what will be sent. Downscaled to at most 1568 px on the long edge
+- Privacy: storage stays local, but every request sends the selected text, the chosen style's samples and any context to Anthropic

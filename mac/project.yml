@@ -1,0 +1,50 @@
+name: Oman
+options:
+  bundleIdPrefix: com.romanbitca
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+packages:
+  OmanKit:
+    path: OmanKit
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+targets:
+  Oman:
+    type: application
+    platform: macOS
+    sources:
+      - App
+    dependencies:
+      - package: OmanKit
+        product: OmanCore
+      - package: OmanKit
+        product: ClaudeAPI
+      - package: OmanKit
+        product: OmanStorage
+      - package: OmanKit
+        product: SystemBridge
+      - package: OmanKit
+        product: OmanUI
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: oman
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.productivity
+        LSUIElement: true
+    entitlements:
+      path: App/Oman.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_NAME: oman
+        PRODUCT_BUNDLE_IDENTIFIER: com.romanbitca.oman
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: S72639F3BR
+        PROVISIONING_PROFILE_SPECIFIER: ""

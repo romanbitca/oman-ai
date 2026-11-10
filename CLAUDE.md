@@ -2,7 +2,9 @@
 
 ## Project context
 
-oman is an Electron meeting recorder for macOS and Windows. Local-first SQLite. Multi-workspace.
+oman is a native macOS menu bar writing tool (Swift and SwiftUI), modelled on Apple's Writing Tools. It rewrites selected text or composes new text through the Anthropic API, in styles built from the user's own messages. All UI opens from the menu bar icon; nothing appears in or near the text field being edited.
+
+The earlier Electron meeting recorder (`electron/`, `src/`, `shared/`) is parked. See PLAN.md.
 
 Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the start of every session before writing code.
 
@@ -13,27 +15,33 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Update KNOWN_ISSUES.md when you discover bugs or workarounds.
 - Update SESSION_LOG.md at the end of every session with what was done, dated.
 - Never rewrite working code unless explicitly asked.
-- Run `npm run typecheck` and `npm run lint` after changes. Fix errors before declaring done.
+- After Swift changes, run `swift test` in `mac/OmanKit` and build the app (see Commands). Fix errors before declaring done.
+- After changes to the parked Electron code, run `npm run typecheck` and `npm run lint`.
 - Commit at logical milestones with clear messages. Do not commit broken code.
+
+## Commands
+
+- Tests: `cd mac/OmanKit && swift test`
+- Generate the Xcode project: `cd mac && xcodegen generate`
+- Build the app: `cd mac && xcodebuild -project Oman.xcodeproj -scheme Oman -configuration Debug build`
 
 ## Style
 
-- TypeScript strict mode
-- No `any` unless commented why
+- Swift 6 language mode with strict concurrency
+- No force unwraps or `fatalError` outside tests unless commented why
 - Prefer explicit imports
 - Comments only for non-obvious logic
-- File names: kebab-case
-- React components: PascalCase
-- Functions and variables: camelCase
+- Swift file names, types and protocols: PascalCase
+- Swift functions and variables: camelCase
+- The parked TypeScript code keeps its rules: strict mode, no `any` unless commented why, kebab-case file names
 
 ## Stack constraints
 
-- Electron + electron-vite + electron-builder
-- React 18 + TypeScript
-- Tailwind CSS + shadcn/ui (neutral theme, dark mode default)
-- Zustand for renderer state
-- better-sqlite3 for storage
-- Path aliases: @/ for src/, @shared/ for shared/, @electron/ for electron/
+- Swift and SwiftUI, with AppKit for the status item and panel
+- XcodeGen for the app target; the `mac/OmanKit` Swift package holds all logic
+- GRDB for SQLite, Keychain for the API key
+- Anthropic Messages API over URLSession; no other model provider
+- macOS 14 or later
 
 ## Current phase
 

@@ -1,15 +1,12 @@
 # oman
 
-Personal/internal meeting recorder. Mac and Windows. Local-first.
+Personal macOS menu bar writing tool. Select text in any app, click the icon, and rewrite it or compose new text in your own voice through the Anthropic API.
 
 ## Stack
 
-Electron + React + TypeScript + SQLite (better-sqlite3) + Whisper.cpp.
-Native Swift binary for Mac audio. Native C# binary for Windows audio (later phase).
+Native Swift and SwiftUI, in `mac/`. SQLite (GRDB) for styles, Keychain for the API key.
 
-## Goal
-
-Record meetings (auto-detected or manual), transcribe locally or via cloud, store in SQLite, send transcript to Google Drive or Claude.
+The earlier Electron meeting recorder in `electron/`, `src/` and `shared/` is parked.
 
 ## Documentation
 
@@ -21,4 +18,4 @@ Record meetings (auto-detected or manual), transcribe locally or via cloud, stor
 
 ## Status
 
-Pre-alpha. Phase 1.
+Pre-alpha.

@@ -4,6 +4,63 @@ Phased roadmap. Mark each phase with status: [TODO], [IN PROGRESS], [DONE date],
 
 ---
 
+# Writing tool (current focus)
+
+Native Swift menu bar app in `mac/`. See DECISIONS.md, 2026-11-10.
+
+## W1: Capture and replace [IN PROGRESS]
+
+Clicking the menu bar icon reads the selected text from the frontmost app without taking focus. Replace pastes over it and restores the clipboard.
+
+Acceptance:
+- Works in Slack, Telegram, Mail and Gmail in Chrome
+- The selection survives opening the panel and typing in it
+- The clipboard holds its previous contents afterwards
+- If the selection changed, nothing is pasted and the panel says so
+
+## W2: Panel, Claude and Compose [IN PROGRESS]
+
+Panel laid out like Apple's Writing Tools: Proofread, Rewrite, free-text instruction, Compose. Streaming result with Replace or Insert, Copy, Try again and a typed adjustment. API key and model picker in Settings, with Haiku 5.5 as the default model.
+
+Acceptance:
+- A rewrite streams into the panel and Replace puts it in the source app
+- With nothing selected the panel opens in Compose, and Insert pastes at the cursor
+- API errors appear in the panel and the original text is untouched
+
+## W3: Styles [IN PROGRESS]
+
+Settings editor to create styles from pasted messages, with an optional note and a test sentence. Style buttons in the panel. The last style used in each app is preselected.
+
+Acceptance:
+- Styles persist across launches
+- A second request with the same style shows `cache_read_input_tokens > 0`
+- A rewrite sounds like the person who wrote the samples
+
+## W4: Context [IN PROGRESS]
+
+Paste box, Use clipboard, Pin, and a screenshot of the window being written in with a thumbnail preview.
+
+Acceptance:
+- Context changes the result, and nothing is sent that the panel did not show
+- Only the source window is captured
+- Screen Recording permission is requested only on first use
+
+## W5: Finish [IN PROGRESS]
+
+First-run setup in the panel, launch at login, signed build.
+
+Acceptance:
+- A fresh install reaches a working rewrite by following the panel alone
+- Accessibility permission survives a rebuild
+
+---
+
+# Meeting recorder (parked 2026-11-10)
+
+Everything below is parked until the writing tool ships. P1 and P2 produced the Electron skeleton in `electron/`, `src/` and `shared/`, which stays in the repo untouched.
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.
@@ -104,7 +161,7 @@ Acceptance:
 
 ---
 
-## P3a: Mac audio binary (standalone) [IN PROGRESS]
+## P3a: Mac audio binary (standalone) [BLOCKED parked 2026-11-10, writing tool comes first]
 
 Native Swift binary that captures system audio + microphone to chunked Opus files. Runs and verifies independently of Electron.
 
