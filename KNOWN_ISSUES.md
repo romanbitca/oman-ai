@@ -22,6 +22,12 @@ Slack and other Electron apps don't expose selected text through Accessibility u
 
 ---
 
+## 2026-11-10 — A build in a temporary folder never appears in privacy settings
+
+macOS records the permission request, but the lookup by bundle ID fails (`kLSApplicationNotFoundErr` in the `tccd` log), so System Settings has nothing to list. Test permissions from a copy in `/Applications`.
+
+---
+
 ## 2026-11-10 — Tooling gotchas for this repo
 
 - Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.

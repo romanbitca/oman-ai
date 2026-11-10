@@ -12,7 +12,8 @@ Date-stamped log of what each work session accomplished.
 - Verified: 145 tests pass; the signed app builds and runs at a 28 MB footprint; scripted clicks on the icon open and close the panel under it while the frontmost app stays frontmost; every screen and both Settings tabs were checked in offscreen renders
 - Not verified yet, because it needs the user's Accessibility grant and API key: selection capture and paste in real apps, typing in the panel, a live Claude request, real mouse clicks on the icon. W1 to W5 stay [IN PROGRESS] until those pass
 - Fixed after the user's first try: Cmd+V did nothing in text fields, because a menu-bar-only app has no Edit menu. Added one for the Settings window, and direct handling of editing shortcuts in the non-activating panel, including non-Latin keyboard layouts
-- Next: the user grants Accessibility and adds a key, then W1 acceptance in Slack, Telegram, Mail and Gmail
+- oman did not appear in the Accessibility list because the build ran from a temporary folder. Installed a signed Release build to `/Applications/oman.app`
+- Next: the user grants Accessibility, then W1 acceptance in Slack, Telegram, Mail and Gmail
 
 ## 2026-04-28 — Project bootstrap
 
