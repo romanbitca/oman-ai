@@ -1,0 +1,445 @@
+import Foundation
+import Observation
+import OmanCore
+
+enum PanelScreen: Equatable {
+    case setup
+    case home
+    case compose
+    case working
+    case result
+    case failed
+}
+
+@MainActor
+@Observable
+public final class PanelViewModel {
+    @ObservationIgnored private let services: AppServices
+    @ObservationIgnored private weak var presenter: (any PanelPresenting)?
+    @ObservationIgnored private(set) var runningTask: Task<Void, Never>?
+    @ObservationIgnored private(set) var screenTask: Task<Void, Never>?
+    @ObservationIgnored private var setupPollTask: Task<Void, Never>?
+    @ObservationIgnored private var screenBeforeRun: PanelScreen = .compose
+    @ObservationIgnored private var draftBeforeRun = ""
+    @ObservationIgnored private var baseScreen: PanelScreen = .compose
+    @ObservationIgnored private(set) var lastRequest: WritingRequest?
+
+    private(set) var screen: PanelScreen = .compose
+    private(set) var capture = SelectionCapture(app: nil, text: nil)
+    private(set) var session = 0
+    private(set) var isPinned = false
+
+    private(set) var hasAPIKey = false
+    private(set) var isAccessibilityGranted = false
+    private(set) var isValidatingKey = false
+    private(set) var setupError: String?
+    var apiKeyDraft = ""
+
+    var instruction = ""
+    var composePrompt = ""
+    var adjustment = ""
+
+    private(set) var styles: [WritingStyle] = []
+    private(set) var selectedStyleID: UUID?
+
+    var contextText = ""
+    var isContextExpanded = false
+    private(set) var includeScreen = false
+    private(set) var screenshot: ScreenshotAttachment?
+    private(set) var screenHint: String?
+    private(set) var clipboardCandidate: String?
+
+    private(set) var draft = ""
+    private(set) var notice: String?
+    private(set) var errorMessage: String?
+    private(set) var offersSettings = false
+    var showOriginal = false
+
+    public init(services: AppServices, presenter: any PanelPresenting) {
+        self.services = services
+        self.presenter = presenter
+    }
+
+    // MARK: Session
+
+    public func begin(with capture: SelectionCapture) {
+        cancelWork()
+        self.capture = capture
+        session += 1
+        instruction = ""
+        composePrompt = ""
+        adjustment = ""
+        contextText = ""
+        isContextExpanded = false
+        includeScreen = false
+        screenshot = nil
+        screenHint = nil
+        draft = ""
+        notice = nil
+        errorMessage = nil
+        offersSettings = false
+        showOriginal = false
+        lastRequest = nil
+        apiKeyDraft = ""
+        setupError = nil
+        isPinned = false
+        presenter?.setPanelPinned(false)
+        styles = (try? services.styles.loadStyles()) ?? []
+        selectedStyleID = preselectedStyleID()
+        clipboardCandidate = services.system.clipboardText()
+        route()
+    }
+
+    public func panelDidClose() {
+        cancelWork()
+    }
+
+    private func cancelWork() {
+        runningTask?.cancel()
+        runningTask = nil
+        screenTask?.cancel()
+        screenTask = nil
+        setupPollTask?.cancel()
+        setupPollTask = nil
+    }
+
+    private func preselectedStyleID() -> UUID? {
+        guard let bundleID = capture.app?.bundleID,
+              let stored = try? services.styles.lastStyleID(forBundleID: bundleID),
+              styles.contains(where: { $0.id == stored })
+        else { return nil }
+        return stored
+    }
+
+    private func loadAPIKey() -> String? {
+        guard let key = try? services.apiKeys.loadAPIKey(), !key.isEmpty else { return nil }
+        return key
+    }
+
+    private func route() {
+        hasAPIKey = loadAPIKey() != nil
+        isAccessibilityGranted = services.system.isAccessibilityGranted
+        guard hasAPIKey, isAccessibilityGranted else {
+            screen = .setup
+            startSetupPolling()
+            return
+        }
+        let destination: PanelScreen = capture.text != nil ? .home : .compose
+        baseScreen = destination
+        screen = destination
+    }
+
+    // MARK: Setup
+
+    private func startSetupPolling() {
+        guard setupPollTask == nil else { return }
+        setupPollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard let self, !Task.isCancelled else { return }
+                self.refreshSetup()
+            }
+        }
+    }
+
+    func refreshSetup() {
+        guard screen == .setup else { return }
+        isAccessibilityGranted = services.system.isAccessibilityGranted
+        guard hasAPIKey, isAccessibilityGranted else { return }
+        setupPollTask?.cancel()
+        setupPollTask = nil
+        if isPinned {
+            isPinned = false
+            presenter?.setPanelPinned(false)
+        }
+        route()
+    }
+
+    func saveSetupKey() async {
+        let key = apiKeyDraft.trimmed
+        guard !key.isEmpty, !isValidatingKey else { return }
+        isValidatingKey = true
+        setupError = nil
+        defer { isValidatingKey = false }
+        do {
+            try await services.writing.validate(apiKey: key)
+            try services.apiKeys.saveAPIKey(key)
+            apiKeyDraft = ""
+            hasAPIKey = true
+            refreshSetup()
+        } catch {
+            setupError = error.localizedDescription
+        }
+    }
+
+    func allowAccessibility() {
+        // Going to System Settings is an outside click; pinning keeps the setup screen and its polling alive.
+        isPinned = true
+        presenter?.setPanelPinned(true)
+        services.system.requestAccessibility()
+    }
+
+    // MARK: Navigation
+
+    var sourceAppName: String? { capture.app?.name }
+    var canGoBackFromCompose: Bool { capture.text != nil }
+    var canCompose: Bool { !composePrompt.trimmed.isEmpty }
+    var selectedStyle: WritingStyle? { styles.first { $0.id == selectedStyleID } }
+
+    func openCompose() {
+        baseScreen = .compose
+        screen = .compose
+    }
+
+    func backToHome() {
+        baseScreen = .home
+        screen = .home
+    }
+
+    func goBack() {
+        draft = ""
+        notice = nil
+        errorMessage = nil
+        offersSettings = false
+        adjustment = ""
+        showOriginal = false
+        screen = baseScreen
+    }
+
+    func togglePin() {
+        isPinned.toggle()
+        presenter?.setPanelPinned(isPinned)
+    }
+
+    func openSettings() {
+        presenter?.openSettings()
+    }
+
+    // MARK: Writing
+
+    func proofread() {
+        guard let text = capture.text else { return }
+        start(task: .proofread(text: text), style: nil, context: WritingContext())
+    }
+
+    func rewrite() {
+        guard let text = capture.text else { return }
+        let typed = instruction.trimmed
+        start(
+            task: .rewrite(text: text, instruction: typed.isEmpty ? nil : typed),
+            style: selectedStyle,
+            context: currentContext
+        )
+    }
+
+    func chooseStyleAndRewrite(_ style: WritingStyle) {
+        selectedStyleID = style.id
+        if let bundleID = capture.app?.bundleID {
+            try? services.styles.setLastStyleID(style.id, forBundleID: bundleID)
+        }
+        rewrite()
+    }
+
+    func toggleComposeStyle(_ style: WritingStyle) {
+        selectedStyleID = selectedStyleID == style.id ? nil : style.id
+    }
+
+    func compose() {
+        let prompt = composePrompt.trimmed
+        guard !prompt.isEmpty else { return }
+        start(
+            task: .compose(request: prompt, selectedText: capture.text),
+            style: selectedStyle,
+            context: currentContext
+        )
+    }
+
+    func tryAgain() {
+        guard var request = lastRequest else { return }
+        request.refinement = Refinement(currentDraft: draft, adjustment: "Write a different version of this.")
+        perform(request)
+    }
+
+    func applyAdjustment() {
+        let typed = adjustment.trimmed
+        guard !typed.isEmpty, var request = lastRequest else { return }
+        request.refinement = Refinement(currentDraft: draft, adjustment: typed)
+        adjustment = ""
+        perform(request)
+    }
+
+    func retryFailed() {
+        guard let lastRequest else { return }
+        perform(lastRequest)
+    }
+
+    func stop() {
+        runningTask?.cancel()
+        runningTask = nil
+        draft = draftBeforeRun
+        screen = screenBeforeRun
+    }
+
+    private var currentContext: WritingContext {
+        WritingContext(pastedText: contextText, screenshot: screenshot)
+    }
+
+    private func start(task: WritingTask, style: WritingStyle?, context: WritingContext) {
+        let model = (try? services.settings.selectedModel()) ?? .default
+        perform(WritingRequest(task: task, style: style, context: context, model: model))
+    }
+
+    private func perform(_ request: WritingRequest) {
+        runningTask?.cancel()
+        lastRequest = request
+        notice = nil
+        errorMessage = nil
+        offersSettings = false
+        showOriginal = false
+        if screen != .working, screen != .failed {
+            screenBeforeRun = screen
+            draftBeforeRun = draft
+        }
+        guard let apiKey = loadAPIKey() else {
+            fail(with: WritingError.missingAPIKey)
+            return
+        }
+        draft = ""
+        screen = .working
+        let stream = services.writing.stream(request, apiKey: apiKey)
+        runningTask = Task { [weak self] in
+            do {
+                for try await delta in stream {
+                    guard let self, !Task.isCancelled else { return }
+                    self.draft += delta
+                }
+                guard let self, !Task.isCancelled else { return }
+                self.screen = .result
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self, !Task.isCancelled else { return }
+                self.fail(with: error)
+            }
+        }
+    }
+
+    private func fail(with error: Error) {
+        draft = ""
+        errorMessage = error.localizedDescription
+        let writingError = error as? WritingError
+        offersSettings = writingError == .missingAPIKey || writingError == .invalidAPIKey
+        screen = .failed
+    }
+
+    // MARK: Result
+
+    private var lastTaskIsCompose: Bool {
+        if case .compose = lastRequest?.task { return true }
+        return false
+    }
+
+    var primaryActionTitle: String { lastTaskIsCompose ? "Insert" : "Replace" }
+    var canApplyResult: Bool { capture.app != nil }
+
+    var originalText: String? {
+        switch lastRequest?.task {
+        case .proofread(let text), .rewrite(let text, _): text
+        default: nil
+        }
+    }
+
+    func applyResult() {
+        if lastTaskIsCompose {
+            insert()
+        } else {
+            replace()
+        }
+    }
+
+    private func replace() {
+        guard let expected = capture.text, let app = capture.app else { return }
+        let text = draft
+        notice = nil
+        presenter?.hidePanel()
+        runningTask = Task { [weak self] in
+            guard let self else { return }
+            let outcome = await self.services.system.replaceSelection(expected: expected, with: text, in: app)
+            self.handle(outcome)
+        }
+    }
+
+    private func insert() {
+        guard capture.app != nil else { return }
+        let text = draft
+        let app = capture.app
+        notice = nil
+        presenter?.hidePanel()
+        runningTask = Task { [weak self] in
+            guard let self else { return }
+            let outcome = await self.services.system.insertAtCursor(text, in: app)
+            self.handle(outcome)
+        }
+    }
+
+    private func handle(_ outcome: InsertOutcome) {
+        switch outcome {
+        case .inserted:
+            panelDidClose()
+        case .selectionChanged:
+            presenter?.showPanel()
+            notice = "Your selection changed. Select the text again and press Replace, or use Copy."
+        case .sourceUnavailable:
+            presenter?.showPanel()
+            notice = "\(capture.app?.name ?? "The app") is no longer available. Use Copy instead."
+        case .permissionMissing:
+            presenter?.showPanel()
+            notice = "oman needs Accessibility permission to paste."
+        }
+    }
+
+    func copyResult() {
+        services.system.copyToClipboard(draft)
+        notice = "Copied"
+    }
+
+    // MARK: Context
+
+    func setIncludeScreen(_ enabled: Bool) {
+        screenHint = nil
+        screenTask?.cancel()
+        screenTask = nil
+        guard enabled else {
+            includeScreen = false
+            screenshot = nil
+            return
+        }
+        guard let app = capture.app else { return }
+        guard services.system.isScreenCaptureGranted else {
+            services.system.requestScreenCapture()
+            includeScreen = false
+            screenHint = "Allow Screen Recording for oman in System Settings, then turn this on again."
+            return
+        }
+        includeScreen = true
+        screenTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let shot = try await self.services.system.captureWindow(of: app)
+                guard !Task.isCancelled else { return }
+                self.screenshot = shot
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.includeScreen = false
+                self.screenHint = error.localizedDescription
+            }
+        }
+    }
+
+    func useClipboard() {
+        guard let text = clipboardCandidate else { return }
+        contextText = contextText.isEmpty ? text : contextText + "\n\n" + text
+        isContextExpanded = true
+        clipboardCandidate = nil
+    }
+}
