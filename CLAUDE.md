@@ -2,7 +2,7 @@
 
 ## Project context
 
-oman is a native macOS menu bar writing tool (Swift and SwiftUI), modelled on Apple's Writing Tools. It rewrites selected text or composes new text through the Anthropic API, in styles built from the user's own messages. All UI opens from the menu bar icon; nothing appears in or near the text field being edited.
+oman is a native macOS menu bar writing tool (Swift and SwiftUI), modelled on Apple's Writing Tools. It rewrites selected text or composes new text through the Anthropic API or Apple's on-device model, in styles built from the user's own messages. All UI opens from the menu bar icon; nothing appears in or near the text field being edited.
 
 The earlier Electron meeting recorder (`electron/`, `src/`, `shared/`) is parked. See PLAN.md.
 
@@ -41,7 +41,7 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Swift and SwiftUI, with AppKit for the status item and panel
 - XcodeGen for the app target; the `mac/OmanKit` Swift package holds all logic
 - GRDB for SQLite, Keychain for the API key
-- Anthropic Messages API over URLSession; no other model provider
+- Anthropic Messages API over URLSession, plus Apple's on-device model through FoundationModels; no other model provider
 - macOS 14 or later
 
 ## Current phase

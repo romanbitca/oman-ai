@@ -46,6 +46,8 @@ public struct ClaudeClient: WritingService {
         }
     }
 
+    public func unavailableReason(for model: WritingModel) -> String? { nil }
+
     private static func run(
         _ request: WritingRequest,
         apiKey: String,

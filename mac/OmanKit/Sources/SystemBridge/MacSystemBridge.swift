@@ -13,8 +13,33 @@ public final class MacSystemBridge: SystemBridging {
     private static let pasteReadMilliseconds = 500
 
     private let pasteboard = NSPasteboard.general
+    private let hotKeys = GlobalHotKeys()
 
     public init() {}
+
+    // MARK: Appearance and shortcuts
+
+    public func setAppearance(_ mode: AppearanceMode) {
+        switch mode {
+        case .system: NSApp.appearance = nil
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
+    }
+
+    public var onGlobalShortcut: (@MainActor (ShortcutAction) -> Void)? {
+        get { hotKeys.onTrigger }
+        set { hotKeys.onTrigger = newValue }
+    }
+
+    @discardableResult
+    public func registerGlobalShortcuts(_ shortcuts: [ShortcutAction: KeyCombo]) -> Set<ShortcutAction> {
+        hotKeys.register(shortcuts)
+    }
+
+    public func suspendGlobalShortcuts() {
+        hotKeys.unregisterAll()
+    }
 
     // MARK: Permissions
 

@@ -5,6 +5,8 @@ public protocol WritingService: Sendable {
     func stream(_ request: WritingRequest, apiKey: String) -> AsyncThrowingStream<String, Error>
     /// Throws `WritingError.invalidAPIKey` when Anthropic rejects the key.
     func validate(apiKey: String) async throws
+    /// A sentence to show the user when this model can't run right now, or nil when it can.
+    func unavailableReason(for model: WritingModel) -> String?
 }
 
 public protocol StyleStore: Sendable {
@@ -16,8 +18,10 @@ public protocol StyleStore: Sendable {
 }
 
 public protocol AppSettingsStore: Sendable {
-    func selectedModel() throws -> ClaudeModel
-    func setSelectedModel(_ model: ClaudeModel) throws
+    func selectedModel() throws -> WritingModel
+    func setSelectedModel(_ model: WritingModel) throws
+    func preferences() throws -> AppPreferences
+    func setPreferences(_ preferences: AppPreferences) throws
 }
 
 public protocol APIKeyStore: Sendable {
@@ -43,6 +47,15 @@ public protocol SystemBridging: AnyObject {
     func copyToClipboard(_ text: String)
     func clipboardText() -> String?
     func captureWindow(of app: SourceApp) async throws -> ScreenshotAttachment
+
+    func setAppearance(_ mode: AppearanceMode)
+
+    var onGlobalShortcut: (@MainActor (ShortcutAction) -> Void)? { get set }
+    /// Replaces every registered shortcut. Returns the actions whose combination could not be registered.
+    @discardableResult
+    func registerGlobalShortcuts(_ shortcuts: [ShortcutAction: KeyCombo]) -> Set<ShortcutAction>
+    /// Stops shortcuts firing while the user records a new one. Registering again resumes them.
+    func suspendGlobalShortcuts()
 }
 
 /// Implemented by the app shell, which owns the status item and the panel window.

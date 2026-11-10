@@ -1,48 +1,120 @@
 import OmanCore
 import SwiftUI
 
-struct StyleEditorView: View {
+struct StylesSettingsView: View {
+    @Bindable var model: SettingsViewModel
+
+    var body: some View {
+        SettingsTile(title: "Your styles") {
+            FlowLayout(spacing: 6) {
+                ForEach(model.styles) { style in
+                    styleChip(style)
+                }
+                Button {
+                    withAnimation(Liquid.morph) { model.createStyle() }
+                } label: {
+                    Label("New style", systemImage: "plus")
+                        .font(.system(size: 12, weight: .medium))
+                        .padding(.horizontal, 13)
+                        .frame(height: 32)
+                        .background(Color.primary.opacity(0.07), in: Capsule())
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(LiquidPressStyle())
+            }
+        }
+
+        if !model.styles.isEmpty {
+            SettingsTile(title: "Choosing a style") {
+                SettingsRow(title: "Default style", detail: "Selected when an app has no style of its own yet.") {
+                    Picker(
+                        "Default style",
+                        selection: Binding(
+                            get: { model.preferences.defaultStyleID },
+                            set: { value in model.updatePreferences { $0.defaultStyleID = value } }
+                        )
+                    ) {
+                        Text("None").tag(UUID?.none)
+                        ForEach(model.styles) { style in
+                            Text(style.displayName).tag(UUID?.some(style.id))
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: 180)
+                }
+                Divider()
+                SettingsToggleRow(
+                    title: "Remember the last style in each app",
+                    detail: "Slack can keep one style and Mail another.",
+                    isOn: Binding(
+                        get: { model.preferences.remembersStylePerApp },
+                        set: { value in model.updatePreferences { $0.remembersStylePerApp = value } }
+                    )
+                )
+            }
+        }
+
+        if let style = model.selectedStyle {
+            StyleEditorView(model: model, style: style).id(style.id)
+        }
+
+        if let error = model.styleError {
+            NoticeText(text: error).padding(.horizontal, 6)
+        }
+    }
+
+    private func styleChip(_ style: WritingStyle) -> some View {
+        let isSelected = style.id == model.selectedStyleID
+        return Button {
+            withAnimation(Liquid.morph) { model.selectStyle(style.id) }
+        } label: {
+            Text(style.displayName)
+                .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .padding(.horizontal, 14)
+                .frame(height: 32)
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .background(isSelected ? Liquid.accent : Color.primary.opacity(0.07), in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(LiquidPressStyle())
+    }
+}
+
+private struct StyleEditorView: View {
     @Bindable var model: SettingsViewModel
     let style: WritingStyle
 
-    private let card = RoundedRectangle(cornerRadius: 14, style: .continuous)
-
     var body: some View {
-        ScrollView(.vertical) {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 10) {
-                    TextField("Name", text: Binding(get: { style.name }, set: { model.updateName($0) }))
+        SettingsTile {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 7) {
+                    TextField("Style name", text: Binding(get: { style.name }, set: { model.updateName($0) }))
                         .textFieldStyle(.plain)
-                        .font(.system(size: 24, weight: .semibold))
-
+                        .focusEffectDisabled()
+                        .font(.system(size: 20, weight: .semibold))
                     TextField(
-                        "Note, for example: no emoji with clients",
+                        "Add a note, for example: no emoji with clients",
                         text: Binding(get: { style.note }, set: { model.updateNote($0) })
                     )
                     .textFieldStyle(.plain)
+                    .focusEffectDisabled()
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 }
-
-                samplesSection
-                tryItSection
-
-                if let error = model.styleError {
-                    NoticeText(text: error)
+                Spacer(minLength: 0)
+                PanelIconButton(symbol: "trash", label: "Delete style") {
+                    withAnimation(Liquid.morph) { model.deleteSelectedStyle() }
                 }
             }
-            .padding(24)
         }
-        .scrollIndicators(.automatic)
-    }
 
-    private var samplesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        SettingsTile {
             HStack(alignment: .firstTextBaseline) {
-                Text("Samples").font(.system(size: 15, weight: .semibold))
+                Text("Your messages").font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Text("\(model.sampleSummary). Five or more work best.")
-                    .font(.caption)
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
 
@@ -52,58 +124,34 @@ struct StyleEditorView: View {
                         .font(.system(size: 13))
                         .lineLimit(4)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    PanelIconButton(symbol: "xmark", label: "Remove sample") {
+                    PanelIconButton(symbol: "xmark", label: "Remove message") {
                         model.removeSample(id: sample.id)
                     }
                 }
                 .padding(.leading, 13)
                 .padding(.trailing, 6)
                 .padding(.vertical, 8)
-                .background(Color.primary.opacity(0.05), in: card)
+                .background(Color.primary.opacity(0.07), in: SettingsMetrics.inset)
             }
 
-            VStack(alignment: .trailing, spacing: 8) {
-                TextEditor(text: $model.newSampleText)
-                    .font(.system(size: 13))
-                    .scrollContentBackground(.hidden)
-                    .focusEffectDisabled()
-                    .frame(height: 96)
-                    .overlay(alignment: .topLeading) {
-                        if model.newSampleText.isEmpty {
-                            Text("Paste a real message you wrote")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.tertiary)
-                                .padding(.leading, 5)
-                                .allowsHitTesting(false)
-                        }
-                    }
+            SettingsTextBox(prompt: "Paste a real message you wrote", text: $model.newSampleText)
 
-                LiquidButton(title: "Add sample", symbol: "plus", prominent: true) { model.addSample() }
+            HStack {
+                Spacer()
+                LiquidButton(title: "Add message", symbol: "plus", prominent: true) { model.addSample() }
                     .disabled(model.newSampleText.trimmed.isEmpty)
             }
-            .padding(11)
-            .background(Color.primary.opacity(0.05), in: card)
         }
-    }
 
-    private var tryItSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Try it").font(.system(size: 15, weight: .semibold))
-
+        SettingsTile(title: "Try it") {
             HStack(spacing: 8) {
-                TextField("Type a sentence to rewrite in this style", text: $model.tryItText)
-                    .textFieldStyle(.plain)
-                    .focusEffectDisabled()
-                    .font(.system(size: 13))
-                    .padding(.horizontal, 13)
-                    .frame(height: 38)
-                    .background(Color.primary.opacity(0.05), in: Capsule())
-                    .onSubmit { model.tryIt() }
+                SettingsTextField(prompt: "Type a sentence to rewrite in this style", text: $model.tryItText) {
+                    model.tryIt()
+                }
                 LiquidButton(title: "Try") { model.tryIt() }
                     .disabled(model.tryItText.trimmed.isEmpty || model.isTrying)
             }
-
-            if model.isTrying {
+            if model.isTrying, model.tryItResult.isEmpty {
                 ProgressView().controlSize(.small)
             }
             if !model.tryItResult.isEmpty {
@@ -113,7 +161,7 @@ struct StyleEditorView: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(13)
-                    .background(Color.primary.opacity(0.05), in: card)
+                    .background(Color.primary.opacity(0.07), in: SettingsMetrics.inset)
             }
             if let error = model.tryItError {
                 NoticeText(text: error)

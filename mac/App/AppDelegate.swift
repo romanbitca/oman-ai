@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             let database = try OmanDatabase.openDefault()
             let services = AppServices(
-                writing: ClaudeClient(),
+                writing: WritingRouter(),
                 styles: database,
                 settings: database,
                 apiKeys: KeychainAPIKeyStore(),
@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Text fields in a normal window only get Cmd+V and the other editing shortcuts through an Edit menu.
     private func installMainMenu() {
         let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         appMenu.addItem(withTitle: "Quit oman", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
         let appItem = NSMenuItem()
         appItem.submenu = appMenu

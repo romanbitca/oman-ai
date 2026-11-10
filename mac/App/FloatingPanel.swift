@@ -1,8 +1,16 @@
 import AppKit
+import OmanCore
+import SwiftUI
+
+/// Without this, a click on a panel that lost focus only refocuses it and the button never fires.
+final class PanelHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
 
 /// Takes keyboard input without activating oman, so the source app keeps its selection.
 final class FloatingPanel: NSPanel {
     var onEscape: (() -> Void)?
+    var onKeyCombo: ((KeyCombo) -> Bool)?
 
     init() {
         // .nonactivatingPanel must be set here: adding it after init does not update the window server.
@@ -32,6 +40,9 @@ final class FloatingPanel: NSPanel {
 
     // The panel is key while oman stays inactive, so editing shortcuts can't rely on the main menu.
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if onKeyCombo?(KeyCombo(keyCode: event.keyCode, modifiers: event.modifierFlags.rawValue)) == true {
+            return true
+        }
         if let action = Self.editingAction(for: event), NSApp.sendAction(action, to: nil, from: self) {
             return true
         }

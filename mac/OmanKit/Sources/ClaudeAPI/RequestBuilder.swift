@@ -20,7 +20,7 @@ enum RequestBuilder {
             model: request.model.rawValue,
             maxTokens: 16000,
             stream: true,
-            outputConfig: OutputConfig(effort: "low"),
+            outputConfig: OutputConfig(effort: request.quality.effort),
             system: PromptBuilder.systemBlocks(for: request),
             messages: [UserMessage(content: PromptBuilder.userContent(for: request))],
             fallbacks: usesFallback ? "default" : nil
@@ -39,10 +39,10 @@ enum RequestBuilder {
         return urlRequest
     }
 
-    private static func supportsServerSideFallback(_ model: ClaudeModel) -> Bool {
+    private static func supportsServerSideFallback(_ model: WritingModel) -> Bool {
         switch model {
         case .sonnet, .opus: true
-        case .haiku: false
+        case .haiku, .appleOnDevice: false
         }
     }
 

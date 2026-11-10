@@ -15,7 +15,9 @@ Date-stamped log of what each work session accomplished.
 - oman did not appear in the Accessibility list because the build ran from a temporary folder. Installed a signed Release build to `/Applications/oman.app`
 - Liquid Glass pass: the panel is now floating glass tiles in a fixed transparent window so shapes can morph, and Settings moved to a sidebar. Minimum OS stays macOS 14 with a material fallback. Layout checked offscreen and 145 tests pass, but real glass rendering has not been seen, because this session has no Screen Recording permission. The user is taking the design to Claude Design
 - Signing: no Developer ID certificate on this Mac. The only paid team in Xcode belonged to a different account, and Xcode's login for it was rejected. The user needs to confirm which account signs
-- Next: design from Claude Design, then signing, then push to `romanbitca/oman-ai` with the romanbitca account
+- The user likes the panel's look. Fixed a freeze: the main thread spun at 100% inside AppKit's Password AutoFill heuristics, which also made buttons look dead. Could not reproduce it on demand, so the fix (AutoFill heuristics off, confirmed idle afterwards) still needs real use to confirm
+- Added assignable shortcuts (global, per style, and for results), redesigned Settings with new options (theme, quality, language, standing rules, default style, panel defaults), a pinned panel as a draggable floating window, and Apple's on-device model. 194 tests pass; the on-device model ran for real on this Mac. Real key presses for global shortcuts, dragging, and the look of the new Settings are not verified by me
+- Next: the user tries the new build. Then the icon choice, signing (which Apple Developer account), and the push to `romanbitca/oman-ai`
 
 ## 2026-04-28 — Project bootstrap
 

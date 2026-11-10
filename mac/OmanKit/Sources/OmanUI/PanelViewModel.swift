@@ -23,11 +23,13 @@ public final class PanelViewModel {
     @ObservationIgnored private var draftBeforeRun = ""
     @ObservationIgnored private var baseScreen: PanelScreen = .compose
     @ObservationIgnored private(set) var lastRequest: WritingRequest?
+    @ObservationIgnored private var preferences = AppPreferences()
 
     private(set) var screen: PanelScreen = .compose
     private(set) var capture = SelectionCapture(app: nil, text: nil)
     private(set) var session = 0
     private(set) var isPinned = false
+    private(set) var selectedModel: WritingModel = .default
 
     private(set) var hasAPIKey = false
     private(set) var isAccessibilityGranted = false
@@ -62,7 +64,7 @@ public final class PanelViewModel {
 
     // MARK: Session
 
-    public func begin(with capture: SelectionCapture) {
+    public func begin(with capture: SelectionCapture, keepPinned: Bool = false) {
         cancelWork()
         self.capture = capture
         session += 1
@@ -82,12 +84,62 @@ public final class PanelViewModel {
         lastRequest = nil
         apiKeyDraft = ""
         setupError = nil
-        isPinned = false
-        presenter?.setPanelPinned(false)
+        preferences = (try? services.settings.preferences()) ?? AppPreferences()
+        selectedModel = (try? services.settings.selectedModel()) ?? .default
+        isPinned = keepPinned || preferences.keepsPanelOpen
+        presenter?.setPanelPinned(isPinned)
         styles = (try? services.styles.loadStyles()) ?? []
         selectedStyleID = preselectedStyleID()
         clipboardCandidate = services.system.clipboardText()
         route()
+        if preferences.includesScreenByDefault, !usesLocalModel, screen != .setup, capture.app != nil,
+           services.system.isScreenCaptureGranted {
+            setIncludeScreen(true)
+        }
+    }
+
+    /// Carries out a global shortcut right after `begin(with:)`.
+    public func run(_ action: ShortcutAction) {
+        guard screen == .home || screen == .compose else { return }
+        switch action {
+        case .proofread:
+            proofread()
+        case .rewrite:
+            rewrite()
+        case .compose:
+            openCompose()
+        case .style(let id):
+            guard let style = styles.first(where: { $0.id == id }) else { return }
+            if capture.text != nil {
+                chooseStyleAndRewrite(style)
+            } else {
+                selectedStyleID = id
+            }
+        case .openPanel, .acceptResult, .copyResult, .tryAgain, .toggleOriginal:
+            break
+        }
+    }
+
+    /// Returns true when the key combination belongs to a result action, so it should not reach the text fields.
+    public func handlePanelShortcut(_ combo: KeyCombo) -> Bool {
+        guard screen == .result,
+              let action = ShortcutAction.panelActions.first(where: { preferences.combo(for: $0) == combo })
+        else { return false }
+        switch action {
+        case .acceptResult:
+            guard canApplyResult else { return false }
+            applyResult()
+        case .copyResult:
+            copyResult()
+        case .tryAgain:
+            tryAgain()
+        case .toggleOriginal:
+            guard originalText != nil else { return false }
+            showOriginal.toggle()
+        default:
+            return false
+        }
+        return true
     }
 
     public func panelDidClose() {
@@ -104,11 +156,13 @@ public final class PanelViewModel {
     }
 
     private func preselectedStyleID() -> UUID? {
-        guard let bundleID = capture.app?.bundleID,
-              let stored = try? services.styles.lastStyleID(forBundleID: bundleID),
-              styles.contains(where: { $0.id == stored })
-        else { return nil }
-        return stored
+        if preferences.remembersStylePerApp,
+           let bundleID = capture.app?.bundleID,
+           let stored = try? services.styles.lastStyleID(forBundleID: bundleID),
+           styles.contains(where: { $0.id == stored }) {
+            return stored
+        }
+        return styles.first(where: { $0.id == preferences.defaultStyleID })?.id
     }
 
     private func loadAPIKey() -> String? {
@@ -119,7 +173,7 @@ public final class PanelViewModel {
     private func route() {
         hasAPIKey = loadAPIKey() != nil
         isAccessibilityGranted = services.system.isAccessibilityGranted
-        guard hasAPIKey, isAccessibilityGranted else {
+        guard isKeyStepDone, isAccessibilityGranted else {
             screen = .setup
             startSetupPolling()
             return
@@ -145,7 +199,7 @@ public final class PanelViewModel {
     func refreshSetup() {
         guard screen == .setup else { return }
         isAccessibilityGranted = services.system.isAccessibilityGranted
-        guard hasAPIKey, isAccessibilityGranted else { return }
+        guard isKeyStepDone, isAccessibilityGranted else { return }
         setupPollTask?.cancel()
         setupPollTask = nil
         if isPinned {
@@ -170,6 +224,17 @@ public final class PanelViewModel {
         } catch {
             setupError = error.localizedDescription
         }
+    }
+
+    var usesLocalModel: Bool { selectedModel.isLocal }
+    var isKeyStepDone: Bool { hasAPIKey || usesLocalModel }
+    var canUseAppleModel: Bool { services.writing.unavailableReason(for: .appleOnDevice) == nil }
+
+    func useAppleModel() {
+        try? services.settings.setSelectedModel(.appleOnDevice)
+        selectedModel = .appleOnDevice
+        setupError = nil
+        refreshSetup()
     }
 
     func allowAccessibility() {
@@ -234,7 +299,7 @@ public final class PanelViewModel {
 
     func chooseStyleAndRewrite(_ style: WritingStyle) {
         selectedStyleID = style.id
-        if let bundleID = capture.app?.bundleID {
+        if preferences.remembersStylePerApp, let bundleID = capture.app?.bundleID {
             try? services.styles.setLastStyleID(style.id, forBundleID: bundleID)
         }
         rewrite()
@@ -286,7 +351,17 @@ public final class PanelViewModel {
 
     private func start(task: WritingTask, style: WritingStyle?, context: WritingContext) {
         let model = (try? services.settings.selectedModel()) ?? .default
-        perform(WritingRequest(task: task, style: style, context: context, model: model))
+        perform(
+            WritingRequest(
+                task: task,
+                style: style,
+                context: context,
+                model: model,
+                quality: preferences.quality,
+                outputLanguage: preferences.outputLanguage,
+                customInstructions: preferences.customInstructions
+            )
+        )
     }
 
     private func perform(_ request: WritingRequest) {
@@ -300,7 +375,7 @@ public final class PanelViewModel {
             screenBeforeRun = screen
             draftBeforeRun = draft
         }
-        guard let apiKey = loadAPIKey() else {
+        guard let apiKey = request.model.isLocal ? "" : loadAPIKey() else {
             fail(with: WritingError.missingAPIKey)
             return
         }
@@ -385,7 +460,12 @@ public final class PanelViewModel {
     private func handle(_ outcome: InsertOutcome) {
         switch outcome {
         case .inserted:
-            panelDidClose()
+            if isPinned {
+                presenter?.showPanel()
+                notice = lastTaskIsCompose ? "Inserted" : "Replaced"
+            } else {
+                panelDidClose()
+            }
         case .selectionChanged:
             presenter?.showPanel()
             notice = "Your selection changed. Select the text again and press Replace, or use Copy."

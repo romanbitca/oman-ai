@@ -13,6 +13,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     private var settingsWindow: NSWindow?
     private var outsideClickMonitor: Any?
     private var isPinned = false
+    private var placedOrigin: NSPoint?
 
     init(services: AppServices) {
         self.services = services
@@ -20,11 +21,18 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
         let model = PanelViewModel(services: services, presenter: self)
         panelModel = model
-        let hostingView = NSHostingView(rootView: PanelRootView(model: model))
+        let hostingView = PanelHostingView(rootView: PanelRootView(model: model))
         hostingView.sizingOptions = []
         panel.setContentSize(PanelRootView.windowSize)
         panel.contentView = hostingView
         panel.onEscape = { [weak self] in self?.dismissPanel() }
+        panel.onKeyCombo = { [weak self] combo in self?.panelModel?.handlePanelShortcut(combo) ?? false }
+
+        services.system.onGlobalShortcut = { [weak self] action in self?.handleGlobalShortcut(action) }
+        if let preferences = try? services.settings.preferences() {
+            services.system.setAppearance(preferences.appearance)
+            services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+        }
 
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "wand.and.sparkles", accessibilityDescription: "oman")
@@ -40,15 +48,36 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
             showStatusMenu()
             return
         }
-        if panel.isVisible {
+        togglePanel()
+    }
+
+    private func togglePanel() {
+        // A pinned panel is a floating window: the icon loads the current selection into it instead of closing it.
+        if panel.isVisible, !isPinned {
             dismissPanel()
             return
         }
+        openPanel(then: nil)
+    }
+
+    private func handleGlobalShortcut(_ action: ShortcutAction) {
+        if action == .openPanel {
+            togglePanel()
+        } else {
+            openPanel(then: action)
+        }
+    }
+
+    private func openPanel(then action: ShortcutAction?) {
+        let keepPinned = isPinned && panel.isVisible
         // The selection must be read before the panel takes keyboard focus.
         Task { @MainActor in
             let capture = await services.system.captureSelection()
-            panelModel?.begin(with: capture)
+            panelModel?.begin(with: capture, keepPinned: keepPinned)
             showPanel()
+            if let action {
+                panelModel?.run(action)
+            }
         }
     }
 
@@ -118,7 +147,11 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     }
 
     func showPanel() {
-        positionPanel()
+        let wasDragged = placedOrigin.map { $0 != panel.frame.origin } ?? false
+        if !(isPinned && wasDragged) {
+            positionPanel()
+            placedOrigin = panel.frame.origin
+        }
         panel.orderFrontRegardless()
         panel.makeKey()
         startWatchingOutsideClicks()
@@ -133,10 +166,22 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         if settingsWindow == nil {
             let model = SettingsViewModel(services: services)
             settingsModel = model
-            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsRootView(model: model)))
+            let window = NSWindow(
+                contentRect: NSRect(origin: .zero, size: SettingsRootView.windowSize),
+                styleMask: [.titled, .closable, .fullSizeContentView],
+                backing: .buffered,
+                defer: false
+            )
             window.title = "oman Settings"
-            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            // Same floating glass as the panel: the window itself is invisible.
+            window.isOpaque = false
+            window.backgroundColor = .clear
+            window.hasShadow = false
+            window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
+            window.contentView = NSHostingView(rootView: SettingsRootView(model: model))
             window.center()
             settingsWindow = window
         }

@@ -15,6 +15,7 @@ enum OmanDatabaseError: LocalizedError, Equatable {
 
 public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
     private static let selectedModelKey = "selected_model"
+    private static let preferencesKey = "app_preferences"
 
     let writer: any DatabaseWriter
     private let now: @Sendable () -> Date
@@ -172,14 +173,14 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
 
     // MARK: AppSettingsStore
 
-    public func selectedModel() throws -> ClaudeModel {
+    public func selectedModel() throws -> WritingModel {
         let value = try writer.read { db in
             try String.fetchOne(db, sql: "SELECT value FROM settings WHERE key = ?", arguments: [Self.selectedModelKey])
         }
-        return value.flatMap(ClaudeModel.init(rawValue:)) ?? .default
+        return value.flatMap(WritingModel.init(rawValue:)) ?? .default
     }
 
-    public func setSelectedModel(_ model: ClaudeModel) throws {
+    public func setSelectedModel(_ model: WritingModel) throws {
         try writer.write { db in
             try db.execute(
                 sql: """
@@ -187,6 +188,31 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
                     ON CONFLICT(key) DO UPDATE SET value = excluded.value
                     """,
                 arguments: [Self.selectedModelKey, model.rawValue]
+            )
+        }
+    }
+
+    public func preferences() throws -> AppPreferences {
+        let value = try writer.read { db in
+            try String.fetchOne(db, sql: "SELECT value FROM settings WHERE key = ?", arguments: [Self.preferencesKey])
+        }
+        guard let value, let decoded = try? JSONDecoder().decode(AppPreferences.self, from: Data(value.utf8)) else {
+            return AppPreferences()
+        }
+        return decoded
+    }
+
+    public func setPreferences(_ preferences: AppPreferences) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let json = String(decoding: try encoder.encode(preferences), as: UTF8.self)
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO settings (key, value) VALUES (?, ?)
+                    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                    """,
+                arguments: [Self.preferencesKey, json]
             )
         }
     }

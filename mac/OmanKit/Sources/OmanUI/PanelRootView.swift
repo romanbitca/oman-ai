@@ -18,12 +18,20 @@ public struct PanelRootView: View {
 
     public var body: some View {
         LiquidContainer(spacing: PanelMetrics.blend) {
-            content
-                .frame(width: PanelMetrics.width)
-                .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
+            VStack(spacing: 6) {
+                if model.isPinned {
+                    PanelDragHandle()
+                        .transition(.scale(scale: 0.5, anchor: .bottom).combined(with: .opacity))
+                }
+                content
+            }
+            .frame(width: PanelMetrics.width)
+            .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
         }
         .environment(\.liquidSpace, space)
+        .environment(\.panelIsFloating, model.isPinned)
         .animation(Liquid.morph, value: model.screen)
+        .animation(Liquid.morph, value: model.isPinned)
         .keyframeAnimator(initialValue: DropValues(), trigger: model.session) { view, drop in
             view
                 .scaleEffect(x: drop.width, y: drop.height, anchor: .top)

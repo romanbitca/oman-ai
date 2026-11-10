@@ -8,7 +8,7 @@ struct ContextSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: PanelMetrics.gap) {
             HStack(spacing: 6) {
-                if model.capture.app != nil {
+                if model.capture.app != nil, !model.usesLocalModel {
                     ContextChip(title: "Screen", symbol: "macwindow", isOn: model.includeScreen) {
                         model.setIncludeScreen(!model.includeScreen)
                     }

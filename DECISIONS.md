@@ -78,3 +78,13 @@ Supersedes the 2026-04-28 Stack and Scope entries for active work. The Electron 
 - Replacing text: always a synthetic Cmd+V, because setting text through Accessibility silently fails in many apps and a paste keeps Cmd+Z working. The selection is re-checked first and nothing is pasted if it changed
 - Screen context: only the window being written in, off by default, with a thumbnail of what will be sent. Downscaled to at most 1568 px on the long edge
 - Privacy: storage stays local, but every request sends the selected text, the chosen style's samples and any context to Anthropic
+
+## 2026-11-10 — Shortcuts, settings and Apple's on-device model
+
+- Apple's on-device model is now an option next to Claude. This reverses "Anthropic only" from earlier the same day, at the user's request. It is free and local, takes text only, and has a 4,096-token context, so style samples are cut to about 4,000 characters. It gets its own plain-sentence prompt, because the tagged Claude prompt came back unchanged
+- `ClaudeModel` is renamed `WritingModel`, since it now includes a non-Claude model
+- Global shortcuts use Carbon `RegisterEventHotKey`, with no new dependency. None are set by default, so oman never takes a combination another app uses. Result shortcuts inside the panel have defaults
+- Preferences are one JSON value in the `settings` table. Decoding tolerates missing keys, so older saved settings keep loading
+- Settings use the same floating glass tiles as the panel, in a transparent window
+- A pinned panel is a floating window: it can be dragged, stays where it is dropped, and the menu bar icon loads the current selection into it instead of closing it
+- Password AutoFill heuristics are turned off for the whole app with `NSAutoFillHeuristicsEnabled`, because they froze the main thread walking SwiftUI's key views

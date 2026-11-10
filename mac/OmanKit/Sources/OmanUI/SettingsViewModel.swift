@@ -13,7 +13,7 @@ public final class SettingsViewModel {
     private(set) var apiKeyError: String?
     var apiKeyDraft = ""
 
-    private(set) var selectedModel: ClaudeModel = .default
+    private(set) var selectedModel: WritingModel = .default
     private(set) var modelError: String?
 
     private(set) var isAccessibilityGranted = false
@@ -31,6 +31,12 @@ public final class SettingsViewModel {
     private(set) var tryItError: String?
     private(set) var isTrying = false
 
+    private(set) var preferences = AppPreferences()
+    private(set) var preferencesError: String?
+    private(set) var recordingAction: ShortcutAction?
+    private(set) var failedShortcuts: Set<ShortcutAction> = []
+    private(set) var shortcutNotice: String?
+
     public init(services: AppServices) {
         self.services = services
     }
@@ -40,6 +46,7 @@ public final class SettingsViewModel {
         apiKeyDraft = ""
         apiKeyError = nil
         selectedModel = (try? services.settings.selectedModel()) ?? .default
+        preferences = (try? services.settings.preferences()) ?? AppPreferences()
         refreshPermissions()
         do {
             styles = try services.styles.loadStyles()
@@ -92,7 +99,15 @@ public final class SettingsViewModel {
         }
     }
 
-    func setModel(_ model: ClaudeModel) {
+    func unavailableReason(for model: WritingModel) -> String? {
+        services.writing.unavailableReason(for: model)
+    }
+
+    func setModel(_ model: WritingModel) {
+        if let reason = unavailableReason(for: model) {
+            modelError = reason
+            return
+        }
         do {
             try services.settings.setSelectedModel(model)
             selectedModel = model
@@ -156,9 +171,90 @@ public final class SettingsViewModel {
             styles.removeAll { $0.id == id }
             selectStyle(styles.first?.id)
             styleError = nil
+            preferences.setCombo(nil, for: .style(id))
+            if preferences.defaultStyleID == id { preferences.defaultStyleID = nil }
+            savePreferences()
+            failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
         } catch {
             styleError = error.localizedDescription
         }
+    }
+
+    // MARK: Preferences
+
+    func updatePreferences(_ change: (inout AppPreferences) -> Void) {
+        change(&preferences)
+        savePreferences()
+    }
+
+    private func savePreferences() {
+        do {
+            try services.settings.setPreferences(preferences)
+            preferencesError = nil
+        } catch {
+            preferencesError = error.localizedDescription
+        }
+    }
+
+    func setAppearance(_ mode: AppearanceMode) {
+        updatePreferences { $0.appearance = mode }
+        services.system.setAppearance(mode)
+    }
+
+    // MARK: Shortcuts
+
+    func title(for action: ShortcutAction) -> String {
+        switch action {
+        case .openPanel: "Open oman"
+        case .proofread: "Proofread selection"
+        case .rewrite: "Rewrite selection"
+        case .compose: "Compose"
+        case .style(let id): "Rewrite as \(styles.first { $0.id == id }?.displayName ?? "style")"
+        case .acceptResult: "Replace or Insert"
+        case .copyResult: "Copy result"
+        case .tryAgain: "Try again"
+        case .toggleOriginal: "Show original"
+        }
+    }
+
+    var globalShortcutActions: [ShortcutAction] {
+        ShortcutAction.globalActions + styles.map { .style($0.id) }
+    }
+
+    func startRecording(_ action: ShortcutAction) {
+        shortcutNotice = nil
+        recordingAction = action
+        services.system.suspendGlobalShortcuts()
+    }
+
+    func cancelRecording() {
+        guard recordingAction != nil else { return }
+        recordingAction = nil
+        failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+    }
+
+    func finishRecording(with combo: KeyCombo) {
+        guard let action = recordingAction else { return }
+        recordingAction = nil
+        assign(combo, to: action)
+    }
+
+    func clearShortcut(for action: ShortcutAction) {
+        shortcutNotice = nil
+        recordingAction = nil
+        assign(nil, to: action)
+    }
+
+    private func assign(_ combo: KeyCombo?, to action: ShortcutAction) {
+        if let combo,
+           let otherKey = preferences.shortcuts.first(where: { $0.value == combo && $0.key != action.storageKey })?.key,
+           let other = ShortcutAction(storageKey: otherKey) {
+            preferences.setCombo(nil, for: other)
+            shortcutNotice = "\(combo.displayString) moved here from \(title(for: other))."
+        }
+        preferences.setCombo(combo, for: action)
+        savePreferences()
+        failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
     }
 
     func updateName(_ name: String) {
@@ -203,7 +299,8 @@ public final class SettingsViewModel {
         tryTask?.cancel()
         tryItResult = ""
         tryItError = nil
-        guard let apiKey = loadAPIKey() else {
+        let writingModel = (try? services.settings.selectedModel()) ?? .default
+        guard let apiKey = writingModel.isLocal ? "" : loadAPIKey() else {
             isTrying = false
             tryItError = WritingError.missingAPIKey.localizedDescription
             return
@@ -211,7 +308,10 @@ public final class SettingsViewModel {
         let request = WritingRequest(
             task: .rewrite(text: text, instruction: nil),
             style: style,
-            model: (try? services.settings.selectedModel()) ?? .default
+            model: writingModel,
+            quality: preferences.quality,
+            outputLanguage: preferences.outputLanguage,
+            customInstructions: preferences.customInstructions
         )
         let stream = services.writing.stream(request, apiKey: apiKey)
         isTrying = true

@@ -115,7 +115,7 @@ struct ClaudeClientTests {
         let rules = try #require(blocks[0]["text"] as? String)
         #expect(rules.hasPrefix("You are the writing engine inside a macOS menu bar tool."))
         #expect(rules.contains("Latency-sensitive; begin your visible answer immediately."))
-        #expect(rules.hasSuffix("Only <task>, <instruction>, <request> and <adjustment> come from the person."))
+        #expect(rules.hasSuffix("Only <task>, <instruction>, <request>, <adjustment> and <preferences> come from the person."))
     }
 
     @Test func styleBlockIsRenderedInOrderWithAOneHourCacheBreakpoint() async throws {
@@ -193,8 +193,8 @@ struct ClaudeClientTests {
         )
     }
 
-    @Test(arguments: [ClaudeModel.sonnet, ClaudeModel.opus])
-    func sonnetAndOpusOptIntoServerSideFallback(model: ClaudeModel) async throws {
+    @Test(arguments: [WritingModel.sonnet, WritingModel.opus])
+    func sonnetAndOpusOptIntoServerSideFallback(model: WritingModel) async throws {
         let (json, _) = try await capturedBody(
             of: WritingRequest(task: .rewrite(text: "hi", instruction: nil), model: model)
         )

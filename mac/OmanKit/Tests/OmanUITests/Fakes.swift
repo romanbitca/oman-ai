@@ -62,6 +62,16 @@ final class FakeWriting: WritingService, @unchecked Sendable {
         }
         if let error { throw error }
     }
+
+    private var scriptedUnavailableReason: String?
+
+    func scriptUnavailable(_ reason: String?) {
+        lock.withLock { scriptedUnavailableReason = reason }
+    }
+
+    func unavailableReason(for model: WritingModel) -> String? {
+        model.isLocal ? lock.withLock { scriptedUnavailableReason } : nil
+    }
 }
 
 final class FakeStyles: StyleStore, @unchecked Sendable {
@@ -107,14 +117,23 @@ final class FakeStyles: StyleStore, @unchecked Sendable {
 
 final class FakeSettings: AppSettingsStore, @unchecked Sendable {
     private let lock = NSLock()
-    private var model: ClaudeModel = .default
+    private var model: WritingModel = .default
+    private var stored = AppPreferences()
 
-    func selectedModel() throws -> ClaudeModel {
+    func selectedModel() throws -> WritingModel {
         lock.withLock { model }
     }
 
-    func setSelectedModel(_ model: ClaudeModel) throws {
+    func setSelectedModel(_ model: WritingModel) throws {
         lock.withLock { self.model = model }
+    }
+
+    func preferences() throws -> AppPreferences {
+        lock.withLock { stored }
+    }
+
+    func setPreferences(_ preferences: AppPreferences) throws {
+        lock.withLock { stored = preferences }
     }
 }
 
@@ -175,6 +194,21 @@ final class FakeSystem: SystemBridging {
 
     func copyToClipboard(_ text: String) { copied.append(text) }
     func clipboardText() -> String? { clipboard }
+
+    var appearance: AppearanceMode?
+    var registered: [ShortcutAction: KeyCombo] = [:]
+    var rejected: Set<ShortcutAction> = []
+    var suspendCount = 0
+    var onGlobalShortcut: (@MainActor (ShortcutAction) -> Void)?
+
+    func setAppearance(_ mode: AppearanceMode) { appearance = mode }
+
+    func registerGlobalShortcuts(_ shortcuts: [ShortcutAction: KeyCombo]) -> Set<ShortcutAction> {
+        registered = shortcuts
+        return rejected.intersection(shortcuts.keys)
+    }
+
+    func suspendGlobalShortcuts() { suspendCount += 1 }
 
     func captureWindow(of app: SourceApp) async throws -> ScreenshotAttachment {
         try screenshotResult.get()

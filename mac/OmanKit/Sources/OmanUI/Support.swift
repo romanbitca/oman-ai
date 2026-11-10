@@ -9,12 +9,13 @@ extension WritingStyle {
     var displayName: String { name.trimmed.isEmpty ? "Untitled" : name }
 }
 
-extension ClaudeModel {
+extension WritingModel {
     var tagline: String {
         switch self {
         case .haiku: "Fastest and cheapest"
         case .sonnet: "Balanced"
         case .opus: "Most capable"
+        case .appleOnDevice: "Free, stays on this Mac"
         }
     }
 }

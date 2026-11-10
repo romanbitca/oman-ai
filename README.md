@@ -1,6 +1,6 @@
 # oman
 
-Personal macOS menu bar writing tool. Select text in any app, click the icon, and rewrite it or compose new text in your own voice through the Anthropic API.
+Personal macOS menu bar writing tool. Select text in any app, click the icon, and rewrite it or compose new text in your own voice through the Anthropic API or Apple's on-device model.
 
 ## Stack
 

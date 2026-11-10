@@ -44,11 +44,13 @@ struct GlassTile<Content: View>: View {
     var id: String?
     var padding: CGFloat = 13
     @ViewBuilder var content: Content
+    @Environment(\.panelIsFloating) private var isFloating
 
     var body: some View {
         content
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background { if isFloating { WindowDragArea() } }
             .liquidGlass(in: PanelShape.tile, id: id)
     }
 }

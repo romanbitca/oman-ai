@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum Liquid {
@@ -16,6 +17,33 @@ enum Liquid {
 
 extension EnvironmentValues {
     @Entry var liquidSpace: Namespace.ID?
+    @Entry var panelIsFloating = false
+}
+
+/// Moves the window when dragged. Placed behind controls, so they keep working.
+struct WindowDragArea: NSViewRepresentable {
+    final class DragView: NSView {
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    }
+
+    func makeNSView(context: Context) -> NSView { DragView() }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+struct PanelDragHandle: View {
+    var body: some View {
+        Capsule()
+            .fill(Color.primary.opacity(0.42))
+            .frame(width: 34, height: 4)
+            .frame(width: 88, height: 20)
+            .background(WindowDragArea())
+            .liquidGlass(in: Capsule())
+            .help("Drag to move")
+    }
 }
 
 /// Lets neighbouring glass shapes flow into each other while they animate.

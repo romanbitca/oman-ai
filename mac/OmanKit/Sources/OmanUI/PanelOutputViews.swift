@@ -2,31 +2,23 @@ import SwiftUI
 
 struct PanelWorkingView: View {
     let model: PanelViewModel
-    private let endID = "end"
 
     var body: some View {
         VStack(alignment: .leading, spacing: PanelMetrics.gap) {
-            ScrollViewReader { proxy in
-                ScrollView(.vertical) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(model.draft.isEmpty ? " " : model.draft)
-                            .font(.system(size: 14))
-                            .lineSpacing(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Color.clear.frame(height: 1).id(endID)
-                    }
+            ScrollView(.vertical) {
+                Text(model.draft.isEmpty ? " " : model.draft)
+                    .font(.system(size: 14))
+                    .lineSpacing(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(15)
-                }
-                .scrollIndicators(.never)
-                .scrollBounceBehavior(.basedOnSize)
-                .frame(minHeight: 84, maxHeight: 340)
-                .fixedSize(horizontal: false, vertical: true)
-                .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
-                .overlay { LiquidGlow(shape: PanelShape.tile) }
-                .onChange(of: model.draft) {
-                    proxy.scrollTo(endID, anchor: .bottom)
-                }
             }
+            .defaultScrollAnchor(.bottom)
+            .scrollIndicators(.never)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(minHeight: 84, maxHeight: 340)
+            .fixedSize(horizontal: false, vertical: true)
+            .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
+            .overlay { LiquidGlow(shape: PanelShape.tile) }
 
             HStack(spacing: 8) {
                 Text("Writing…")
@@ -55,7 +47,7 @@ struct PanelResultView: View {
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(15)
-                    .contentTransition(.opacity)
+                    .id(model.showOriginal)
             }
             .scrollIndicators(.never)
             .scrollBounceBehavior(.basedOnSize)
@@ -92,7 +84,10 @@ struct PanelResultView: View {
                     Text(model.showOriginal ? "Show result" : "Show original")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .contentShape(Rectangle())
+                        .padding(.horizontal, 10)
+                        .frame(height: 30)
+                        .background(Color.primary.opacity(model.showOriginal ? 0.1 : 0), in: Capsule())
+                        .contentShape(Capsule())
                 }
                 .buttonStyle(LiquidPressStyle())
             }

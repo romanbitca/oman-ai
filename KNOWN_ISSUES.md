@@ -4,6 +4,18 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-10 — Freeze in AppKit's Password AutoFill check
+
+The main thread spun at 100% in `NSAutoFillHeuristicController`, walking SwiftUI's key views (`FocusNavigationSequence.next`). It showed up after focus changes such as taking a screenshot, and buttons then looked broken. Worked around in `OmanMain.swift` with the `NSAutoFillHeuristicsEnabled` default. It could not be reproduced on demand, so if the app freezes again, run `sample $(pgrep -x oman) 2` to see where it is stuck.
+
+---
+
+## 2026-11-10 — Apple's on-device model has hard limits
+
+Its context is 4,096 tokens, so only about 4,000 characters of style samples are used, and it is much weaker at matching a voice than Claude. It ignores screenshots and quality settings.
+
+---
+
 ## 2026-11-10 — Compose: Insert where text can't go loses the draft
 
 Insert sends Cmd+V and closes the panel. If nothing editable has focus, the paste does nothing, and macOS gives no way to detect that, so the draft is gone and has to be regenerated.

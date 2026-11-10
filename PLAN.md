@@ -53,6 +53,16 @@ Acceptance:
 - A fresh install reaches a working rewrite by following the panel alone
 - Accessibility permission survives a rebuild
 
+## W6: Shortcuts, floating panel, on-device model [IN PROGRESS]
+
+Assignable global and result shortcuts, a redesigned Settings with more options, a pinned panel that works as a floating window, and Apple's on-device model as an alternative to Claude.
+
+Acceptance:
+- A global shortcut runs its action on the selection from any app
+- A pinned panel can be dragged, stays on top, and keeps its position
+- Rewrite and Compose work on the on-device model with no API key
+- The panel does not freeze after focus changes, such as taking a screenshot
+
 ---
 
 # Meeting recorder (parked 2026-11-10)

@@ -269,8 +269,8 @@ struct SelectedModelTests {
         #expect(try makeDatabase().selectedModel() == .haiku)
     }
 
-    @Test(arguments: ClaudeModel.allCases)
-    func persistsEachModel(model: ClaudeModel) throws {
+    @Test(arguments: WritingModel.allCases)
+    func persistsEachModel(model: WritingModel) throws {
         let database = try makeDatabase()
 
         try database.setSelectedModel(model)

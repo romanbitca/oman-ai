@@ -9,8 +9,8 @@ struct PanelSetupView: View {
                 Text("Set up oman").font(.system(size: 15, weight: .semibold))
 
                 VStack(alignment: .leading, spacing: 9) {
-                    stepTitle("Anthropic API key", isDone: model.hasAPIKey)
-                    if !model.hasAPIKey {
+                    stepTitle(model.usesLocalModel ? "Apple on-device model" : "Anthropic API key", isDone: model.isKeyStepDone)
+                    if !model.isKeyStepDone {
                         HStack(spacing: 8) {
                             SecureField("Paste your API key", text: $model.apiKeyDraft)
                                 .textFieldStyle(.plain)
@@ -29,6 +29,12 @@ struct PanelSetupView: View {
                         if let error = model.setupError {
                             NoticeText(text: error)
                         }
+                        if model.canUseAppleModel {
+                            Button("Use Apple's on-device model instead") { model.useAppleModel() }
+                                .buttonStyle(LiquidPressStyle())
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Liquid.accent)
+                        }
                     }
                 }
 
@@ -37,7 +43,7 @@ struct PanelSetupView: View {
                         stepTitle("Accessibility", isDone: model.isAccessibilityGranted)
                         Spacer()
                         if !model.isAccessibilityGranted {
-                            LiquidButton(title: "Allow", prominent: model.hasAPIKey) { model.allowAccessibility() }
+                            LiquidButton(title: "Allow", prominent: model.isKeyStepDone) { model.allowAccessibility() }
                         }
                     }
                     NoticeText(text: "oman needs this to read your selection and paste the result.")
