@@ -4,6 +4,30 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — Editors that copy a whole line when nothing is selected
+
+VS Code and some other editors copy the current line when ⌘C is pressed with no selection. In an Electron editor, OmanAI reads the selection with ⌘C, so that line shows up as the selected text, and Replace would paste at the cursor instead of over the line. Select the text first. Detecting this copy needs the editor's own clipboard format and is not done yet.
+
+---
+
+## 2026-11-11 — No selection in terminals, remote desktops and virtual machines
+
+OmanAI doesn't send its synthetic ⌘C to these apps, because there it can do more than copy: in a remote desktop or virtual machine it can arrive as Ctrl+C. A selection is still read where the app exposes it through Accessibility, as Terminal does. Otherwise the panel opens in Compose. The list of apps is in `SensitiveApps.swift`.
+
+---
+
+## 2026-11-11 — Insert can ask for a second press
+
+Insert compares the focused element with the one from when the panel opened, and asks again if it differs. An app that hands out a new Accessibility element for the same field would cause one extra press. Pasting into a terminal always asks twice, because pasted text can run as a command.
+
+---
+
+## 2026-11-11 — The screenshot can still be a large popup
+
+Invisible windows and windows smaller than 50 points are skipped, but a large popup in front of the document window, such as an emoji picker, is still what gets captured. The preview shows the whole picture, so check it before sending.
+
+---
+
 ## 2026-11-10 — Freeze in AppKit's Password AutoFill check
 
 The main thread spun at 100% in `NSAutoFillHeuristicController`, walking SwiftUI's key views (`FocusNavigationSequence.next`). It showed up after focus changes such as taking a screenshot, and buttons then looked broken. Worked around in `OmanMain.swift` with the `NSAutoFillHeuristicsEnabled` default. It could not be reproduced on demand, so if the app freezes again, run `sample $(pgrep -x OmanAI) 2` to see where it is stuck.

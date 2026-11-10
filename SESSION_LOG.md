@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Security review and fixes
+
+- Reviewed what leaves the Mac, the clipboard handling, the API key, prompt injection, the two permissions, Sparkle updates, the release pipeline and the repository's history, then fixed what the review found. The choices made are in DECISIONS.md
+- Panel and API: prompt tags that selected or pasted text can't forge, cut-off responses no longer accepted as finished, hidden context no longer sent unseen, an uncropped screenshot preview, requests that wait for the screen capture, results cleaned of hidden characters, the clipboard read only on request, and smaller fixes
+- Clipboard and paste: `ClipboardRoute` gives the clipboard back when the app has read the paste and undoes a copy that arrives late. No synthetic ⌘C for terminals, remote desktops and virtual machines. Insert checks where the cursor is, and terminals need a second press
+- Releases: the workflow is split into check, build and publish, with secrets in an approved `release` environment. Sparkle now requires a signed feed and checks an update before unpacking it. GRDB, Sparkle and XcodeGen are pinned. docs/RELEASING.md describes the new setup
+- Verified: 266 tests pass, and passed 20 runs in a row, half of them with every CPU core busy. The app builds. A throwaway Release build and a throwaway key showed that the feed tool signs the feed once the app asks for it, and both signatures checked out independently. Lazy pasteboard delivery was checked between two processes on a private pasteboard
+- Not verified: capture and paste in real apps with the new clipboard code, which needs an on-screen test. The new prompt format against the live API, which needs a few real rewrites. The workflows and `setup-release-secrets.sh`, which have not run since they changed. A real update from 0.2.0
+- Next for the maintainer: merge, run `mac/scripts/setup-release-secrets.sh`, add the two rulesets from docs/RELEASING.md, then try a few rewrites and pastes in Slack and Mail before tagging a release
+
 ## 2026-11-10 — Pivot to a menu bar writing tool, native Swift build
 
 - Direction changed: writing tool first, meeting recorder parked. Decisions recorded in DECISIONS.md, phases W1 to W5 added to PLAN.md, CLAUDE.md and README.md updated

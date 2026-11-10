@@ -111,3 +111,23 @@ Supersedes the earlier 2026-11-10 entries on how release builds are signed.
 - The Xcode project signs ad hoc by default, so anyone can build without an Apple account
 - The Electron meeting recorder moved to the `archive/meeting-recorder` branch. It is still parked, and the plan to return to it is unchanged
 - Every commit in the published history is attributed to the `romanbitca` GitHub account through its private no-reply address
+
+## 2026-11-11 — Security review fixes
+
+These follow a security review of the whole app and its release pipeline.
+
+- Prompt tags carry a code that is new for every request, given on the first line of the message, so text being worked on can't close a tag or forge one. A writing style's tags carry a code taken from the style's ID instead, which never changes, so the cached system prompt stays identical between requests. Chosen over escaping `<`, which would change the text the model sees, including a `<3` in someone's messages
+- A response is finished only when its stop reason is `end_turn` or `stop_sequence`. Anything else, including a stream that ends without one, is reported as cut off and never offered for Replace
+- A result is cleaned before it is shown, so the panel shows exactly what will be pasted. Invisible tag characters are always removed. Other hidden characters (zero-width spaces, direction overrides) are removed unless the person's own text already had them. A trailing line break is removed unless the person's text ended with one. Emoji joiners and right-to-left marks are kept
+- The Messages chip stays lit while context text exists, even with its editor closed. The screenshot preview shows the whole picture, up to 180 points tall, instead of a cropped strip
+- A request waits for a screen capture that is still running. If the capture fails, nothing is sent and the panel goes back to where the reason is shown
+- When the panel opens, only the clipboard's types are looked at. Its text is read when the Clipboard chip is pressed. Text marked as concealed or transient is never offered
+- Reading a selection with ⌘C and pasting with ⌘V go through `ClipboardRoute`. A copy that arrives up to a second after the panel stopped waiting is undone. Pasted text is handed over lazily, so the clipboard is given back once the app has asked for it: never sooner than 500 ms, and at most 2 seconds later if nobody asks
+- The synthetic ⌘C is never sent to terminals, remote desktops or virtual machines. The list is built in, in `SensitiveApps.swift`, with no setting for it yet
+- Insert asks for a second press when the focused element is not the one from when the panel opened. Any paste into a terminal asks for a second press too
+- ⌘C and ⌘V can't be assigned as shortcuts, because OmanAI presses them itself
+- Showing what changed between the original and the result is left for later. It is a new feature, not a fix
+- Sparkle checks an update's EdDSA signature before unpacking it (`SUVerifyUpdateBeforeExtraction`) and requires a signed feed (`SURequireSignedFeed`). The update key stays on GitHub, inside a protected environment. Signing the feed on the maintainer's Mac would be stronger and can come later
+- The release workflow has three jobs: check, build and publish. Secrets live in a `release` environment that needs the maintainer's approval and only accepts `v*` tags. Build and publish each ask for approval, because they run on separate machines so that the build can't reach the update key
+- GRDB and Sparkle are pinned to commits, and the workflows install one XcodeGen release by checksum
+- The signing certificate is still imported with `-A` in the workflow. Any process on the runner could call `codesign` itself, so narrowing the key's access list would add little, and the change could not be tested without a release
