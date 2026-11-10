@@ -4,7 +4,7 @@
 
 OmanAI is a native macOS menu bar writing tool (Swift and SwiftUI), modelled on Apple's Writing Tools. It rewrites selected text or composes new text through the Anthropic API or Apple's on-device model, in styles built from the user's own messages. All UI opens from the menu bar icon; nothing appears in or near the text field being edited.
 
-The earlier Electron meeting recorder (`electron/`, `src/`, `shared/`) is parked. See PLAN.md.
+The earlier Electron meeting recorder is parked on the `archive/meeting-recorder` branch. See PLAN.md.
 
 Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the start of every session before writing code.
 
@@ -16,7 +16,6 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Update SESSION_LOG.md at the end of every session with what was done, dated.
 - Never rewrite working code unless explicitly asked.
 - After Swift changes, run `swift test` in `mac/OmanKit` and build the app (see Commands). Fix errors before declaring done.
-- After changes to the parked Electron code, run `npm run typecheck` and `npm run lint`.
 - Commit at logical milestones with clear messages. Do not commit broken code.
 
 ## Commands
@@ -24,7 +23,8 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Tests: `cd mac/OmanKit && swift test`
 - Generate the Xcode project: `cd mac && xcodegen generate`
 - Build the app: `cd mac && xcodebuild -project Oman.xcodeproj -scheme Oman -configuration Debug build`
-- Install for real use or for other people: `mac/scripts/release.sh`, quit OmanAI, then `ditto <notarized OmanAI.app> /Applications/OmanAI.app`. Use only this build for the installed copy, because a different signature makes macOS ignore the Accessibility switch; see KNOWN_ISSUES.md
+- Publish a release: push a tag such as `v0.2.0`, and GitHub Actions does the rest. See docs/RELEASING.md
+- Install on this Mac: `mac/scripts/release.sh <version>`, quit OmanAI, then `ditto mac/build/release/export/OmanAI.app /Applications/OmanAI.app`. Use only this build for the installed copy, because a different signature makes macOS ignore the Accessibility switch; see KNOWN_ISSUES.md
 
 ## Style
 
@@ -34,13 +34,13 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - Comments only for non-obvious logic
 - Swift file names, types and protocols: PascalCase
 - Swift functions and variables: camelCase
-- The parked TypeScript code keeps its rules: strict mode, no `any` unless commented why, kebab-case file names
 
 ## Stack constraints
 
 - Swift and SwiftUI, with AppKit for the status item and panel
 - XcodeGen for the app target; the `mac/OmanKit` Swift package holds all logic
 - GRDB for SQLite, Keychain for the API key
+- Sparkle for automatic updates, published through GitHub Releases
 - Anthropic Messages API over URLSession, plus Apple's on-device model through FoundationModels; no other model provider
 - macOS 14 or later
 

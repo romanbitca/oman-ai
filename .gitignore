@@ -1,7 +1,3 @@
-node_modules/
-dist/
-out/
-build/
 .DS_Store
 *.log
 .env
@@ -9,36 +5,28 @@ build/
 .vscode/
 .idea/
 *.dmg
-*.exe
-*.deb
-*.AppImage
+build/
 release/
-coverage/
 
-# swift app (the xcodeproj is generated from mac/project.yml)
+# generated from mac/project.yml
 mac/Oman.xcodeproj/
+
+# swift build output
 mac/OmanKit/.build/
 mac/OmanKit/.swiftpm/
 DerivedData/
 *.xcuserstate
 
-# native build artifacts
-native/mac/AudioCapture/.build/
-native/mac/AudioCapture/.swiftpm/
-native/win/**/bin/
-native/win/**/obj/
-
-# whisper models (downloaded at runtime)
-resources/whisper-models/
-
-# user data
+# local databases
 *.db
 *.db-shm
 *.db-wal
 
-# typescript incremental build cache
-*.tsbuildinfo
+# signing material must never be committed
+*.p12
+*.p8
+*.cer
+*.mobileprovision
 
 # claude code per-machine settings
 .claude/settings.local.json
-

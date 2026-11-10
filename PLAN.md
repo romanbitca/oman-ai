@@ -63,11 +63,20 @@ Acceptance:
 - Rewrite and Compose work on the on-device model with no API key
 - The panel does not freeze after focus changes, such as taking a screenshot
 
+## W7: Releases and open source [IN PROGRESS]
+
+Signed and notarized builds published from a Git tag by GitHub Actions, automatic updates through Sparkle and GitHub Releases, and the files an open-source project needs.
+
+Acceptance:
+- Pushing a tag such as `v0.2.0` publishes a notarized zip and `appcast.xml` on GitHub Releases
+- An older installed version finds the new one and installs it, and Accessibility keeps working afterwards
+- Someone without an Apple Developer account can clone the repo, build it and run the tests
+
 ---
 
 # Meeting recorder (parked 2026-11-10)
 
-Everything below is parked until the writing tool ships. P1 and P2 produced the Electron skeleton in `electron/`, `src/` and `shared/`, which stays in the repo untouched.
+Everything below is parked until the writing tool ships. P1 and P2 produced an Electron skeleton, which is kept on the `archive/meeting-recorder` branch.
 
 ---
 
