@@ -98,3 +98,16 @@ Supersedes the 2026-04-28 Stack and Scope entries for active work. The Electron 
 - The app is named OmanAI everywhere a person can see it, including the app bundle. The bundle ID `com.romanbitca.oman`, the Keychain service, the `oman` database folder and the Swift module names stay, so permissions, the API key and saved styles carry over
 - The pinned panel's drag grip is a dark curve with a thin glass border, wrapped around the top-right corner and concentric with the tile. The window's side margin grew from 18 to 30 points to hold it and its shadow
 - Settings has no animation at all: no page fade, no sliding highlights, no press or hover fades, no window-open animation and no spinner. A hand-drawn switch replaces the system one, which animates its knob. The panel keeps its short fades
+
+## 2026-11-10 — Open source, releases and automatic updates
+
+Supersedes the earlier 2026-11-10 entries on how release builds are signed.
+
+- OmanAI is open source under the MIT license
+- Automatic updates use Sparkle 2, a new dependency. The feed and the zip are assets on GitHub Releases, so no server is needed. Updates download in the background and install when the app quits, with a toggle in Settings
+- Only builds given a public key check for updates, so local builds and forks never update themselves
+- Releases are built by GitHub Actions when a tag like `v1.2.3` is pushed. Signing uses a Developer ID certificate stored as a secret and notarizing uses an App Store Connect API key, so releases don't depend on an account signed in to Xcode
+- The build number comes from the version, so 0.2.0 becomes 2000, because Sparkle compares it and it has to grow
+- The Xcode project signs ad hoc by default, so anyone can build without an Apple account
+- The Electron meeting recorder moved to the `archive/meeting-recorder` branch. It is still parked, and the plan to return to it is unchanged
+- Every commit in the published history is attributed to the `romanbitca` GitHub account through its private no-reply address

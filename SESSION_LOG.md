@@ -23,7 +23,9 @@ Date-stamped log of what each work session accomplished.
 - The app is now named OmanAI. The bundle ID, Keychain service and database folder did not change, so saved styles and the API key carry over
 - Third design pass: the pinned panel's grip is a dark curve with a thin glass border, and Settings has no animation at all, including a hand-drawn switch. The first curved grip could not drag for two reasons, both found with real mouse events: shapes above the drag area took the click, and Liquid Glass in a custom shape counts as clear to the window server. Real drags moved the installed panel from the middle and both ends of the curve. The final build only removed an extra grab area that did not catch clicks
 - Accessibility has been refused since the move from the Apple Development build to Developer ID, because the existing grant is tied to the old signature. It needs the user to remove OmanAI from the list and allow it again. Selection reading and paste still need re-testing on the Developer ID build, and the new Settings has been checked offscreen only
-- Next: the push to `romanbitca/oman-ai` and the landing page
+- Prepared the project for open source and automatic updates: MIT license, public README and contributor files, GitHub Actions for tests and for signed releases from a tag, Sparkle updates from GitHub Releases, an ad hoc default build, and the meeting recorder moved to an archive branch
+- Verified: 200 tests pass, an ad hoc build works with no Apple account, a Release archive builds with hardened runtime, and the update feed is generated and signed correctly with a throwaway key. Not verified, because they need the maintainer's certificate and keys: the workflows have not run on GitHub, nothing has been signed through the new Developer ID path, and no installed app has updated itself yet
+- Next: finish the setup in docs/RELEASING.md and publish the first release with automatic updates, then the bug pass and the landing page
 
 ## 2026-04-28 — Project bootstrap
 

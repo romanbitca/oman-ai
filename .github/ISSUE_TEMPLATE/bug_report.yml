@@ -1,0 +1,35 @@
+name: Bug report
+description: Something in OmanAI doesn't work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please leave out API keys and any private text.
+  - type: input
+    id: version
+    attributes:
+      label: OmanAI version
+      description: Shown in Settings, under About.
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App you were writing in
+      placeholder: Slack, Mail, Chrome…
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
