@@ -84,6 +84,8 @@ struct AccessSettingsView: View {
 }
 
 struct AboutSettingsView: View {
+    let model: SettingsViewModel
+
     private var version: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "–"
@@ -104,7 +106,32 @@ struct AboutSettingsView: View {
             }
         }
 
+        if model.canUpdate {
+            SettingsTile(title: "Updates") {
+                SettingsToggleRow(
+                    title: "Install updates automatically",
+                    detail: "Checks GitHub once a day and installs new versions when OmanAI quits.",
+                    isOn: Binding(
+                        get: { model.installsUpdatesAutomatically },
+                        set: { model.setInstallsUpdatesAutomatically($0) }
+                    )
+                )
+                Divider()
+                SettingsRow(title: "Check for a new version") {
+                    LiquidButton(title: "Check Now") { model.checkForUpdates() }
+                }
+            }
+        }
+
         SettingsTile {
+            SettingsRow(title: "Open source", detail: "Free to use and change under the MIT license.") {
+                LiquidButton(title: "View on GitHub") {
+                    if let url = URL(string: "https://github.com/romanbitca/oman-ai") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            }
+            Divider()
             SettingsRow(title: "Quit OmanAI", detail: "The menu bar icon goes away until you open the app again.") {
                 LiquidButton(title: "Quit") { NSApp.terminate(nil) }
             }

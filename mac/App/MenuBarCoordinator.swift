@@ -85,6 +85,9 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     private func showStatusMenu() {
         let menu = NSMenu()
         menu.addItem(withTitle: "Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
+        if services.updates != nil {
+            menu.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdatesFromMenu), keyEquivalent: "").target = self
+        }
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit OmanAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
@@ -94,6 +97,10 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
     @objc private func openSettingsFromMenu() {
         openSettings()
+    }
+
+    @objc private func checkForUpdatesFromMenu() {
+        services.updates?.checkForUpdates()
     }
 
     private func dismissPanel() {

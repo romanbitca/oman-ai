@@ -1,12 +1,35 @@
 #!/bin/bash
-# Builds OmanAI, signs it with Developer ID, notarizes it, and leaves a stapled OmanAI.app in the output folder.
-# Uses the Apple account signed in to Xcode. Usage: scripts/release.sh [output-folder]
+# Builds OmanAI, signs it with Developer ID, notarizes it and writes a stapled zip to the output folder.
+# Usage: scripts/release.sh <version> [output-folder]
+#
+# Needs a "Developer ID Application" certificate in the keychain, and one of these for notarizing:
+#   NOTARY_KEY_PATH, NOTARY_KEY_ID and NOTARY_ISSUER_ID, for an App Store Connect API key
+#   a notarytool keychain profile, named by NOTARY_PROFILE (default OmanAI)
+# SPARKLE_PUBLIC_KEY turns on automatic updates in the build. See docs/RELEASING.md.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-TEAM=S72639F3BR
-OUT="${1:-build/release}"
+VERSION="${1:?Usage: scripts/release.sh <version> [output-folder]}"
+OUT="${2:-build/release}"
+TEAM="${APPLE_TEAM_ID:-S72639F3BR}"
+
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "The version must look like 1.2.3" >&2
+    exit 1
+fi
+IFS=. read -r MAJOR MINOR PATCH <<<"$VERSION"
+# Sparkle compares this number, so it has to grow with every release.
+BUILD=$((10#$MAJOR * 1000000 + 10#$MINOR * 1000 + 10#$PATCH))
+
+if [ -n "${NOTARY_KEY_PATH:-}" ]; then
+    NOTARY_AUTH=(--key "$NOTARY_KEY_PATH" --key-id "${NOTARY_KEY_ID:?}" --issuer "${NOTARY_ISSUER_ID:?}")
+else
+    NOTARY_AUTH=(--keychain-profile "${NOTARY_PROFILE:-OmanAI}")
+fi
+
 ARCHIVE="$OUT/OmanAI.xcarchive"
+APP="$OUT/export/OmanAI.app"
+ZIP="$OUT/OmanAI-$VERSION.zip"
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
@@ -18,33 +41,31 @@ xcodebuild archive \
     -scheme Oman \
     -configuration Release \
     -archivePath "$ARCHIVE" \
+    -derivedDataPath "$OUT/derived" \
     DEVELOPMENT_TEAM="$TEAM" \
-    CODE_SIGN_STYLE=Automatic \
-    CODE_SIGN_IDENTITY="Apple Development" \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="Developer ID Application" \
     PROVISIONING_PROFILE_SPECIFIER="" \
     ENABLE_HARDENED_RUNTIME=YES \
-    -allowProvisioningUpdates
+    MARKETING_VERSION="$VERSION" \
+    CURRENT_PROJECT_VERSION="$BUILD" \
+    SPARKLE_PUBLIC_KEY="${SPARKLE_PUBLIC_KEY:-}"
 
-# With destination "upload" this signs with Developer ID and submits the app to Apple's notary service.
+cp ExportOptions.plist "$OUT/ExportOptions.plist"
+plutil -replace teamID -string "$TEAM" "$OUT/ExportOptions.plist"
 xcodebuild -exportArchive \
     -archivePath "$ARCHIVE" \
-    -exportOptionsPlist ExportOptions.plist \
-    -exportPath "$OUT/submitted" \
-    -allowProvisioningUpdates
+    -exportOptionsPlist "$OUT/ExportOptions.plist" \
+    -exportPath "$OUT/export"
 
-for attempt in $(seq 1 40); do
-    if xcodebuild -exportNotarizedApp -archivePath "$ARCHIVE" -exportPath "$OUT/notarized" >"$OUT/notary.log" 2>&1; then
-        break
-    fi
-    if [ "$attempt" -eq 40 ]; then
-        cat "$OUT/notary.log"
-        echo "Apple did not finish notarizing in time." >&2
-        exit 1
-    fi
-    sleep 30
-done
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$OUT/notarize.zip"
+xcrun notarytool submit "$OUT/notarize.zip" "${NOTARY_AUTH[@]}" --wait --timeout 30m
+rm "$OUT/notarize.zip"
 
-APP="$OUT/notarized/OmanAI.app"
+xcrun stapler staple "$APP"
 xcrun stapler validate "$APP"
 spctl --assess --type execute --verbose=2 "$APP"
-echo "Ready: $APP"
+
+# The zip has to come after stapling, so the ticket travels with the app.
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
+echo "Ready: $ZIP"

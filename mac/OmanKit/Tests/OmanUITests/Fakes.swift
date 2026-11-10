@@ -229,6 +229,14 @@ final class FakePresenter: PanelPresenting {
 }
 
 @MainActor
+final class FakeUpdates: AppUpdating {
+    var installsUpdatesAutomatically = true
+    private(set) var checkCount = 0
+
+    func checkForUpdates() { checkCount += 1 }
+}
+
+@MainActor
 final class Harness {
     let writing = FakeWriting()
     let styles = FakeStyles()
@@ -236,6 +244,7 @@ final class Harness {
     let keys: FakeKeys
     let system = FakeSystem()
     let presenter = FakePresenter()
+    let updates = FakeUpdates()
 
     static let slack = SourceApp(name: "Slack", bundleID: "com.tinyspeck.slackmacgap", processID: 42)
 
@@ -244,7 +253,7 @@ final class Harness {
     }
 
     var services: AppServices {
-        AppServices(writing: writing, styles: styles, settings: settings, apiKeys: keys, system: system)
+        AppServices(writing: writing, styles: styles, settings: settings, apiKeys: keys, system: system, updates: updates)
     }
 
     func makePanel() -> PanelViewModel {

@@ -67,6 +67,13 @@ public protocol PanelPresenting: AnyObject {
     func openSettings()
 }
 
+/// Implemented by the app shell. Builds without an update signing key don't have one.
+@MainActor
+public protocol AppUpdating: AnyObject {
+    var installsUpdatesAutomatically: Bool { get set }
+    func checkForUpdates()
+}
+
 @MainActor
 public struct AppServices {
     public let writing: any WritingService
@@ -74,18 +81,21 @@ public struct AppServices {
     public let settings: any AppSettingsStore
     public let apiKeys: any APIKeyStore
     public let system: any SystemBridging
+    public let updates: (any AppUpdating)?
 
     public init(
         writing: any WritingService,
         styles: any StyleStore,
         settings: any AppSettingsStore,
         apiKeys: any APIKeyStore,
-        system: any SystemBridging
+        system: any SystemBridging,
+        updates: (any AppUpdating)? = nil
     ) {
         self.writing = writing
         self.styles = styles
         self.settings = settings
         self.apiKeys = apiKeys
         self.system = system
+        self.updates = updates
     }
 }

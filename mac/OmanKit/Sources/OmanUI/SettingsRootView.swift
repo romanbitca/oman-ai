@@ -110,7 +110,7 @@ public struct SettingsRootView: View {
                 case .styles: StylesSettingsView(model: model)
                 case .shortcuts: ShortcutsSettingsView(model: model)
                 case .access: AccessSettingsView(model: model)
-                case .about: AboutSettingsView()
+                case .about: AboutSettingsView(model: model)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

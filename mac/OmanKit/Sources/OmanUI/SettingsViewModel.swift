@@ -37,6 +37,9 @@ public final class SettingsViewModel {
     private(set) var failedShortcuts: Set<ShortcutAction> = []
     private(set) var shortcutNotice: String?
 
+    private(set) var installsUpdatesAutomatically = false
+    var canUpdate: Bool { services.updates != nil }
+
     public init(services: AppServices) {
         self.services = services
     }
@@ -47,6 +50,7 @@ public final class SettingsViewModel {
         apiKeyError = nil
         selectedModel = (try? services.settings.selectedModel()) ?? .default
         preferences = (try? services.settings.preferences()) ?? AppPreferences()
+        installsUpdatesAutomatically = services.updates?.installsUpdatesAutomatically ?? false
         refreshPermissions()
         do {
             styles = try services.styles.loadStyles()
@@ -63,6 +67,17 @@ public final class SettingsViewModel {
     private func loadAPIKey() -> String? {
         guard let key = try? services.apiKeys.loadAPIKey(), !key.isEmpty else { return nil }
         return key
+    }
+
+    // MARK: Updates
+
+    func setInstallsUpdatesAutomatically(_ enabled: Bool) {
+        services.updates?.installsUpdatesAutomatically = enabled
+        installsUpdatesAutomatically = enabled
+    }
+
+    func checkForUpdates() {
+        services.updates?.checkForUpdates()
     }
 
     // MARK: General

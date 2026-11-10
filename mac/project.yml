@@ -7,6 +7,9 @@ options:
 packages:
   OmanKit:
     path: OmanKit
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -33,14 +36,20 @@ targets:
         product: SystemBridge
       - package: OmanKit
         product: OmanUI
+      - package: Sparkle
+        product: Sparkle
     info:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: OmanAI
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSApplicationCategoryType: public.app-category.productivity
         LSUIElement: true
+        SUFeedURL: https://github.com/romanbitca/oman-ai/releases/latest/download/appcast.xml
+        SUPublicEDKey: "$(SPARKLE_PUBLIC_KEY)"
+        SUEnableAutomaticChecks: true
+        SUAutomaticallyUpdate: true
     entitlements:
       path: App/Oman.entitlements
       properties:
@@ -50,7 +59,12 @@ targets:
         PRODUCT_NAME: OmanAI
         PRODUCT_BUNDLE_IDENTIFIER: com.romanbitca.oman
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        # Left empty so local builds don't update themselves. scripts/release.sh fills it in.
+        SPARKLE_PUBLIC_KEY: ""
+        # Ad hoc, so anyone can build without an Apple account. scripts/release.sh signs with Developer ID.
         CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: Apple Development
-        DEVELOPMENT_TEAM: S72639F3BR
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
         PROVISIONING_PROFILE_SPECIFIER: ""

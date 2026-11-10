@@ -17,7 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 styles: database,
                 settings: database,
                 apiKeys: KeychainAPIKeyStore(),
-                system: MacSystemBridge()
+                system: MacSystemBridge(),
+                updates: UpdaterController.makeIfConfigured()
             )
             coordinator = MenuBarCoordinator(services: services)
         } catch {
