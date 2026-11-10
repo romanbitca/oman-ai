@@ -40,6 +40,12 @@ macOS records the permission request, but the lookup by bundle ID fails (`kLSApp
 
 ---
 
+## 2026-11-10 — Changing the signature breaks privacy grants
+
+Accessibility is tied to the code signature. Going between an Apple Development build and a Developer ID build can leave oman switched on in System Settings but not trusted. Remove it from the list and allow it again. The saved API key may also ask for Keychain access once. `mac/scripts/release.sh` and the Install command in CLAUDE.md produce different signatures, so keep to one of them for the copy in `/Applications`.
+
+---
+
 ## 2026-11-10 — Tooling gotchas for this repo
 
 - Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.
