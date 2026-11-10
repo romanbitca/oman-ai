@@ -37,6 +37,28 @@ struct PasteboardSnapshot {
     }
 }
 
+/// Hands pasted text over only when an app asks for it. That request is the one sign that a paste was read.
+final class PasteReceipt: NSObject, NSPasteboardItemDataProvider, @unchecked Sendable {
+    private let text: String
+    private let lock = NSLock()
+    private var read = false
+
+    init(text: String) {
+        self.text = text
+    }
+
+    var wasRead: Bool { lock.withLock { read } }
+
+    func pasteboard(
+        _ pasteboard: NSPasteboard?,
+        item: NSPasteboardItem,
+        provideDataForType type: NSPasteboard.PasteboardType
+    ) {
+        item.setString(text, forType: type)
+        lock.withLock { read = true }
+    }
+}
+
 extension NSPasteboard {
     static let transientType = PasteboardType("org.nspasteboard.TransientType")
     static let concealedType = PasteboardType("org.nspasteboard.ConcealedType")
@@ -49,11 +71,15 @@ extension NSPasteboard {
     }
 
     /// Marked transient so clipboard history apps skip text that is only passing through.
-    func writeTransientString(_ text: String) {
+    /// The returned receipt says whether any app has asked for the text yet.
+    @discardableResult
+    func writeTransientString(_ text: String) -> PasteReceipt {
         clearContents()
+        let receipt = PasteReceipt(text: text)
         let item = NSPasteboardItem()
-        item.setString(text, forType: .string)
+        item.setDataProvider(receipt, forTypes: [.string])
         item.setData(Data(), forType: Self.transientType)
         writeObjects([item])
+        return receipt
     }
 }

@@ -24,6 +24,7 @@ public final class PanelViewModel {
     @ObservationIgnored private var baseScreen: PanelScreen = .compose
     @ObservationIgnored private(set) var lastRequest: WritingRequest?
     @ObservationIgnored private var preferences = AppPreferences()
+    @ObservationIgnored private var terminalPasteConfirmed = false
 
     private(set) var screen: PanelScreen = .compose
     private(set) var capture = SelectionCapture(app: nil, text: nil)
@@ -82,6 +83,7 @@ public final class PanelViewModel {
         offersSettings = false
         showOriginal = false
         lastRequest = nil
+        terminalPasteConfirmed = false
         apiKeyDraft = ""
         setupError = nil
         preferences = (try? services.settings.preferences()) ?? AppPreferences()
@@ -396,6 +398,7 @@ public final class PanelViewModel {
         errorMessage = nil
         offersSettings = false
         showOriginal = false
+        terminalPasteConfirmed = false
         rememberScreenBeforeRun()
         guard let apiKey = request.model.isLocal ? "" : loadAPIKey() else {
             fail(with: WritingError.missingAPIKey)
@@ -461,6 +464,13 @@ public final class PanelViewModel {
     }
 
     func applyResult() {
+        if SensitiveApps.isTerminal(bundleID: capture.app?.bundleID), !terminalPasteConfirmed {
+            terminalPasteConfirmed = true
+            let app = capture.app?.name ?? "a terminal"
+            notice = "Pasted text can run as a command in \(app). "
+                + "Press \(primaryActionTitle) again to paste it, or use Copy."
+            return
+        }
         if lastTaskIsCompose {
             insert()
         } else {
@@ -505,6 +515,10 @@ public final class PanelViewModel {
         case .selectionChanged:
             presenter?.showPanel()
             notice = "Your selection changed. Select the text again and press Replace, or use Copy."
+        case .focusMoved:
+            presenter?.showPanel()
+            notice = "The cursor has moved since you opened OmanAI. "
+                + "Press Insert again to put the text where it is now, or use Copy."
         case .sourceUnavailable:
             presenter?.showPanel()
             notice = "\(capture.app?.name ?? "The app") is no longer available. Use Copy instead."

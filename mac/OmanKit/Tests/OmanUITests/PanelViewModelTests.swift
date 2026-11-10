@@ -485,6 +485,66 @@ import Testing
         #expect(harness.presenter.hideCount == 1)
     }
 
+    @Test func insertIntoAMovedCursorExplainsAndStaysOpen() async {
+        let harness = Harness()
+        harness.system.insertOutcome = .focusMoved
+        let model = harness.makePanel()
+        model.begin(with: noSelection)
+        model.composePrompt = "say thanks"
+        model.compose()
+        await finish(model)
+        model.applyResult()
+        await finish(model)
+
+        #expect(harness.presenter.showCount == 1)
+        #expect(
+            model.notice
+                == "The cursor has moved since you opened OmanAI. Press Insert again to put the text where it is now, or use Copy."
+        )
+        #expect(model.screen == .result)
+    }
+
+    @Test func aTerminalNeedsASecondPressBeforeAnythingIsPasted() async throws {
+        let harness = Harness()
+        let terminal = SourceApp(name: "Terminal", bundleID: "com.apple.Terminal", processID: 7)
+        let model = await readyResult(harness, capture: SelectionCapture(app: terminal, text: "ls -la"))
+
+        model.applyResult()
+        #expect(harness.system.replaceCalls.isEmpty)
+        #expect(harness.presenter.hideCount == 0)
+        #expect(
+            model.notice
+                == "Pasted text can run as a command in Terminal. Press Replace again to paste it, or use Copy."
+        )
+
+        model.applyResult()
+        await finish(model)
+        #expect(harness.system.replaceCalls.count == 1)
+    }
+
+    @Test func aNewResultInATerminalAsksAgain() async throws {
+        let harness = Harness()
+        let terminal = SourceApp(name: "iTerm2", bundleID: "com.googlecode.iterm2", processID: 7)
+        let model = await readyResult(harness, capture: SelectionCapture(app: terminal, text: "ls -la"))
+        model.applyResult()
+        #expect(model.notice != nil)
+
+        model.tryAgain()
+        await finish(model)
+        #expect(model.notice == nil)
+        model.applyResult()
+        #expect(harness.system.replaceCalls.isEmpty)
+        #expect(model.notice != nil)
+    }
+
+    @Test func otherAppsPasteOnTheFirstPress() async {
+        let harness = Harness()
+        let model = await readyResult(harness)
+        model.applyResult()
+        await finish(model)
+        #expect(harness.system.replaceCalls.count == 1)
+    }
+
     @Test func composeWithoutAppCannotInsert() async {
         let harness = Harness()
         let model = harness.makePanel()

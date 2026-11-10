@@ -6,14 +6,18 @@ import ServiceManagement
 @MainActor
 public final class MacSystemBridge: SystemBridging {
     private static let pollIntervalMilliseconds = 10
-    private static let copyTimeoutMilliseconds = 250
     private static let activationTimeoutMilliseconds = 400
     private static let keyWindowSettleMilliseconds = 120
-    // Slow Electron apps read the pasteboard well after the key event arrives.
-    private static let pasteReadMilliseconds = 500
 
     private let pasteboard = NSPasteboard.general
+    private let clipboard = ClipboardRoute(
+        pasteboard: .general,
+        postCopy: KeyEvents.postCopy,
+        postPaste: KeyEvents.postPaste
+    )
     private let hotKeys = GlobalHotKeys()
+    // CoreFoundation's equality is how two Accessibility references are compared.
+    private var insertionTarget = InsertionTarget<AXUIElement> { CFEqual($0, $1) }
 
     public init() {}
 
@@ -71,6 +75,8 @@ public final class MacSystemBridge: SystemBridging {
     // MARK: Selection
 
     public func captureSelection() async -> SelectionCapture {
+        // Whatever was remembered belongs to an earlier panel.
+        insertionTarget.remember(nil, processID: 0)
         guard let front = NSWorkspace.shared.frontmostApplication,
               front.processIdentifier != ProcessInfo.processInfo.processIdentifier
         else {
@@ -84,7 +90,9 @@ public final class MacSystemBridge: SystemBridging {
         guard AXIsProcessTrusted() else {
             return SelectionCapture(app: app, text: nil)
         }
-        let text = await readSelection(inProcess: front.processIdentifier)
+        let focused = SelectionReader.focusedElement(processID: front.processIdentifier)
+        insertionTarget.remember(focused, processID: front.processIdentifier)
+        let text = await readSelection(focused: focused, bundleID: front.bundleIdentifier)
         return SelectionCapture(app: app, text: SelectionComparison.nonBlank(text))
     }
 
@@ -93,12 +101,13 @@ public final class MacSystemBridge: SystemBridging {
         guard await ensureFrontmost(app) else { return .sourceUnavailable }
         await pause(milliseconds: Self.keyWindowSettleMilliseconds)
 
-        guard let current = await readSelection(inProcess: app.processID),
+        let focused = SelectionReader.focusedElement(processID: app.processID)
+        guard let current = await readSelection(focused: focused, bundleID: app.bundleID),
               SelectionComparison.matches(current, expected)
         else {
             return .selectionChanged
         }
-        await paste(text)
+        await clipboard.paste(text)
         return .inserted
     }
 
@@ -114,15 +123,18 @@ public final class MacSystemBridge: SystemBridging {
             }
         }
         await pause(milliseconds: Self.keyWindowSettleMilliseconds)
-        await paste(text)
+        if let app {
+            let focused = SelectionReader.focusedElement(processID: app.processID)
+            guard insertionTarget.confirm(focused, processID: app.processID) else { return .focusMoved }
+        }
+        await clipboard.paste(text)
         return .inserted
     }
 
     // MARK: Clipboard
 
     public func copyToClipboard(_ text: String) {
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        clipboard.copy(text)
     }
 
     public var hasClipboardText: Bool { pasteboard.offersPlainText }
@@ -140,43 +152,17 @@ public final class MacSystemBridge: SystemBridging {
 
     // MARK: Private
 
-    private func readSelection(inProcess processID: pid_t) async -> String? {
-        switch SelectionReader.read(processID: processID) {
+    private func readSelection(focused: AXUIElement?, bundleID: String?) async -> String? {
+        switch SelectionReader.read(focused) {
         case .selected(let text):
             return text
         case .secure, .noSelection:
             return nil
         case .unavailable:
-            return await copySelectionThroughClipboard()
+            // A synthetic ⌘C is not sent to apps where it can do more than copy.
+            guard !SensitiveApps.skipsSyntheticCopy(bundleID: bundleID) else { return nil }
+            return await clipboard.copySelection()
         }
-    }
-
-    private func copySelectionThroughClipboard() async -> String? {
-        let snapshot = PasteboardSnapshot(of: pasteboard)
-        let originalCount = pasteboard.changeCount
-        KeyEvents.postCopy()
-
-        var copied: String?
-        // An app can clear the pasteboard before it finishes writing, so wait for the text itself.
-        _ = await poll(timeoutMilliseconds: Self.copyTimeoutMilliseconds) {
-            guard pasteboard.changeCount != originalCount else { return false }
-            copied = pasteboard.string(forType: .string)
-            return copied != nil
-        }
-
-        if pasteboard.changeCount != originalCount {
-            snapshot.restore(to: pasteboard)
-        }
-        return copied
-    }
-
-    private func paste(_ text: String) async {
-        let snapshot = PasteboardSnapshot(of: pasteboard)
-        pasteboard.writeTransientString(text)
-        let writtenCount = pasteboard.changeCount
-        KeyEvents.postPaste()
-        await pause(milliseconds: Self.pasteReadMilliseconds)
-        snapshot.restore(to: pasteboard, ifChangeCountIs: writtenCount)
     }
 
     private func ensureFrontmost(_ app: SourceApp) async -> Bool {
@@ -199,7 +185,7 @@ public final class MacSystemBridge: SystemBridging {
         return condition()
     }
 
-    /// Detached so that cancelling the caller cannot cut a wait short and restore the clipboard too early.
+    /// Detached so that cancelling the caller cannot cut a wait short.
     private func pause(milliseconds: Int) async {
         await Task.detached {
             try? await Task.sleep(for: .milliseconds(milliseconds))

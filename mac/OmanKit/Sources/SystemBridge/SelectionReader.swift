@@ -27,13 +27,19 @@ enum SelectionReader {
     // The default is six seconds, which would freeze the menu bar click on a hung app.
     private static let messagingTimeoutSeconds: Float = 0.25
 
-    static func read(processID: pid_t) -> AccessibilityReading {
+    /// Nil when the app doesn't say what has keyboard focus, as Electron apps don't.
+    static func focusedElement(processID: pid_t) -> AXUIElement? {
         let application = AXUIElementCreateApplication(processID)
         AXUIElementSetMessagingTimeout(application, messagingTimeoutSeconds)
         guard let focused = element(of: application, attribute: "AXFocusedUIElement") else {
-            return .unavailable
+            return nil
         }
         AXUIElementSetMessagingTimeout(focused, messagingTimeoutSeconds)
+        return focused
+    }
+
+    static func read(_ focused: AXUIElement?) -> AccessibilityReading {
+        guard let focused else { return .unavailable }
 
         if AccessibilityReading.isSecure(
             role: string(of: focused, attribute: "AXRole"),

@@ -73,6 +73,8 @@ public struct SelectionCapture: Equatable, Sendable {
 public enum InsertOutcome: Equatable, Sendable {
     case inserted
     case selectionChanged
+    /// The cursor is somewhere else than when the panel opened. Nothing was pasted; asking again pastes there.
+    case focusMoved
     case sourceUnavailable
     case permissionMissing
 }
