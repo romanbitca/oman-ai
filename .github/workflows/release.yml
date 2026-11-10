@@ -4,20 +4,50 @@ on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+"]
 
-permissions:
-  contents: write
+# Nothing is granted by default. Each job asks for what it needs.
+permissions: {}
 
 concurrency: release
 
 jobs:
-  release:
+  # Runs with no secrets, so a tag that should not be released never gets near them.
+  check:
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the tag is on main
+        run: |
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::$GITHUB_REF_NAME is not on main, so it will not be released."
+            exit 1
+          fi
+
+      - name: Run the tests
+        working-directory: mac/OmanKit
+        run: swift test
+
+  # The signing secrets live in the release environment, which waits for a maintainer's approval.
+  build:
+    needs: check
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: echo "$(mac/scripts/install-xcodegen.sh "$RUNNER_TEMP/tools")" >> "$GITHUB_PATH"
 
       - name: Import the signing certificate
         env:
@@ -45,6 +75,44 @@ jobs:
           export NOTARY_KEY_PATH="$RUNNER_TEMP/notary.p8"
           printf %s "$NOTARY_KEY_BASE64" | base64 --decode -o "$NOTARY_KEY_PATH"
           mac/scripts/release.sh "${GITHUB_REF_NAME#v}" "$RUNNER_TEMP/release"
+
+      - name: Remove the signing material
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+          rm -f "$RUNNER_TEMP/certificate.p12" "$RUNNER_TEMP/notary.p8"
+
+      - name: Hand the build to the publish job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: ${{ runner.temp }}/release/OmanAI-*.zip
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
+  # A separate job on a fresh machine: nothing that ran during the build can reach the key that signs
+  # updates or the token that publishes them. It also waits for approval.
+  publish:
+    needs: build
+    runs-on: macos-26
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install XcodeGen
+        run: echo "$(mac/scripts/install-xcodegen.sh "$RUNNER_TEMP/tools")" >> "$GITHUB_PATH"
+
+      - name: Fetch the build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: ${{ runner.temp }}/release
 
       - name: Publish the release and update feed
         env:

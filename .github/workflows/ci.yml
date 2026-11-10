@@ -14,13 +14,15 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Run the tests
         working-directory: mac/OmanKit
         run: swift test
 
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: echo "$(mac/scripts/install-xcodegen.sh "$RUNNER_TEMP/tools")" >> "$GITHUB_PATH"
 
       - name: Build the app
         working-directory: mac

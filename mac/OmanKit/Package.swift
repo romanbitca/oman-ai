@@ -12,7 +12,8 @@ let package = Package(
         .library(name: "OmanUI", targets: ["OmanUI"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.12.0"),
+        // GRDB 7.12.0, pinned to its commit so a release never picks up code nobody chose.
+        .package(url: "https://github.com/groue/GRDB.swift.git", revision: "92a554cd0d5e8d67cb18993c6054e73fe42c066c"),
     ],
     targets: [
         .target(name: "OmanCore"),

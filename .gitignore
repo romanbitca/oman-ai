@@ -17,6 +17,11 @@ mac/OmanKit/.swiftpm/
 DerivedData/
 *.xcuserstate
 
+# left behind by the Electron app on the archive/meeting-recorder branch
+node_modules/
+out/
+*.tsbuildinfo
+
 # local databases
 *.db
 *.db-shm

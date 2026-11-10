@@ -31,8 +31,15 @@ ARCHIVE="$OUT/OmanAI.xcarchive"
 APP="$OUT/export/OmanAI.app"
 ZIP="$OUT/OmanAI-$VERSION.zip"
 
+# The output folder is emptied first, so only ever empty one this script made before.
+if [ -e "$OUT" ] && [ ! -e "$OUT/.omanai-release" ] && [ ! -d "$OUT/OmanAI.xcarchive" ] &&
+    [ -n "$(ls -A "$OUT" 2>/dev/null)" ]; then
+    echo "$OUT already has other files in it. Choose a new or empty folder." >&2
+    exit 1
+fi
 rm -rf "$OUT"
 mkdir -p "$OUT"
+touch "$OUT/.omanai-release"
 
 xcodegen generate
 
