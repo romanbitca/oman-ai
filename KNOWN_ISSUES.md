@@ -46,6 +46,12 @@ Accessibility is tied to the code signature. Going between an Apple Development 
 
 ---
 
+## 2026-11-10 — Xcode can refuse to create a Developer ID certificate
+
+On an Individual team, Xcode's Manage Certificates failed with "This operation can only be performed by the Account Holder", even for the account holder. Creating the same certificate on developer.apple.com from a certificate request worked. Importing a certificate while iCloud is selected in Keychain Access fails with error -25294, so import into the login keychain.
+
+---
+
 ## 2026-11-10 — Tooling gotchas for this repo
 
 - Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.

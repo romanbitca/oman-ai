@@ -14,6 +14,12 @@ Open Xcode, then Settings, then the Accounts tab. Press **+**, choose Apple ID a
 
 In the same tab, select your team and press **Manage Certificates**. Press **+**, choose **Developer ID Application** and press Done. Only the account holder can create this certificate.
 
+If Xcode refuses with "This operation can only be performed by the Account Holder", create it on the website instead. In Keychain Access, click **login**, then use Certificate Assistant to save a certificate request to disk. On the [new certificate page](https://developer.apple.com/account/resources/certificates/add), choose **Developer ID Application**, select **G2 Sub-CA**, upload the request and download the certificate. Then install it:
+
+```bash
+security import ~/Downloads/developerID_application.cer -k ~/Library/Keychains/login.keychain-db
+```
+
 Check that it worked:
 
 ```bash
@@ -49,6 +55,8 @@ It creates the key that signs updates, which stays in your login keychain, and s
 | `SPARKLE_PUBLIC_KEY` | Variable | The public half, built into the app |
 
 Afterwards, delete the `.p12` file and keep the `.p8` file somewhere safe.
+
+The certificate has an expiry date, shown in Keychain Access. Apps you already released keep working after it, but new releases can't be signed until you create a new certificate and run the script again.
 
 Back up the update key too. If it is lost, installed copies can no longer accept updates, and everyone would have to download a new version by hand. To export it, run `generate_keys -x <file>` from Sparkle's tools, and keep that file in a password manager.
 

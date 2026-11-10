@@ -8,14 +8,17 @@ cd "$(dirname "$0")/.."
 REPO="${GITHUB_REPOSITORY:-romanbitca/oman-ai}"
 PACKAGES="build/packages"
 
-# Paths dragged into Terminal arrive with backslashes and a trailing space.
+# Paths dragged into Terminal arrive with backslashes or quotes, and a trailing space.
 clean_path() {
     local path="${1%% }"
     path="${path//\\/}"
+    path="${path#\'}"
+    path="${path%\'}"
     printf %s "${path/#\~/$HOME}"
 }
 
-if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
+IDENTITIES="$(security find-identity -v -p codesigning)"
+if ! grep -q "Developer ID Application" <<<"$IDENTITIES"; then
     echo "There is no Developer ID Application certificate in your keychain. See docs/RELEASING.md." >&2
     exit 1
 fi
@@ -28,6 +31,17 @@ read -r -p "App Store Connect Key ID: " NOTARY_KEY_ID
 read -r -p "App Store Connect Issuer ID: " NOTARY_ISSUER_ID
 P12_PATH="$(clean_path "$P12_PATH")"
 NOTARY_KEY_PATH="$(clean_path "$NOTARY_KEY_PATH")"
+for file in "$P12_PATH" "$NOTARY_KEY_PATH"; do
+    if [ ! -f "$file" ]; then
+        echo "Can't find $file" >&2
+        exit 1
+    fi
+done
+if ! openssl pkcs12 -in "$P12_PATH" -nokeys -passin "pass:$P12_PASSWORD" >/dev/null 2>&1 &&
+    ! openssl pkcs12 -legacy -in "$P12_PATH" -nokeys -passin "pass:$P12_PASSWORD" >/dev/null 2>&1; then
+    echo "That password doesn't open the .p12 file." >&2
+    exit 1
+fi
 
 xcodegen generate >/dev/null
 xcodebuild -resolvePackageDependencies -project Oman.xcodeproj -scheme Oman -clonedSourcePackagesDirPath "$PACKAGES" >/dev/null
