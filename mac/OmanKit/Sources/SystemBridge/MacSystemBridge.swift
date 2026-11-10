@@ -125,8 +125,11 @@ public final class MacSystemBridge: SystemBridging {
         pasteboard.setString(text, forType: .string)
     }
 
+    public var hasClipboardText: Bool { pasteboard.offersPlainText }
+
     public func clipboardText() -> String? {
-        SelectionComparison.nonBlank(pasteboard.string(forType: .string))
+        guard pasteboard.offersPlainText else { return nil }
+        return SelectionComparison.nonBlank(pasteboard.string(forType: .string))
     }
 
     // MARK: Screen

@@ -30,6 +30,7 @@ struct PixelSize: Equatable {
 enum WindowCapture {
     private static let maxLongEdgePixels = 1568
     private static let jpegQuality = 0.8
+    private static let smallestWindowEdge = 50.0
 
     static func captureFrontWindow(ofProcess processID: pid_t) async throws -> ScreenshotAttachment {
         guard CGPreflightScreenCaptureAccess() else { throw WindowCaptureError.permissionMissing }
@@ -73,13 +74,28 @@ enum WindowCapture {
         for window in windows {
             guard window["kCGWindowOwnerPID"] as? pid_t == ownerProcessID,
                   window["kCGWindowLayer"] as? Int == 0,
-                  let windowID = window["kCGWindowNumber"] as? CGWindowID
+                  let windowID = window["kCGWindowNumber"] as? CGWindowID,
+                  isWorthCapturing(window)
             else {
                 continue
             }
             return windowID
         }
         return nil
+    }
+
+    /// Apps keep invisible helper windows and small popups in front of the window being written in.
+    private static func isWorthCapturing(_ window: [String: Any]) -> Bool {
+        if let alpha = window["kCGWindowAlpha"] as? Double, alpha <= 0 {
+            return false
+        }
+        guard let bounds = window["kCGWindowBounds"] as? [String: Any],
+              let width = bounds["Width"] as? Double,
+              let height = bounds["Height"] as? Double
+        else {
+            return true
+        }
+        return width >= smallestWindowEdge && height >= smallestWindowEdge
     }
 
     static func scaledSize(width: Double, height: Double, maxLongEdge: Int) -> PixelSize {

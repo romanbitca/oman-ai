@@ -35,6 +35,13 @@ import Testing
         #expect(combo.isUsable)
     }
 
+    @Test func copyAndPasteAreRecognised() {
+        #expect(KeyCombo(keyCode: 8, modifiers: KeyCombo.command).isCopyOrPaste)
+        #expect(KeyCombo(keyCode: 9, modifiers: KeyCombo.command).isCopyOrPaste)
+        #expect(!KeyCombo(keyCode: 8, modifiers: KeyCombo.command | KeyCombo.shift).isCopyOrPaste)
+        #expect(!combo.isCopyOrPaste)
+    }
+
     @Test func comboIgnoresUnrelatedEventFlags() {
         let capsLock: UInt = 1 << 16
         #expect(KeyCombo(keyCode: 15, modifiers: combo.modifiers | capsLock) == combo)
@@ -66,6 +73,13 @@ import Testing
 
     @Test func globalShortcutsLeavePanelActionsOut() {
         var preferences = AppPreferences()
+        preferences.setCombo(combo, for: .rewrite)
+        #expect(preferences.globalShortcuts == [.rewrite: combo])
+    }
+
+    @Test func aSavedCopyOrPasteShortcutIsNeverRegistered() {
+        var preferences = AppPreferences()
+        preferences.setCombo(KeyCombo(keyCode: 8, modifiers: KeyCombo.command), for: .proofread)
         preferences.setCombo(combo, for: .rewrite)
         #expect(preferences.globalShortcuts == [.rewrite: combo])
     }
@@ -209,6 +223,20 @@ import Testing
         #expect(panel.selectedStyleID == nil)
     }
 
+    @Test func aShortcutRequestWaitsForTheDefaultScreen() async throws {
+        let harness = preparedHarness()
+        try setPreferences(harness) { $0.includesScreenByDefault = true }
+        let panel = harness.makePanel()
+        panel.begin(with: selection)
+        // This is what the menu bar does for a global shortcut: run the action straight after begin.
+        panel.run(.rewrite)
+        #expect(panel.screen == .working)
+
+        #expect(await eventually { panel.screen == .result })
+        #expect(harness.writing.requests.count == 1)
+        #expect(harness.writing.requests.first?.context.screenshot != nil)
+    }
+
     @Test func screenIsIncludedWhenThatIsTheDefault() async throws {
         let harness = preparedHarness()
         try setPreferences(harness) { $0.includesScreenByDefault = true }
@@ -299,6 +327,21 @@ import Testing
         #expect(settings.preferences.combo(for: .compose) == nil)
         #expect(settings.preferences.combo(for: .rewrite) == combo)
         #expect(settings.shortcutNotice == "\(combo.displayString) moved here from Compose.")
+    }
+
+    @Test func copyAndPasteCannotBecomeShortcuts() throws {
+        let harness = preparedHarness()
+        try setPreferences(harness) { $0.setCombo(combo, for: .compose) }
+        let settings = harness.makeSettings()
+        settings.reload()
+        settings.startRecording(.rewrite)
+        settings.finishRecording(with: KeyCombo(keyCode: 9, modifiers: KeyCombo.command))
+
+        #expect(settings.recordingAction == nil)
+        #expect(settings.preferences.combo(for: .rewrite) == nil)
+        #expect(settings.shortcutNotice == "⌘V is how OmanAI copies and pastes, so it can't be a shortcut.")
+        // Recording had suspended the shortcuts, so the saved ones come back.
+        #expect(harness.system.registered == [.compose: combo])
     }
 
     @Test func aRejectedShortcutIsReported() {

@@ -25,9 +25,17 @@ public protocol AppSettingsStore: Sendable {
 }
 
 public protocol APIKeyStore: Sendable {
+    /// Whether a key is saved, answered without reading the key itself where the store can.
+    func hasAPIKey() throws -> Bool
     func loadAPIKey() throws -> String?
     func saveAPIKey(_ key: String) throws
     func deleteAPIKey() throws
+}
+
+extension APIKeyStore {
+    public func hasAPIKey() throws -> Bool {
+        try loadAPIKey()?.isEmpty == false
+    }
 }
 
 @MainActor
@@ -45,6 +53,8 @@ public protocol SystemBridging: AnyObject {
     func replaceSelection(expected: String, with text: String, in app: SourceApp) async -> InsertOutcome
     func insertAtCursor(_ text: String, in app: SourceApp?) async -> InsertOutcome
     func copyToClipboard(_ text: String)
+    /// Whether the clipboard offers text, decided from its types alone so nothing is read until the person asks.
+    var hasClipboardText: Bool { get }
     func clipboardText() -> String?
     func captureWindow(of app: SourceApp) async throws -> ScreenshotAttachment
 

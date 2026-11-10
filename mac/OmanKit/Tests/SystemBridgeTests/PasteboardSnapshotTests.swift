@@ -100,6 +100,57 @@ import Testing
         }
     }
 
+    @Test func plainTextIsOfferedFromItsTypeAlone() {
+        withPasteboard { pasteboard in
+            pasteboard.clearContents()
+            #expect(pasteboard.offersPlainText == false)
+
+            pasteboard.setString("hello", forType: .string)
+            #expect(pasteboard.offersPlainText)
+
+            pasteboard.clearContents()
+            pasteboard.setData(Data([0x01]), forType: customType)
+            #expect(pasteboard.offersPlainText == false)
+        }
+    }
+
+    @Test func passwordManagerAndTransientTextIsNotOffered() {
+        withPasteboard { pasteboard in
+            let concealed = item(string: "hunter2")
+            concealed.setData(Data(), forType: NSPasteboard.concealedType)
+            pasteboard.clearContents()
+            pasteboard.writeObjects([concealed])
+            #expect(pasteboard.offersPlainText == false)
+
+            pasteboard.writeTransientString("passing through")
+            #expect(pasteboard.offersPlainText == false)
+        }
+    }
+
+    @Test func concealedMarkersAndFileCopiesSurviveARestore() {
+        withPasteboard { pasteboard in
+            let concealed = item(string: "hunter2")
+            concealed.setData(Data(), forType: NSPasteboard.concealedType)
+            pasteboard.clearContents()
+            pasteboard.writeObjects([concealed])
+            var snapshot = PasteboardSnapshot(of: pasteboard)
+            pasteboard.clearContents()
+            pasteboard.setString("the selection", forType: .string)
+            snapshot.restore(to: pasteboard)
+            #expect(pasteboard.types?.contains(NSPasteboard.concealedType) == true)
+            #expect(pasteboard.string(forType: .string) == "hunter2")
+
+            let file = URL(fileURLWithPath: "/tmp/example-report.pdf")
+            pasteboard.clearContents()
+            pasteboard.writeObjects([file as NSURL])
+            snapshot = PasteboardSnapshot(of: pasteboard)
+            pasteboard.clearContents()
+            pasteboard.setString("the selection", forType: .string)
+            snapshot.restore(to: pasteboard)
+            #expect(pasteboard.readObjects(forClasses: [NSURL.self]) as? [URL] == [file])
+        }
+    }
+
     @Test func transientWriteMarksTheItem() throws {
         try withPasteboard { pasteboard in
             pasteboard.writeTransientString("Привет")

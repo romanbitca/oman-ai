@@ -13,10 +13,10 @@ struct ContextSectionView: View {
                         model.setIncludeScreen(!model.includeScreen)
                     }
                 }
-                ContextChip(title: "Messages", symbol: "text.alignleft", isOn: model.isContextExpanded) {
+                ContextChip(title: "Messages", symbol: "text.alignleft", isOn: model.isContextChipOn) {
                     model.isContextExpanded.toggle()
                 }
-                if model.clipboardCandidate != nil {
+                if model.hasClipboardCandidate {
                     ContextChip(title: "Clipboard", symbol: "doc.on.clipboard", isOn: false) {
                         model.useClipboard()
                     }
@@ -90,12 +90,12 @@ private struct ScreenshotThumbnail: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             if let image = NSImage(data: screenshot.jpegData) {
+                // The whole picture, uncropped: this is exactly what will be sent.
                 Image(nsImage: image)
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 96)
+                    .aspectRatio(contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .frame(maxWidth: .infinity, maxHeight: 180)
             }
             PanelIconButton(symbol: "xmark.circle.fill", label: "Remove screenshot", action: onRemove)
                 .padding(3)

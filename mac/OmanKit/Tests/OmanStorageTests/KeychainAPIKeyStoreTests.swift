@@ -29,6 +29,17 @@ struct KeychainAPIKeyStoreTests {
         #expect(try store.loadAPIKey() == nil)
     }
 
+    @Test func hasAPIKeyFollowsWhatIsStored() throws {
+        let store = makeTemporaryStore()
+        defer { try? store.deleteAPIKey() }
+
+        #expect(try store.hasAPIKey() == false)
+        try store.saveAPIKey("a-test-value")
+        #expect(try store.hasAPIKey())
+        try store.deleteAPIKey()
+        #expect(try store.hasAPIKey() == false)
+    }
+
     @Test func deletingAnAbsentKeyDoesNotThrow() throws {
         let store = makeTemporaryStore()
 

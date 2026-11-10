@@ -49,7 +49,7 @@ public final class PanelViewModel {
     private(set) var includeScreen = false
     private(set) var screenshot: ScreenshotAttachment?
     private(set) var screenHint: String?
-    private(set) var clipboardCandidate: String?
+    private(set) var hasClipboardCandidate = false
 
     private(set) var draft = ""
     private(set) var notice: String?
@@ -90,7 +90,7 @@ public final class PanelViewModel {
         presenter?.setPanelPinned(isPinned)
         styles = (try? services.styles.loadStyles()) ?? []
         selectedStyleID = preselectedStyleID()
-        clipboardCandidate = services.system.clipboardText()
+        hasClipboardCandidate = services.system.hasClipboardText
         route()
         if preferences.includesScreenByDefault, !usesLocalModel, screen != .setup, capture.app != nil,
            services.system.isScreenCaptureGranted {
@@ -171,7 +171,7 @@ public final class PanelViewModel {
     }
 
     private func route() {
-        hasAPIKey = loadAPIKey() != nil
+        hasAPIKey = (try? services.apiKeys.hasAPIKey()) ?? false
         isAccessibilityGranted = services.system.isAccessibilityGranted
         guard isKeyStepDone, isAccessibilityGranted else {
             screen = .setup
@@ -290,11 +290,7 @@ public final class PanelViewModel {
     func rewrite() {
         guard let text = capture.text else { return }
         let typed = instruction.trimmed
-        start(
-            task: .rewrite(text: text, instruction: typed.isEmpty ? nil : typed),
-            style: selectedStyle,
-            context: currentContext
-        )
+        startWithContext(task: .rewrite(text: text, instruction: typed.isEmpty ? nil : typed), style: selectedStyle)
     }
 
     func chooseStyleAndRewrite(_ style: WritingStyle) {
@@ -312,11 +308,7 @@ public final class PanelViewModel {
     func compose() {
         let prompt = composePrompt.trimmed
         guard !prompt.isEmpty else { return }
-        start(
-            task: .compose(request: prompt, selectedText: capture.text),
-            style: selectedStyle,
-            context: currentContext
-        )
+        startWithContext(task: .compose(request: prompt, selectedText: capture.text), style: selectedStyle)
     }
 
     func tryAgain() {
@@ -349,6 +341,39 @@ public final class PanelViewModel {
         WritingContext(pastedText: contextText, screenshot: screenshot)
     }
 
+    /// Rewrite and Compose send the context. When the screen was asked for and its capture is still running,
+    /// the request waits for the picture instead of leaving without it.
+    private func startWithContext(task: WritingTask, style: WritingStyle?) {
+        guard includeScreen, screenshot == nil, let pendingCapture = screenTask else {
+            start(task: task, style: style, context: currentContext)
+            return
+        }
+        runningTask?.cancel()
+        rememberScreenBeforeRun()
+        notice = nil
+        errorMessage = nil
+        draft = ""
+        screen = .working
+        runningTask = Task { [weak self] in
+            await pendingCapture.value
+            guard let self, !Task.isCancelled else { return }
+            guard self.screenshot != nil else {
+                // The capture failed and says why beside the Screen chip, so go back there rather than send without it.
+                self.draft = self.draftBeforeRun
+                self.screen = self.screenBeforeRun
+                return
+            }
+            self.start(task: task, style: style, context: self.currentContext)
+        }
+    }
+
+    private func rememberScreenBeforeRun() {
+        if screen != .working, screen != .failed {
+            screenBeforeRun = screen
+            draftBeforeRun = draft
+        }
+    }
+
     private func start(task: WritingTask, style: WritingStyle?, context: WritingContext) {
         let model = (try? services.settings.selectedModel()) ?? .default
         perform(
@@ -371,10 +396,7 @@ public final class PanelViewModel {
         errorMessage = nil
         offersSettings = false
         showOriginal = false
-        if screen != .working, screen != .failed {
-            screenBeforeRun = screen
-            draftBeforeRun = draft
-        }
+        rememberScreenBeforeRun()
         guard let apiKey = request.model.isLocal ? "" : loadAPIKey() else {
             fail(with: WritingError.missingAPIKey)
             return
@@ -389,7 +411,7 @@ public final class PanelViewModel {
                     self.draft += delta
                 }
                 guard let self, !Task.isCancelled else { return }
-                self.screen = .result
+                self.showResult()
             } catch is CancellationError {
                 return
             } catch {
@@ -397,6 +419,20 @@ public final class PanelViewModel {
                 self.fail(with: error)
             }
         }
+    }
+
+    /// What the panel shows is exactly what Replace, Insert and Copy will deliver.
+    private func showResult() {
+        let cleaned = ResultCleaner.clean(draft, source: originalText)
+        guard !cleaned.text.trimmed.isEmpty else {
+            fail(with: WritingError.noOutput)
+            return
+        }
+        draft = cleaned.text
+        if cleaned.removedHiddenCharacters {
+            notice = "Hidden characters were removed from this result."
+        }
+        screen = .result
     }
 
     private func fail(with error: Error) {
@@ -516,10 +552,14 @@ public final class PanelViewModel {
         }
     }
 
+    /// The Messages chip stays lit while context will be sent, even with its editor closed.
+    var isContextChipOn: Bool { isContextExpanded || !contextText.trimmed.isEmpty }
+
+    /// The clipboard is only read here, when the person asks for it.
     func useClipboard() {
-        guard let text = clipboardCandidate else { return }
+        hasClipboardCandidate = false
+        guard let text = services.system.clipboardText() else { return }
         contextText = contextText.isEmpty ? text : contextText + "\n\n" + text
         isContextExpanded = true
-        clipboardCandidate = nil
     }
 }

@@ -24,24 +24,27 @@ struct WritingPreferencesTests {
     @Test func preferencesAppearInRewriteAndCompose() {
         for task in [WritingTask.rewrite(text: "hi", instruction: nil), .compose(request: "say hi", selectedText: nil)] {
             let text = PromptBuilder.userText(
-                for: WritingRequest(task: task, outputLanguage: "English", customInstructions: "No exclamation marks.")
+                for: WritingRequest(task: task, outputLanguage: "English", customInstructions: "No exclamation marks."),
+                code: "CODE"
             )
-            #expect(text.contains("<preferences>Write in English.\nNo exclamation marks.</preferences>"))
+            #expect(text.contains("<preferences-CODE>Write in English.\nNo exclamation marks.</preferences-CODE>"))
         }
     }
 
     @Test func proofreadIgnoresPreferences() {
         let text = PromptBuilder.userText(
-            for: WritingRequest(task: .proofread(text: "hi"), outputLanguage: "English", customInstructions: "Be brief.")
+            for: WritingRequest(task: .proofread(text: "hi"), outputLanguage: "English", customInstructions: "Be brief."),
+            code: "CODE"
         )
-        #expect(!text.contains("<preferences>"))
+        #expect(!text.contains("<preferences"))
     }
 
     @Test func blankPreferencesAddNothing() {
         let text = PromptBuilder.userText(
-            for: WritingRequest(task: .rewrite(text: "hi", instruction: nil), outputLanguage: "  ", customInstructions: "")
+            for: WritingRequest(task: .rewrite(text: "hi", instruction: nil), outputLanguage: "  ", customInstructions: ""),
+            code: "CODE"
         )
-        #expect(!text.contains("<preferences>"))
+        #expect(!text.contains("<preferences"))
     }
 
     @Test func preferencesStayOutOfTheCachedStyleBlock() {

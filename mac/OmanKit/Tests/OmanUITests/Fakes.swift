@@ -145,10 +145,20 @@ final class FakeKeys: APIKeyStore, @unchecked Sendable {
         self.key = key
     }
 
+    private var loadCount = 0
+
     var current: String? { lock.withLock { key } }
+    var loads: Int { lock.withLock { loadCount } }
+
+    func hasAPIKey() throws -> Bool {
+        lock.withLock { key?.isEmpty == false }
+    }
 
     func loadAPIKey() throws -> String? {
-        lock.withLock { key }
+        lock.withLock {
+            loadCount += 1
+            return key
+        }
     }
 
     func saveAPIKey(_ key: String) throws {
@@ -192,8 +202,15 @@ final class FakeSystem: SystemBridging {
         return insertOutcome
     }
 
+    var clipboardReads = 0
+
     func copyToClipboard(_ text: String) { copied.append(text) }
-    func clipboardText() -> String? { clipboard }
+    var hasClipboardText: Bool { clipboard != nil }
+
+    func clipboardText() -> String? {
+        clipboardReads += 1
+        return clipboard
+    }
 
     var appearance: AppearanceMode?
     var registered: [ShortcutAction: KeyCombo] = [:]

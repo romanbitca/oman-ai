@@ -39,6 +39,14 @@ struct PasteboardSnapshot {
 
 extension NSPasteboard {
     static let transientType = PasteboardType("org.nspasteboard.TransientType")
+    static let concealedType = PasteboardType("org.nspasteboard.ConcealedType")
+
+    /// Looks at the types only. Text that a password manager marked as concealed, or that is only passing
+    /// through, is not offered.
+    var offersPlainText: Bool {
+        guard let types, types.contains(.string) else { return false }
+        return !types.contains(Self.concealedType) && !types.contains(Self.transientType)
+    }
 
     /// Marked transient so clipboard history apps skip text that is only passing through.
     func writeTransientString(_ text: String) {

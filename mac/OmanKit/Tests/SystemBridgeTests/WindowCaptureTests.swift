@@ -52,6 +52,19 @@ import Testing
         #expect(WindowCapture.frontWindowID(in: windows, ownerProcessID: 42) == 300)
     }
 
+    @Test func invisibleAndTinyWindowsInFrontAreSkipped() {
+        var invisible = window(pid: 42, layer: 0, number: 300)
+        invisible["kCGWindowAlpha"] = NSNumber(value: 0.0)
+        var tooltip = window(pid: 42, layer: 0, number: 400)
+        tooltip["kCGWindowAlpha"] = NSNumber(value: 1.0)
+        tooltip["kCGWindowBounds"] = ["Width": NSNumber(value: 180), "Height": NSNumber(value: 22)]
+        var document = window(pid: 42, layer: 0, number: 500)
+        document["kCGWindowAlpha"] = NSNumber(value: 1.0)
+        document["kCGWindowBounds"] = ["Width": NSNumber(value: 1200), "Height": NSNumber(value: 800)]
+
+        #expect(WindowCapture.frontWindowID(in: [invisible, tooltip, document], ownerProcessID: 42) == 500)
+    }
+
     @Test func noWindowForTheProcessReturnsNil() {
         let windows = [window(pid: 7, layer: 0, number: 100), window(pid: 42, layer: 25, number: 200)]
         #expect(WindowCapture.frontWindowID(in: windows, ownerProcessID: 42) == nil)

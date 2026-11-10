@@ -45,7 +45,7 @@ public final class SettingsViewModel {
     }
 
     public func reload() {
-        hasAPIKey = loadAPIKey() != nil
+        hasAPIKey = (try? services.apiKeys.hasAPIKey()) ?? false
         apiKeyDraft = ""
         apiKeyError = nil
         selectedModel = (try? services.settings.selectedModel()) ?? .default
@@ -251,6 +251,11 @@ public final class SettingsViewModel {
     func finishRecording(with combo: KeyCombo) {
         guard let action = recordingAction else { return }
         recordingAction = nil
+        guard !combo.isCopyOrPaste else {
+            shortcutNotice = "\(combo.displayString) is how OmanAI copies and pastes, so it can't be a shortcut."
+            failedShortcuts = services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+            return
+        }
         assign(combo, to: action)
     }
 

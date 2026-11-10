@@ -95,12 +95,14 @@ public struct ClaudeClient: WritingService {
         try Task.checkCancellation()
 
         switch stopReason {
+        case "end_turn", "stop_sequence":
+            break
         case "refusal":
             throw WritingError.refused
-        case "max_tokens":
-            throw WritingError.truncated
         default:
-            break
+            // max_tokens, a reason this client doesn't know, or a response that ended before saying why it stopped.
+            // In each case the text so far is not a whole answer.
+            throw WritingError.truncated
         }
         if !yieldedText {
             throw WritingError.noOutput

@@ -38,6 +38,22 @@ public struct KeychainAPIKeyStore: APIKeyStore {
         ]
     }
 
+    public func hasAPIKey() throws -> Bool {
+        var query = itemQuery
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+        let status = SecItemCopyMatching(query as CFDictionary, nil)
+        switch status {
+        case errSecSuccess:
+            return true
+        case errSecItemNotFound:
+            return false
+        default:
+            throw KeychainStoreError.unexpectedStatus(status)
+        }
+    }
+
     public func loadAPIKey() throws -> String? {
         var query = itemQuery
         query[kSecReturnData as String] = true

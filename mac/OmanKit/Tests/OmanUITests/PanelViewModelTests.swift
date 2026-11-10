@@ -506,6 +506,43 @@ import Testing
         #expect(model.notice == "Copied")
     }
 
+    @Test func hiddenCharactersAreRemovedAndSaidSo() async throws {
+        let harness = Harness()
+        // "ok" followed by the invisible tag characters that spell "hi", then a trailing line break.
+        harness.writing.script(deltas: ["ok\u{E0068}\u{E0069}", " then\u{202E}\n"])
+        let model = await readyResult(harness)
+
+        #expect(model.draft == "ok then")
+        #expect(model.notice == "Hidden characters were removed from this result.")
+
+        model.applyResult()
+        await finish(model)
+        #expect(try #require(harness.system.replaceCalls.last).text == "ok then")
+    }
+
+    @Test func anOrdinaryResultHasNoNotice() async {
+        let harness = Harness()
+        let model = await readyResult(harness)
+        #expect(model.draft == "Hello world")
+        #expect(model.notice == nil)
+    }
+
+    @Test func aResultOfOnlyHiddenCharactersIsNoOutput() async {
+        let harness = Harness()
+        harness.writing.script(deltas: ["\u{E0068}\u{200B}\n"])
+        let model = await readyResult(harness)
+        #expect(model.screen == .failed)
+        #expect(model.errorMessage == WritingError.noOutput.localizedDescription)
+    }
+
+    @Test func aSetupCheckDoesNotReadTheKeyItself() {
+        let harness = Harness()
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        #expect(model.hasAPIKey)
+        #expect(harness.keys.loads == 0)
+    }
+
     @Test func showOriginalUsesSourceText() async {
         let harness = Harness()
         let model = await readyResult(harness)
@@ -519,19 +556,63 @@ import Testing
         harness.system.clipboard = "from clipboard"
         let model = harness.makePanel()
         model.begin(with: selection)
-        #expect(model.clipboardCandidate == "from clipboard")
+        #expect(model.hasClipboardCandidate)
         model.contextText = "typed"
         model.useClipboard()
         #expect(model.contextText == "typed\n\nfrom clipboard")
         #expect(model.isContextExpanded)
-        #expect(model.clipboardCandidate == nil)
+        #expect(model.hasClipboardCandidate == false)
     }
 
     @Test func noClipboardMeansNoCandidate() {
         let harness = Harness()
         let model = harness.makePanel()
         model.begin(with: selection)
-        #expect(model.clipboardCandidate == nil)
+        #expect(model.hasClipboardCandidate == false)
+    }
+
+    @Test func theClipboardIsNotReadUntilItIsAskedFor() {
+        let harness = Harness()
+        harness.system.clipboard = "a password, perhaps"
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        #expect(model.hasClipboardCandidate)
+        #expect(harness.system.clipboardReads == 0)
+
+        model.useClipboard()
+        #expect(harness.system.clipboardReads == 1)
+    }
+
+    @Test func aClipboardThatEmptiedSinceOpeningAddsNothing() {
+        let harness = Harness()
+        harness.system.clipboard = "from clipboard"
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        harness.system.clipboard = nil
+        model.useClipboard()
+        #expect(model.contextText.isEmpty)
+        #expect(model.isContextExpanded == false)
+        #expect(model.hasClipboardCandidate == false)
+    }
+
+    @Test func theMessagesChipStaysLitWhileHiddenContextWillBeSent() async throws {
+        let harness = Harness()
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        #expect(model.isContextChipOn == false)
+
+        model.isContextExpanded = true
+        model.contextText = "client said hi"
+        model.isContextExpanded = false
+        #expect(model.isContextChipOn)
+
+        model.rewrite()
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).context.pastedText == "client said hi")
+
+        model.goBack()
+        model.contextText = "  \n "
+        #expect(model.isContextChipOn == false)
     }
 
     @Test func includeScreenWhenGrantedAttachesScreenshot() async throws {
@@ -574,6 +655,62 @@ import Testing
         await model.screenTask?.value
         #expect(model.includeScreen == false)
         #expect(model.screenHint == "No window")
+    }
+
+    @Test func aRequestWaitsForAScreenCaptureThatIsStillRunning() async throws {
+        let harness = Harness()
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.setIncludeScreen(true)
+        #expect(model.screenshot == nil)
+
+        model.rewrite()
+        #expect(model.screen == .working)
+        #expect(harness.writing.requests.isEmpty)
+
+        #expect(await eventually { model.screen == .result })
+        #expect(harness.writing.requests.count == 1)
+        #expect(try #require(harness.writing.requests.last).context.screenshot == model.screenshot)
+        #expect(model.screenshot != nil)
+    }
+
+    @Test func aCaptureThatFailsDuringTheWaitSendsNothing() async {
+        let harness = Harness()
+        harness.system.screenshotResult = .failure(FakeFailure("No window"))
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.setIncludeScreen(true)
+        model.rewrite()
+        #expect(model.screen == .working)
+
+        #expect(await eventually { model.screen == .home })
+        #expect(harness.writing.requests.isEmpty)
+        #expect(model.includeScreen == false)
+        #expect(model.screenHint == "No window")
+    }
+
+    @Test func stoppingDuringTheWaitSendsNothing() async {
+        let harness = Harness()
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.setIncludeScreen(true)
+        model.rewrite()
+        let waiting = model.runningTask
+        model.stop()
+        await waiting?.value
+        #expect(model.screen == .home)
+        #expect(harness.writing.requests.isEmpty)
+    }
+
+    @Test func proofreadDoesNotWaitForTheScreen() {
+        let harness = Harness()
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.setIncludeScreen(true)
+        model.proofread()
+        #expect(harness.writing.requests.count == 1)
+        #expect(harness.writing.requests.last?.context.screenshot == nil)
+        model.panelDidClose()
     }
 
     @Test func includeScreenIsOffAfterBegin() async {

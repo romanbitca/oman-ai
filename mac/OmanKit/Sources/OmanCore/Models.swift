@@ -209,6 +209,12 @@ public struct KeyCombo: Codable, Hashable, Sendable {
         modifiers & (Self.command | Self.option | Self.control) != 0 || Self.functionKeyCodes.contains(keyCode)
     }
 
+    /// ⌘C and ⌘V are the keys OmanAI itself presses to read and replace a selection.
+    /// As a shortcut, either one would be set off by OmanAI's own key presses.
+    public var isCopyOrPaste: Bool {
+        modifiers == Self.command && (keyCode == 8 || keyCode == 9)
+    }
+
     public var displayString: String {
         var text = ""
         if modifiers & Self.control != 0 { text += "⌃" }
@@ -324,7 +330,7 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var globalShortcuts: [ShortcutAction: KeyCombo] {
         var result: [ShortcutAction: KeyCombo] = [:]
         for (key, combo) in shortcuts {
-            if let action = ShortcutAction(storageKey: key), action.isGlobal {
+            if let action = ShortcutAction(storageKey: key), action.isGlobal, !combo.isCopyOrPaste {
                 result[action] = combo
             }
         }

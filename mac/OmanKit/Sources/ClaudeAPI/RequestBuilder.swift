@@ -22,7 +22,7 @@ enum RequestBuilder {
             stream: true,
             outputConfig: OutputConfig(effort: request.quality.effort),
             system: PromptBuilder.systemBlocks(for: request),
-            messages: [UserMessage(content: PromptBuilder.userContent(for: request))],
+            messages: [UserMessage(content: PromptBuilder.userContent(for: request, code: PromptBuilder.makeTagCode()))],
             fallbacks: usesFallback ? "default" : nil
         )
 
