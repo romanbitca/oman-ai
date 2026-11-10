@@ -12,6 +12,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
     private var outsideClickMonitor: Any?
+    private var panelSizeObservation: NSKeyValueObservation?
     private var isPinned = false
 
     init(services: AppServices) {
@@ -20,9 +21,13 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
         let model = PanelViewModel(services: services, presenter: self)
         panelModel = model
-        let hostingView = NSHostingView(rootView: PanelRootView(model: model))
-        hostingView.sizingOptions = [.intrinsicContentSize]
-        panel.contentView = hostingView
+        let controller = NSHostingController(rootView: PanelRootView(model: model))
+        controller.sizingOptions = [.preferredContentSize]
+        panel.contentViewController = controller
+        panelSizeObservation = controller.observe(\.preferredContentSize, options: [.new]) { [weak self] _, change in
+            guard let size = change.newValue else { return }
+            Task { @MainActor in self?.resizePanel(to: size) }
+        }
         panel.onEscape = { [weak self] in self?.dismissPanel() }
 
         if let button = statusItem.button {
@@ -72,14 +77,27 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     }
 
     private func positionPanel() {
-        guard let button = statusItem.button, let buttonWindow = button.window else { return }
-        let buttonRect = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
-        guard let visible = (buttonWindow.screen ?? NSScreen.main)?.visibleFrame else { return }
+        guard let buttonRect = statusButtonScreenRect(),
+              let visible = (statusItem.button?.window?.screen ?? NSScreen.main)?.visibleFrame
+        else { return }
 
         let width = panel.frame.width
         let margin: CGFloat = 8
         let x = min(max(buttonRect.midX - width / 2, visible.minX + margin), visible.maxX - width - margin)
         panel.setFrameTopLeftPoint(NSPoint(x: x, y: buttonRect.minY - 6))
+    }
+
+    private func statusButtonScreenRect() -> NSRect? {
+        guard let button = statusItem.button, let window = button.window else { return nil }
+        return window.convertToScreen(button.convert(button.bounds, to: nil))
+    }
+
+    private func resizePanel(to size: NSSize) {
+        guard size.width > 0, size.height > 0 else { return }
+        var frame = panel.frame
+        frame.origin.y = frame.maxY - size.height
+        frame.size = size
+        panel.setFrame(frame, display: true)
     }
 
     private func startWatchingOutsideClicks() {
@@ -89,6 +107,8 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, !self.isPinned else { return }
+                // The system hosts the icon's window, so its own clicks arrive here too. Closing now would make the icon's action reopen the panel.
+                if self.statusButtonScreenRect()?.contains(NSEvent.mouseLocation) == true { return }
                 self.dismissPanel()
             }
         }
