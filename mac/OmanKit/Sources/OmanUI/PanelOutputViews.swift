@@ -5,28 +5,36 @@ struct PanelWorkingView: View {
     private let endID = "end"
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: PanelMetrics.gap) {
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(model.draft.isEmpty ? " " : model.draft)
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
+                            .lineSpacing(2)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Color.clear.frame(height: 1).id(endID)
                     }
+                    .padding(15)
                 }
+                .scrollIndicators(.never)
                 .scrollBounceBehavior(.basedOnSize)
-                .frame(maxHeight: 300)
+                .frame(minHeight: 84, maxHeight: 340)
+                .fixedSize(horizontal: false, vertical: true)
+                .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
+                .overlay { LiquidGlow(shape: PanelShape.tile) }
                 .onChange(of: model.draft) {
                     proxy.scrollTo(endID, anchor: .bottom)
                 }
             }
 
             HStack(spacing: 8) {
-                ProgressView().controlSize(.small)
-                Text("Writing…").font(.caption).foregroundStyle(.secondary)
+                Text("Writing…")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 6)
                 Spacer()
-                Button("Stop") { model.stop() }
+                LiquidButton(title: "Stop", symbol: "stop.fill") { model.stop() }
             }
         }
     }
@@ -36,43 +44,60 @@ struct PanelResultView: View {
     @Bindable var model: PanelViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                PanelIconButton(symbol: "chevron.left", label: "Back") { model.goBack() }
-                if model.originalText != nil {
-                    Toggle("Show original", isOn: $model.showOriginal)
-                        .toggleStyle(.switch)
-                        .controlSize(.mini)
-                        .font(.caption)
-                }
-                Spacer(minLength: 0)
-                PanelHeaderButtons(model: model)
-            }
+        VStack(alignment: .leading, spacing: PanelMetrics.gap) {
+            GlassTile(id: LiquidID.header, padding: 10) { header }
 
             ScrollView(.vertical) {
                 Text(displayedText)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
+                    .lineSpacing(2)
+                    .foregroundStyle(model.showOriginal ? .secondary : .primary)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(15)
+                    .contentTransition(.opacity)
             }
+            .scrollIndicators(.never)
             .scrollBounceBehavior(.basedOnSize)
-            .frame(maxHeight: 260)
+            .frame(minHeight: 60, maxHeight: 300)
+            .fixedSize(horizontal: false, vertical: true)
+            .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
+            .animation(.easeOut(duration: 0.18), value: model.showOriginal)
 
             if let notice = model.notice {
-                NoticeText(text: notice)
+                NoticeText(text: notice).padding(.horizontal, 6)
             }
 
-            HStack(spacing: 8) {
-                Button(model.primaryActionTitle) { model.applyResult() }
-                    .buttonStyle(.borderedProminent)
+            HStack(spacing: PanelMetrics.gap) {
+                LiquidButton(title: model.primaryActionTitle, prominent: true) { model.applyResult() }
                     .disabled(!model.canApplyResult)
-                Button("Copy") { model.copyResult() }
-                Button("Try again") { model.tryAgain() }
+                LiquidButton(title: "Copy", symbol: "doc.on.doc") { model.copyResult() }
+                LiquidButton(title: "Try again", symbol: "arrow.trianglehead.2.clockwise") { model.tryAgain() }
             }
+            .labelStyle(.titleOnly)
 
-            PanelInputField(symbol: "pencil", prompt: "Make a change…", text: $model.adjustment) {
+            PanelInputField(symbol: "sparkle", prompt: "Make a change…", text: $model.adjustment) {
                 model.applyAdjustment()
             }
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 6) {
+            PanelIconButton(symbol: "chevron.left", label: "Back") { model.goBack() }
+            if model.originalText != nil {
+                Button {
+                    model.showOriginal.toggle()
+                } label: {
+                    Text(model.showOriginal ? "Show result" : "Show original")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(LiquidPressStyle())
+            }
+            Spacer(minLength: 0)
+            PanelHeaderButtons(model: model)
         }
     }
 
@@ -88,17 +113,19 @@ struct PanelFailedView: View {
     let model: PanelViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(model.errorMessage ?? "Something went wrong.", systemImage: "exclamationmark.triangle")
-                .font(.system(size: 13))
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: PanelMetrics.gap) {
+            GlassTile(id: LiquidID.body) {
+                Label(model.errorMessage ?? "Something went wrong.", systemImage: "exclamationmark.triangle.fill")
+                    .symbolRenderingMode(.multicolor)
+                    .font(.system(size: 13))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-            HStack(spacing: 8) {
-                Button("Try again") { model.retryFailed() }
-                    .buttonStyle(.borderedProminent)
-                Button("Back") { model.goBack() }
+            HStack(spacing: PanelMetrics.gap) {
+                LiquidButton(title: "Try again", prominent: true) { model.retryFailed() }
+                LiquidButton(title: "Back") { model.goBack() }
                 if model.offersSettings {
-                    Button("Open Settings") { model.openSettings() }
+                    LiquidButton(title: "Open Settings") { model.openSettings() }
                 }
             }
         }

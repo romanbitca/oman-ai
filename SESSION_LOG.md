@@ -13,7 +13,9 @@ Date-stamped log of what each work session accomplished.
 - Not verified yet, because it needs the user's Accessibility grant and API key: selection capture and paste in real apps, typing in the panel, a live Claude request, real mouse clicks on the icon. W1 to W5 stay [IN PROGRESS] until those pass
 - Fixed after the user's first try: Cmd+V did nothing in text fields, because a menu-bar-only app has no Edit menu. Added one for the Settings window, and direct handling of editing shortcuts in the non-activating panel, including non-Latin keyboard layouts
 - oman did not appear in the Accessibility list because the build ran from a temporary folder. Installed a signed Release build to `/Applications/oman.app`
-- Next: the user grants Accessibility, then W1 acceptance in Slack, Telegram, Mail and Gmail
+- Liquid Glass pass: the panel is now floating glass tiles in a fixed transparent window so shapes can morph, and Settings moved to a sidebar. Minimum OS stays macOS 14 with a material fallback. Layout checked offscreen and 145 tests pass, but real glass rendering has not been seen, because this session has no Screen Recording permission. The user is taking the design to Claude Design
+- Signing: no Developer ID certificate on this Mac. The only paid team in Xcode belonged to a different account, and Xcode's login for it was rejected. The user needs to confirm which account signs
+- Next: design from Claude Design, then signing, then push to `romanbitca/oman-ai` with the romanbitca account
 
 ## 2026-04-28 — Project bootstrap
 

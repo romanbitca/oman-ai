@@ -1,32 +1,55 @@
+import AppKit
 import OmanCore
 import SwiftUI
 
 enum PanelMetrics {
     static let width: CGFloat = 360
-    static let padding: CGFloat = 14
-    static let maxHeight: CGFloat = 560
-    static let contentMaxHeight: CGFloat = maxHeight - padding * 2
+    static let gap: CGFloat = 8
+    /// Below `gap`, so tiles stay separate at rest and only flow together while they move.
+    static let blend: CGFloat = 6
+    static let sideMargin: CGFloat = 18
+    static let bottomMargin: CGFloat = 24
+    static let maxHeight: CGFloat = 640
+    static let tileRadius: CGFloat = 22
+}
+
+enum PanelShape {
+    static let tile = RoundedRectangle(cornerRadius: PanelMetrics.tileRadius, style: .continuous)
+}
+
+/// Morph identities shared between screens, so one tile flows into the next.
+enum LiquidID {
+    static let header = "header"
+    static let body = "body"
+    static let input = "input"
+    static let actions = "actions"
 }
 
 struct PanelScrollArea<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        ScrollView(.vertical) {
+        ViewThatFits(in: .vertical) {
             content.frame(maxWidth: .infinity, alignment: .leading)
+            ScrollView(.vertical) {
+                content.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollIndicators(.never)
+            .scrollClipDisabled()
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .frame(maxHeight: PanelMetrics.contentMaxHeight)
     }
 }
 
-struct PanelCardButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(
-                Color.primary.opacity(configuration.isPressed ? 0.16 : 0.07),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
+struct GlassTile<Content: View>: View {
+    var id: String?
+    var padding: CGFloat = 13
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .liquidGlass(in: PanelShape.tile, id: id)
     }
 }
 
@@ -34,17 +57,23 @@ struct ActionCard: View {
     let title: String
     let symbol: String
     let action: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: symbol).font(.system(size: 20))
-                Text(title).font(.system(size: 13, weight: .medium))
+            VStack(spacing: 7) {
+                Image(systemName: symbol)
+                    .font(.system(size: 21, weight: .regular))
+                    .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.bounce, value: isHovering)
+                Text(title).font(.system(size: 13, weight: .semibold))
             }
-            .frame(maxWidth: .infinity, minHeight: 74)
-            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: 80)
+            .contentShape(PanelShape.tile)
+            .liquidGlass(in: PanelShape.tile, interactive: true)
         }
-        .buttonStyle(PanelCardButtonStyle())
+        .buttonStyle(LiquidPressStyle())
+        .onHover { isHovering = $0 }
     }
 }
 
@@ -52,18 +81,23 @@ struct PanelIconButton: View {
     let symbol: String
     let label: String
     let action: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 13))
-                .frame(width: 22, height: 22)
-                .contentShape(Rectangle())
+                .font(.system(size: 12, weight: .medium))
+                .frame(width: 26, height: 26)
+                .background(Color.primary.opacity(isHovering ? 0.12 : 0), in: Circle())
+                .contentShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(LiquidPressStyle())
         .foregroundStyle(.secondary)
         .help(label)
         .accessibilityLabel(label)
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.14)) { isHovering = hovering }
+        }
     }
 }
 
@@ -71,7 +105,7 @@ struct PanelHeaderButtons: View {
     let model: PanelViewModel
 
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 0) {
             PanelIconButton(
                 symbol: model.isPinned ? "pin.fill" : "pin",
                 label: model.isPinned ? "Unpin panel" : "Pin panel"
@@ -85,23 +119,52 @@ struct PanelHeaderButtons: View {
     }
 }
 
+struct SourceAppIcon: View {
+    let bundleID: String?
+
+    var body: some View {
+        if let image {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 20, height: 20)
+        }
+    }
+
+    private var image: NSImage? {
+        guard let bundleID,
+              let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        else { return nil }
+        return NSWorkspace.shared.icon(forFile: url.path)
+    }
+}
+
 struct PanelInputField: View {
     let symbol: String
     let prompt: String
     @Binding var text: String
+    var id: String? = LiquidID.input
     let onSubmit: () -> Void
+    @FocusState private var isFocused: Bool
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: symbol).foregroundStyle(.secondary)
+        HStack(spacing: 9) {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isFocused ? AnyShapeStyle(Liquid.accent) : AnyShapeStyle(.secondary))
             TextField(prompt, text: $text)
                 .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .focused($isFocused)
                 .focusEffectDisabled()
                 .onSubmit(onSubmit)
         }
-        .padding(.horizontal, 12)
-        .frame(height: 36)
-        .background(Color.primary.opacity(0.07), in: Capsule())
+        .padding(.horizontal, 15)
+        .frame(height: 42)
+        .contentShape(Capsule())
+        .onTapGesture { isFocused = true }
+        .liquidGlass(in: Capsule(), id: id)
+        .animation(.easeOut(duration: 0.16), value: isFocused)
     }
 }
 
@@ -125,35 +188,33 @@ struct StyleChipsView: View {
     var body: some View {
         FlowLayout(spacing: 6) {
             if styles.isEmpty {
-                Button(action: onCreate) {
-                    chipLabel(title: "Create a style", symbol: "plus", isSelected: false)
-                }
-                .buttonStyle(.plain)
+                chip(title: "Create a style", symbol: "plus", isSelected: false, action: onCreate)
             } else {
                 ForEach(styles) { style in
-                    Button {
+                    chip(title: style.displayName, symbol: nil, isSelected: style.id == selectedID) {
                         onSelect(style)
-                    } label: {
-                        chipLabel(title: style.displayName, symbol: nil, isSelected: style.id == selectedID)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
+        .animation(Liquid.press, value: selectedID)
     }
 
-    private func chipLabel(title: String, symbol: String?, isSelected: Bool) -> some View {
-        HStack(spacing: 4) {
-            if let symbol {
-                Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
+    private func chip(title: String, symbol: String?, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if let symbol {
+                    Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
+                }
+                Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
             }
-            Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
+            .padding(.horizontal, 13)
+            .frame(height: 32)
+            .foregroundStyle(isSelected ? Color.white : Color.primary)
+            .contentShape(Capsule())
+            .liquidGlass(in: Capsule(), tint: isSelected ? Liquid.accent : nil, interactive: true)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .foregroundStyle(isSelected ? Color.white : Color.primary)
-        .background(isSelected ? Color.accentColor : Color.primary.opacity(0.07), in: Capsule())
-        .contentShape(Capsule())
+        .buttonStyle(LiquidPressStyle())
     }
 }
 

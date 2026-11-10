@@ -32,6 +32,7 @@ macOS records the permission request, but the lookup by bundle ID fails (`kLSApp
 
 - Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.
 - `swift test` builds every test target, so concurrent module work needs separate worktrees or one module's half-written code breaks the others.
+- Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
 - The computer-use tools can't see oman because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "oman"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---

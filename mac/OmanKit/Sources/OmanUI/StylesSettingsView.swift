@@ -1,131 +1,119 @@
 import OmanCore
 import SwiftUI
 
-struct StylesSettingsView: View {
-    @Bindable var model: SettingsViewModel
-
-    var body: some View {
-        HStack(spacing: 0) {
-            sidebar.frame(width: 200)
-            Divider()
-            if let style = model.selectedStyle {
-                StyleEditorView(model: model, style: style)
-                    .id(style.id)
-            } else {
-                Text("Create a style from your own messages.")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-    }
-
-    private var sidebar: some View {
-        VStack(spacing: 0) {
-            List(selection: Binding(get: { model.selectedStyleID }, set: { model.selectStyle($0) })) {
-                ForEach(model.styles) { style in
-                    Text(style.displayName).tag(style.id)
-                }
-            }
-            Divider()
-            HStack(spacing: 8) {
-                Button("New") { model.createStyle() }
-                Button("Delete") { model.deleteSelectedStyle() }
-                    .disabled(model.selectedStyle == nil)
-                Spacer()
-            }
-            .padding(8)
-        }
-    }
-}
-
-private struct StyleEditorView: View {
+struct StyleEditorView: View {
     @Bindable var model: SettingsViewModel
     let style: WritingStyle
 
+    private let card = RoundedRectangle(cornerRadius: 14, style: .continuous)
+
     var body: some View {
         ScrollView(.vertical) {
-            VStack(alignment: .leading, spacing: 14) {
-                TextField(
-                    "Name",
-                    text: Binding(get: { style.name }, set: { model.updateName($0) })
-                )
-                .textFieldStyle(.roundedBorder)
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    TextField("Name", text: Binding(get: { style.name }, set: { model.updateName($0) }))
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 24, weight: .semibold))
 
-                TextField(
-                    "Note, for example: no emoji with clients",
-                    text: Binding(get: { style.note }, set: { model.updateNote($0) })
-                )
-                .textFieldStyle(.roundedBorder)
+                    TextField(
+                        "Note, for example: no emoji with clients",
+                        text: Binding(get: { style.note }, set: { model.updateNote($0) })
+                    )
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                }
 
                 samplesSection
-                Divider()
                 tryItSection
 
                 if let error = model.styleError {
                     NoticeText(text: error)
                 }
             }
-            .padding(16)
+            .padding(24)
         }
+        .scrollIndicators(.automatic)
     }
 
     private var samplesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Samples").font(.headline)
-            Text("\(model.sampleSummary). Five or more samples work best.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Samples").font(.system(size: 15, weight: .semibold))
+                Spacer()
+                Text("\(model.sampleSummary). Five or more work best.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             ForEach(style.samples) { sample in
                 HStack(alignment: .top, spacing: 8) {
                     Text(sample.text)
-                        .font(.system(size: 12))
+                        .font(.system(size: 13))
                         .lineLimit(4)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    PanelIconButton(symbol: "xmark.circle.fill", label: "Remove sample") {
+                    PanelIconButton(symbol: "xmark", label: "Remove sample") {
                         model.removeSample(id: sample.id)
                     }
                 }
-                .padding(8)
-                .background(
-                    Color.primary.opacity(0.06),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                )
+                .padding(.leading, 13)
+                .padding(.trailing, 6)
+                .padding(.vertical, 8)
+                .background(Color.primary.opacity(0.05), in: card)
             }
 
-            TextEditor(text: $model.newSampleText)
-                .font(.system(size: 12))
-                .scrollContentBackground(.hidden)
-                .frame(height: 90)
-                .padding(4)
-                .background(
-                    Color.primary.opacity(0.06),
-                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                )
+            VStack(alignment: .trailing, spacing: 8) {
+                TextEditor(text: $model.newSampleText)
+                    .font(.system(size: 13))
+                    .scrollContentBackground(.hidden)
+                    .focusEffectDisabled()
+                    .frame(height: 96)
+                    .overlay(alignment: .topLeading) {
+                        if model.newSampleText.isEmpty {
+                            Text("Paste a real message you wrote")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.tertiary)
+                                .padding(.leading, 5)
+                                .allowsHitTesting(false)
+                        }
+                    }
 
-            Button("Add sample") { model.addSample() }
-                .disabled(model.newSampleText.trimmed.isEmpty)
+                LiquidButton(title: "Add sample", symbol: "plus", prominent: true) { model.addSample() }
+                    .disabled(model.newSampleText.trimmed.isEmpty)
+            }
+            .padding(11)
+            .background(Color.primary.opacity(0.05), in: card)
         }
     }
 
     private var tryItSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Try it").font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Try it").font(.system(size: 15, weight: .semibold))
+
             HStack(spacing: 8) {
                 TextField("Type a sentence to rewrite in this style", text: $model.tryItText)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .focusEffectDisabled()
+                    .font(.system(size: 13))
+                    .padding(.horizontal, 13)
+                    .frame(height: 38)
+                    .background(Color.primary.opacity(0.05), in: Capsule())
                     .onSubmit { model.tryIt() }
-                Button("Try") { model.tryIt() }
+                LiquidButton(title: "Try") { model.tryIt() }
                     .disabled(model.tryItText.trimmed.isEmpty || model.isTrying)
             }
+
             if model.isTrying {
                 ProgressView().controlSize(.small)
             }
             if !model.tryItResult.isEmpty {
                 Text(model.tryItResult)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
+                    .lineSpacing(2)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(13)
+                    .background(Color.primary.opacity(0.05), in: card)
             }
             if let error = model.tryItError {
                 NoticeText(text: error)

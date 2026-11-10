@@ -19,7 +19,8 @@ final class FloatingPanel: NSPanel {
         isReleasedWhenClosed = false
         isOpaque = false
         backgroundColor = .clear
-        hasShadow = true
+        // A window shadow would freeze the outline of glass that is still reshaping.
+        hasShadow = false
     }
 
     override var canBecomeKey: Bool { true }

@@ -12,7 +12,6 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
     private var outsideClickMonitor: Any?
-    private var panelSizeObservation: NSKeyValueObservation?
     private var isPinned = false
 
     init(services: AppServices) {
@@ -21,13 +20,10 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
         let model = PanelViewModel(services: services, presenter: self)
         panelModel = model
-        let controller = NSHostingController(rootView: PanelRootView(model: model))
-        controller.sizingOptions = [.preferredContentSize]
-        panel.contentViewController = controller
-        panelSizeObservation = controller.observe(\.preferredContentSize, options: [.new]) { [weak self] _, change in
-            guard let size = change.newValue else { return }
-            Task { @MainActor in self?.resizePanel(to: size) }
-        }
+        let hostingView = NSHostingView(rootView: PanelRootView(model: model))
+        hostingView.sizingOptions = []
+        panel.setContentSize(PanelRootView.windowSize)
+        panel.contentView = hostingView
         panel.onEscape = { [weak self] in self?.dismissPanel() }
 
         if let button = statusItem.button {
@@ -82,22 +78,15 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         else { return }
 
         let width = panel.frame.width
-        let margin: CGFloat = 8
-        let x = min(max(buttonRect.midX - width / 2, visible.minX + margin), visible.maxX - width - margin)
-        panel.setFrameTopLeftPoint(NSPoint(x: x, y: buttonRect.minY - 6))
+        // The window's own side margins are transparent, so they may hang off the screen edge.
+        let inset: CGFloat = 8 - PanelRootView.windowSideMargin
+        let x = min(max(buttonRect.midX - width / 2, visible.minX + inset), visible.maxX - width - inset)
+        panel.setFrameTopLeftPoint(NSPoint(x: x, y: buttonRect.minY - 5))
     }
 
     private func statusButtonScreenRect() -> NSRect? {
         guard let button = statusItem.button, let window = button.window else { return nil }
         return window.convertToScreen(button.convert(button.bounds, to: nil))
-    }
-
-    private func resizePanel(to size: NSSize) {
-        guard size.width > 0, size.height > 0 else { return }
-        var frame = panel.frame
-        frame.origin.y = frame.maxY - size.height
-        frame.size = size
-        panel.setFrame(frame, display: true)
     }
 
     private func startWatchingOutsideClicks() {

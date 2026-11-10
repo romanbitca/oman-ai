@@ -6,23 +6,25 @@ struct PanelComposeView: View {
 
     var body: some View {
         PanelScrollArea {
-            VStack(alignment: .leading, spacing: 12) {
-                header
+            VStack(alignment: .leading, spacing: PanelMetrics.gap) {
+                GlassTile(id: LiquidID.header, padding: 10) { header }
 
                 TextField("What do you want to write?", text: $model.composePrompt, axis: .vertical)
-                    .lineLimit(3...8)
+                    .lineLimit(4...9)
                     .textFieldStyle(.plain)
+                    .font(.system(size: 14))
                     .focused($isPromptFocused)
                     .focusEffectDisabled()
                     .onSubmit { model.compose() }
-                    .padding(10)
-                    .background(
-                        Color.primary.opacity(0.07),
-                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    )
+                    .padding(15)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(PanelShape.tile)
+                    .onTapGesture { isPromptFocused = true }
+                    .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
 
                 if model.capture.text != nil {
                     NoticeText(text: "Using your selected text as reference")
+                        .padding(.horizontal, 6)
                 }
 
                 StyleChipsView(
@@ -36,8 +38,7 @@ struct PanelComposeView: View {
 
                 HStack {
                     Spacer()
-                    Button("Write") { model.compose() }
-                        .buttonStyle(.borderedProminent)
+                    LiquidButton(title: "Write", symbol: "arrow.up", prominent: true) { model.compose() }
                         .disabled(!model.canCompose)
                 }
             }
@@ -50,10 +51,11 @@ struct PanelComposeView: View {
             if model.canGoBackFromCompose {
                 PanelIconButton(symbol: "chevron.left", label: "Back") { model.backToHome() }
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Compose").font(.headline)
+            SourceAppIcon(bundleID: model.capture.app?.bundleID)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Compose").font(.system(size: 13, weight: .semibold))
                 if let name = model.sourceAppName {
-                    Text(name).font(.caption).foregroundStyle(.secondary)
+                    Text(name).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 0)

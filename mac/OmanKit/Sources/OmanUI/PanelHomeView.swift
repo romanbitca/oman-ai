@@ -5,16 +5,16 @@ struct PanelHomeView: View {
 
     var body: some View {
         PanelScrollArea {
-            VStack(alignment: .leading, spacing: 12) {
-                header
+            VStack(alignment: .leading, spacing: PanelMetrics.gap) {
+                GlassTile(id: LiquidID.header) { header }
 
-                PanelInputField(symbol: "sparkles", prompt: "Describe your change", text: $model.instruction) {
+                PanelInputField(symbol: "sparkle", prompt: "Describe your change", text: $model.instruction) {
                     model.rewrite()
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: PanelMetrics.gap) {
                     ActionCard(title: "Proofread", symbol: "text.magnifyingglass") { model.proofread() }
-                    ActionCard(title: "Rewrite", symbol: "arrow.triangle.2.circlepath") { model.rewrite() }
+                    ActionCard(title: "Rewrite", symbol: "arrow.trianglehead.2.clockwise") { model.rewrite() }
                 }
 
                 StyleChipsView(
@@ -26,38 +26,47 @@ struct PanelHomeView: View {
 
                 ContextSectionView(model: model)
 
-                Divider()
-
-                Button {
-                    model.openCompose()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "pencil")
-                        Text("Compose").font(.system(size: 13, weight: .medium))
-                        Spacer()
-                        Image(systemName: "chevron.right").foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 12)
-                    .frame(height: 38)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(PanelCardButtonStyle())
+                composeRow
             }
         }
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .top, spacing: 9) {
+            SourceAppIcon(bundleID: model.capture.app?.bundleID)
+                .padding(.top, 1)
+            VStack(alignment: .leading, spacing: 3) {
                 if let name = model.sourceAppName {
-                    Text(name).font(.caption).foregroundStyle(.secondary)
+                    Text(name).font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                 }
                 Text(model.capture.text ?? "")
-                    .font(.system(size: 12))
+                    .font(.system(size: 13))
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
             PanelHeaderButtons(model: model)
+                .padding(.top, -3)
+                .padding(.trailing, -3)
         }
+    }
+
+    private var composeRow: some View {
+        Button {
+            model.openCompose()
+        } label: {
+            HStack(spacing: 9) {
+                Image(systemName: "square.and.pencil").font(.system(size: 13, weight: .medium))
+                Text("Compose").font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 15)
+            .frame(height: 42)
+            .contentShape(Capsule())
+            .liquidGlass(in: Capsule(), interactive: true, id: LiquidID.actions)
+        }
+        .buttonStyle(LiquidPressStyle())
     }
 }
