@@ -1,24 +1,193 @@
 import Foundation
+import GRDB
 import OmanCore
 
-public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
-    public static func openDefault() throws -> OmanDatabase { OmanDatabase() }
+enum OmanDatabaseError: LocalizedError, Equatable {
+    case invalidIdentifier(String)
 
-    private init() {}
-
-    public func loadStyles() throws -> [WritingStyle] { [] }
-    public func save(_ style: WritingStyle) throws {}
-    public func deleteStyle(id: UUID) throws {}
-    public func lastStyleID(forBundleID bundleID: String) throws -> UUID? { nil }
-    public func setLastStyleID(_ id: UUID?, forBundleID bundleID: String) throws {}
-    public func selectedModel() throws -> ClaudeModel { .default }
-    public func setSelectedModel(_ model: ClaudeModel) throws {}
+    var errorDescription: String? {
+        switch self {
+        case .invalidIdentifier(let value):
+            "The database contains an invalid identifier: \(value)"
+        }
+    }
 }
 
-public struct KeychainAPIKeyStore: APIKeyStore {
-    public init() {}
+public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
+    private static let selectedModelKey = "selected_model"
 
-    public func loadAPIKey() throws -> String? { nil }
-    public func saveAPIKey(_ key: String) throws {}
-    public func deleteAPIKey() throws {}
+    let writer: any DatabaseWriter
+    private let now: @Sendable () -> Date
+
+    public static func openDefault() throws -> OmanDatabase {
+        let applicationSupport = try FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        return try open(inDirectory: applicationSupport.appendingPathComponent("oman", isDirectory: true))
+    }
+
+    static func open(
+        inDirectory directory: URL,
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) throws -> OmanDatabase {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return try open(path: directory.appendingPathComponent("writing.sqlite").path, now: now)
+    }
+
+    static func open(
+        path: String,
+        now: @escaping @Sendable () -> Date = { Date() }
+    ) throws -> OmanDatabase {
+        try OmanDatabase(writer: DatabaseQueue(path: path), now: now)
+    }
+
+    static func inMemory(now: @escaping @Sendable () -> Date = { Date() }) throws -> OmanDatabase {
+        try OmanDatabase(writer: DatabaseQueue(), now: now)
+    }
+
+    private init(writer: any DatabaseWriter, now: @escaping @Sendable () -> Date) throws {
+        self.writer = writer
+        self.now = now
+        try Self.migrator.migrate(writer)
+    }
+
+    private static var migrator: DatabaseMigrator {
+        var migrator = DatabaseMigrator()
+        migrator.registerMigration("v1") { db in
+            try db.execute(sql: """
+                CREATE TABLE styles (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    note TEXT NOT NULL DEFAULT '',
+                    created_at DOUBLE NOT NULL
+                );
+                CREATE TABLE style_samples (
+                    id TEXT PRIMARY KEY,
+                    style_id TEXT NOT NULL REFERENCES styles(id) ON DELETE CASCADE,
+                    body TEXT NOT NULL,
+                    position INTEGER NOT NULL
+                );
+                CREATE TABLE app_style_preferences (
+                    bundle_id TEXT PRIMARY KEY,
+                    style_id TEXT NOT NULL REFERENCES styles(id) ON DELETE CASCADE
+                );
+                CREATE TABLE settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                """)
+        }
+        return migrator
+    }
+
+    private static func uuid(from text: String) throws -> UUID {
+        guard let id = UUID(uuidString: text) else {
+            throw OmanDatabaseError.invalidIdentifier(text)
+        }
+        return id
+    }
+
+    // MARK: StyleStore
+
+    public func loadStyles() throws -> [WritingStyle] {
+        try writer.read { db in
+            let styleRows = try Row.fetchAll(db, sql: "SELECT id, name, note FROM styles ORDER BY created_at, id")
+            let sampleRows = try Row.fetchAll(db, sql: "SELECT id, style_id, body FROM style_samples ORDER BY position")
+
+            var samplesByStyle: [String: [StyleSample]] = [:]
+            for row in sampleRows {
+                let styleID: String = row["style_id"]
+                let id = try Self.uuid(from: row["id"])
+                samplesByStyle[styleID, default: []].append(StyleSample(id: id, text: row["body"]))
+            }
+
+            return try styleRows.map { row in
+                let id: String = row["id"]
+                return WritingStyle(
+                    id: try Self.uuid(from: id),
+                    name: row["name"],
+                    note: row["note"],
+                    samples: samplesByStyle[id] ?? []
+                )
+            }
+        }
+    }
+
+    public func save(_ style: WritingStyle) throws {
+        let id = style.id.uuidString
+        let createdAt = now().timeIntervalSince1970
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO styles (id, name, note, created_at) VALUES (?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET name = excluded.name, note = excluded.note
+                    """,
+                arguments: [id, style.name, style.note, createdAt]
+            )
+            try db.execute(sql: "DELETE FROM style_samples WHERE style_id = ?", arguments: [id])
+            for (position, sample) in style.samples.enumerated() {
+                try db.execute(
+                    sql: "INSERT INTO style_samples (id, style_id, body, position) VALUES (?, ?, ?, ?)",
+                    arguments: [sample.id.uuidString, id, sample.text, position]
+                )
+            }
+        }
+    }
+
+    public func deleteStyle(id: UUID) throws {
+        try writer.write { db in
+            try db.execute(sql: "DELETE FROM styles WHERE id = ?", arguments: [id.uuidString])
+        }
+    }
+
+    public func lastStyleID(forBundleID bundleID: String) throws -> UUID? {
+        let text = try writer.read { db in
+            try String.fetchOne(
+                db,
+                sql: "SELECT style_id FROM app_style_preferences WHERE bundle_id = ?",
+                arguments: [bundleID]
+            )
+        }
+        return try text.map(Self.uuid(from:))
+    }
+
+    public func setLastStyleID(_ id: UUID?, forBundleID bundleID: String) throws {
+        try writer.write { db in
+            guard let id else {
+                try db.execute(sql: "DELETE FROM app_style_preferences WHERE bundle_id = ?", arguments: [bundleID])
+                return
+            }
+            try db.execute(
+                sql: """
+                    INSERT INTO app_style_preferences (bundle_id, style_id) VALUES (?, ?)
+                    ON CONFLICT(bundle_id) DO UPDATE SET style_id = excluded.style_id
+                    """,
+                arguments: [bundleID, id.uuidString]
+            )
+        }
+    }
+
+    // MARK: AppSettingsStore
+
+    public func selectedModel() throws -> ClaudeModel {
+        let value = try writer.read { db in
+            try String.fetchOne(db, sql: "SELECT value FROM settings WHERE key = ?", arguments: [Self.selectedModelKey])
+        }
+        return value.flatMap(ClaudeModel.init(rawValue:)) ?? .default
+    }
+
+    public func setSelectedModel(_ model: ClaudeModel) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO settings (key, value) VALUES (?, ?)
+                    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                    """,
+                arguments: [Self.selectedModelKey, model.rawValue]
+            )
+        }
+    }
 }
