@@ -132,4 +132,5 @@ These follow a security review of the whole app and its release pipeline.
 - GRDB and Sparkle are pinned to commits, and the workflows install one XcodeGen release by checksum
 - Clipboard operations run one at a time. A second one waits for the first, so a double-click on the menu bar icon can't make two captures read each other's writes
 - `mac/OmanKit/Package.resolved` is no longer committed. Xcode and `swift test` each rewrite it their own way, and both libraries are pinned to commits in the manifests
+- The landing page is one static file in `site/`, with system fonts and no requests to anyone else, so it can be hosted anywhere and matches what the app says about privacy. Its hero is a scripted demo of the panel. It is not published yet
 - The signing certificate is still imported with `-A` in the workflow. Any process on the runner could call `codesign` itself, so narrowing the key's access list would add little, and the change could not be tested without a release

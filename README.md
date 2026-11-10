@@ -59,6 +59,7 @@ Local builds are signed ad hoc and never update themselves. macOS treats each re
 
 - `mac/App` holds the menu bar item, the panel window and the updater.
 - `mac/OmanKit` is a Swift package with all the logic: `OmanCore` (shared types), `ClaudeAPI` (Claude and Apple's model), `OmanStorage` (database and Keychain), `SystemBridge` (selection, paste, screen, shortcuts) and `OmanUI` (panel and Settings).
+- `site` holds the landing page: one static HTML file with no build step and no outside requests.
 - [PLAN.md](PLAN.md), [DECISIONS.md](DECISIONS.md) and [SESSION_LOG.md](SESSION_LOG.md) record the roadmap, the reasoning behind choices and the history of the work. [CLAUDE.md](CLAUDE.md) holds instructions for Claude Code.
 
 An earlier Electron meeting recorder is kept on the [`archive/meeting-recorder`](https://github.com/romanbitca/oman-ai/tree/archive/meeting-recorder) branch.
