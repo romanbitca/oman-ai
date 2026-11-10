@@ -28,4 +28,35 @@ final class FloatingPanel: NSPanel {
     override func cancelOperation(_ sender: Any?) {
         onEscape?()
     }
+
+    // The panel is key while oman stays inactive, so editing shortcuts can't rely on the main menu.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if let action = Self.editingAction(for: event), NSApp.sendAction(action, to: nil, from: self) {
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+
+    private static let keysByCode: [UInt16: String] = [0: "a", 6: "z", 7: "x", 8: "c", 9: "v"]
+
+    private static func editingAction(for event: NSEvent) -> Selector? {
+        let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
+        guard flags == .command || flags == [.command, .shift] else { return nil }
+
+        let typed = event.charactersIgnoringModifiers?.lowercased() ?? ""
+        // Cyrillic and other non-Latin layouts report their own letter, so fall back to the physical key.
+        let key = typed.allSatisfy(\.isASCII) && !typed.isEmpty ? typed : keysByCode[event.keyCode]
+
+        if flags.contains(.shift) {
+            return key == "z" ? Selector(("redo:")) : nil
+        }
+        switch key {
+        case "x": return #selector(NSText.cut(_:))
+        case "c": return #selector(NSText.copy(_:))
+        case "v": return #selector(NSText.paste(_:))
+        case "a": return #selector(NSText.selectAll(_:))
+        case "z": return Selector(("undo:"))
+        default: return nil
+        }
+    }
 }
