@@ -96,10 +96,18 @@ struct WritingPreferencesTests {
         )
         let text = AppleOnDeviceClient.instructions(for: request)
         #expect(text.contains("- yep on it"))
-        #expect(text.contains("capital letters and punctuation"))
+        #expect(text.contains("casing and punctuation habits"))
         #expect(!text.contains("English"))
         #expect(!text.contains("Be brief."))
-        #expect(AppleOnDeviceClient.prompt(for: request).contains("the way the examples do"))
+        #expect(AppleOnDeviceClient.prompt(for: request).contains("Match the casing and punctuation of the examples"))
+    }
+
+    /// Asked to "use capital letters" the way a person does, Apple's model wrote the whole text in capitals.
+    @Test func onDeviceProofreadNeverSaysToUseCapitalLetters() {
+        let style = WritingStyle(name: "Slack", samples: [StyleSample(text: "yep on it")])
+        let request = WritingRequest(task: .proofread(text: "hi"), style: style, model: .appleOnDevice)
+        let all = AppleOnDeviceClient.instructions(for: request) + AppleOnDeviceClient.prompt(for: request)
+        #expect(!all.localizedCaseInsensitiveContains("capital"))
     }
 
     @Test func onDeviceProofreadWithoutATemplateOnlyCorrects() {

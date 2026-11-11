@@ -69,7 +69,8 @@ struct AppleOnDeviceClient {
         if case .proofread = request.task {
             // Proofreading keeps the person's wording, so only a template's habits apply, not the standing preferences.
             if let style = request.style, !style.samples.isEmpty {
-                lines.append("Use capital letters and punctuation the way this person does. Examples of their messages:")
+                // Worded without "use capital letters": told that, this model answered in capitals throughout.
+                lines.append("Copy this person's casing and punctuation habits. Examples of their messages:")
                 lines.append(contentsOf: style.samples.map { "- \($0.text)" })
             }
             return lines.joined(separator: "\n")
@@ -99,8 +100,8 @@ struct AppleOnDeviceClient {
                 let hasStyle = request.style?.samples.isEmpty == false
                 parts.append(
                     hasStyle
-                        ? "Fix the spelling and grammar in this text and keep its wording. "
-                            + "Use capital letters and punctuation the way the examples do:\n\n\(text)"
+                        ? "Fix the typos in this text and change nothing else. "
+                            + "Match the casing and punctuation of the examples:\n\n\(text)"
                         : "Fix only the spelling, grammar and punctuation in this text:\n\n\(text)"
                 )
             case .rewrite(let text, let instruction):
