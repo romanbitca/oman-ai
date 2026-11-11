@@ -14,7 +14,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Compose** new text from a short instruction.
 - **Context** from the window you are writing in, pasted messages or the clipboard.
 - **Your choice of model**: Claude Haiku, Sonnet or Opus with your own Anthropic API key, or Apple's on-device model for free.
-- **Spending** per day and per week in Settings, estimated from what each Claude request used.
+- **Spending** for today, this week, this month, last month or all time in Settings, by model, estimated from what each Claude request used.
 - **Shortcuts** for any action, and a panel you can pin and drag anywhere.
 
 ## Install
@@ -25,7 +25,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 
 OmanAI needs macOS 14 or later. Apple's on-device model needs macOS 26 or later with Apple Intelligence turned on.
 
-OmanAI updates itself from this repository's releases. You can turn that off in Settings, under About.
+OmanAI updates itself from this repository's releases. You can turn that off in Settings, under General.
 
 ## Privacy
 

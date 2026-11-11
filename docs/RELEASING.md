@@ -90,7 +90,7 @@ The build number comes from the version, so `0.2.0` becomes `2000`. Version numb
 
 ## How updates reach people
 
-The app checks `releases/latest/download/appcast.xml` once a day. A new version downloads in the background and installs when OmanAI quits. If it stays open for a week without quitting, it offers to install. The toggle is in Settings, under About.
+The app checks `releases/latest/download/appcast.xml` once a day. A new version downloads in the background and installs when OmanAI quits. If it stays open for a week without quitting, it offers to install. The toggle is in Settings, under General.
 
 Every update must carry a signature made with the update key, and the app checks it before unpacking the download. The feed and its release notes are signed with the same key, so nobody who can only change the feed can change what the app is told. Version 0.2.0 was built before these checks were turned on, so they apply to updates from later versions.
 
