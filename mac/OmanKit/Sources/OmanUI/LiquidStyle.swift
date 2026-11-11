@@ -15,6 +15,19 @@ enum Liquid {
     ]
 }
 
+extension View {
+    /// Apple's Writing Tools put a floating button beside selected text in OmanAI's own windows,
+    /// where it covered the panel's Back button and took its clicks.
+    @ViewBuilder
+    func withoutSystemWritingTools() -> some View {
+        if #available(macOS 15.0, *) {
+            writingToolsBehavior(.disabled)
+        } else {
+            self
+        }
+    }
+}
+
 extension EnvironmentValues {
     @Entry var liquidSpace: Namespace.ID?
     @Entry var panelIsFloating = false

@@ -147,3 +147,8 @@ These follow a security review of the whole app and its release pipeline.
 - Costs use Anthropic's list prices for the global API, built into `ClaudePricing.swift` and read from the pricing page on 2026-11-11. Haiku 5.5 uses its higher rates for a prompt over 100,000 tokens, cached tokens included. A model ID that starts with a known model's ID is priced as that model, and an unknown one as the model that was asked for. Prices that change need a new release
 - A request is recorded whenever the stream reported usage, including answers that were stopped or cut off, because those tokens are billed too. HTTP errors record nothing
 - Settings has a Spending page: totals for today and this week, and bar charts for the last 14 days and the last 8 weeks, drawn with Swift Charts and with no animation. Weeks start on the day the person's region starts them
+
+## 2026-11-11 — Apple's Writing Tools off inside OmanAI
+
+- The panel and Settings turn off Apple's Writing Tools for their own text, with `writingToolsBehavior(.disabled)` on macOS 15 and later. OmanAI is a writing tool itself, and the system's floating Writing Tools button appeared beside selected text in the panel, where it could cover Back and take its clicks
+- Back writes one line to the system log (subsystem `com.romanbitca.oman`, category `panel`) naming the screen it went to, and no text, so a Back that seems to do nothing can be checked against one that never arrived

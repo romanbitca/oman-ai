@@ -49,6 +49,7 @@ public struct SettingsRootView: View {
             .padding(SettingsMetrics.outer)
         }
         .environment(\.liquidMotion, false)
+        .withoutSystemWritingTools()
         .frame(width: Self.windowSize.width, height: Self.windowSize.height, alignment: .topLeading)
         .background { windowBackground }
     }

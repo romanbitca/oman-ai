@@ -4,6 +4,14 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — Back sometimes did nothing, and the panel can feel slow
+
+Up to 0.3.0, Apple's Writing Tools ran inside OmanAI's panel. After text in the panel was clicked or selected, macOS set up its floating Writing Tools button and a host window over the panel, which could sit on Back and take the click. The system log shows this as `CampoLightweightUI` events in OmanAI's process. Writing Tools is now off for OmanAI's own text, but Back has not been re-checked on screen. If it misses again, `/usr/bin/log show --last 1h --predicate 'subsystem == "com.romanbitca.oman"'` shows whether the press arrived.
+
+The lag is not explained yet. macOS recorded no hang and never marked OmanAI unresponsive. Each time the panel opens with a focused text field, the system's text cursor indicator is moved about 60 times while the panel animates, and its service sometimes fails to connect (ViewBridge error 18).
+
+---
+
 ## 2026-11-11 — Spending is an estimate
 
 The Spending page prices the token counts Anthropic reports with list prices built into the app, so it can drift from the real bill. A request stopped before it finished counts only the output reported so far, which is usually just the first token. When Sonnet or Opus declines and a fallback model answers, only the answer is counted. Requests made with the same key outside OmanAI, or from another Mac, are not included. Requests from before this version were never recorded. The Anthropic Console has the actual bill.

@@ -1,6 +1,9 @@
 import Foundation
 import Observation
 import OmanCore
+import os
+
+private let panelLog = Logger(subsystem: "com.romanbitca.oman", category: "panel")
 
 enum PanelScreen: Equatable {
     case setup
@@ -273,6 +276,8 @@ public final class PanelViewModel {
         adjustment = ""
         showOriginal = false
         screen = baseScreen
+        // Only the screen's name is logged, so a Back that seems to do nothing can be told from one that never arrived.
+        panelLog.notice("Back pressed, now on \(String(describing: self.screen), privacy: .public)")
     }
 
     func togglePin() {

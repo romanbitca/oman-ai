@@ -35,6 +35,7 @@ public struct PanelRootView: View {
         }
         .environment(\.liquidSpace, space)
         .environment(\.panelIsFloating, model.isPinned)
+        .withoutSystemWritingTools()
         .animation(Liquid.morph, value: model.screen)
         .animation(Liquid.morph, value: model.isPinned)
         .keyframeAnimator(initialValue: 1.0, trigger: model.session) { view, opacity in

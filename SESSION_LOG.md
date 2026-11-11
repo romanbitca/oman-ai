@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Back covered by Apple's Writing Tools
+
+- The maintainer tried 0.3.0: Explain worked against the live API, but Back sometimes did nothing and the app sometimes felt slow
+- Read the system log of the installed app instead of driving the screen. No hang or unresponsive report. Apple's Writing Tools set up its floating button and host window inside OmanAI's panel seconds before the failed Back, and it had done so in 0.2.1 too
+- Turned Writing Tools off for OmanAI's own text in the panel and Settings. A new test checks that the panel's text views and a one-line field's editor report it off; the field's editor reported "limited" before
+- Back now writes the screen it went to in the system log, without any text
+- Verified: 302 tests pass and the app builds. Not verified: Back on screen after the change, and the cause of the slowness
+
 ## 2026-11-11 — Explain, smaller buttons and spending
 
 - Added Explain to the panel: it reads the selected text as its recipient would and says what they will understand, how it sounds and what could be misread. It uses the conversation's context, has its own short system prompt and an assignable shortcut, and its result can be copied but never pasted
