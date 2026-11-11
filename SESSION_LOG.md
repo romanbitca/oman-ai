@@ -4,6 +4,17 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — The models tried through the API, a new website with docs, and a fuller README
+
+- The maintainer entered the Keychain password, and the run of Haiku, Sonnet and Opus at each quality went through: 99 requests through the app's own client, none failed, about $0.20 in all. Haiku gave its first word in 0.6 seconds and a whole answer in 1.0, for about $0.0001 a message. Sonnet took 0.7 and 1.4 seconds, Opus 1.1 and 1.8 at Fast
+- The answers showed two faults in prompts: at Balanced, Sonnet once wrote its second thoughts into a proofread ("Wait, I need to apply only…"), and at Fast, Haiku opened an explanation with a sentence about which language it would answer in. They also showed Proofread with a style leaving out apostrophes the style's messages use
+- Filmed the real panel over a made-up desktop: four clips (rewrite, proofread, explain, compose) and stills of each screen, plus pictures of every Settings page in both themes. A leftover Keychain dialog and the real pointer were kept out of the pictures by moving the scene
+- Built the website twice. The maintainer turned the first design down as dated. The second is dark and typographic, with the recordings, tiles of small demos, a copy of the panel that runs in the browser and a documentation page for every screen and button
+- Deployed it to the maintainer's Coolify server at oman-ai.romanbitca.com. The container was built and tried locally first. Live: both pages and the recordings load, plain HTTP redirects, the security headers are there
+- Rewrote the README with a recording, pictures, the measured model table and links to the site and docs
+- Started research into competitors and features worth building
+- Not verified: the site in Safari and Firefox; the page's own request to GitHub from the live site, because this address had used up GitHub's hourly allowance and the page showed its fallback text
+
 ## 2026-11-11 — Settings rebuilt in macOS's own design, spending by period, the on-device model tried
 
 - The maintainer chose tabs in the toolbar with native controls, the single-wave icon and the name As written. They also asked for a divider and one scrolling line of templates, a Screen chip without a button of its own, a more advanced Spending page, and a test of the models, the on-device one above all

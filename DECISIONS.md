@@ -269,3 +269,15 @@ Asked for by the maintainer: more than today and this week, such as this month, 
 - Proofread with a template on Apple's on-device model is told to "copy this person's casing and punctuation habits" and to "fix the typos in this text and change nothing else". The wording written that morning, "use capital letters and punctuation the way this person does", made the model answer in capitals throughout. It had not been released
 - Seven wordings were run on the model itself, twice each on up to four texts, before choosing. The chosen one keeps a lower-case style lower-case and capitalises for a style that does
 
+## 2026-11-12 — A website with documentation, on the maintainer's own server
+
+Asked for by the maintainer: a richer site with recordings, examples and motion, a page that explains every button, a fuller README, and a Donate button.
+
+- The site is static files in `site/`: a home page and `site/docs/`. No build step, no libraries and nothing loaded from anywhere else. Its one outside request asks GitHub for the latest version number, and it works without the answer
+- It is served by nginx from `site/Dockerfile`, on the maintainer's Coolify server at oman-ai.romanbitca.com. Coolify builds it from `main` and deploys again when a file under `site/` changes
+- The design is one dark page: large type, the app's own glass, and the app itself at work. A first version with a light body, a rounded display face and bordered cards was turned down by the maintainer as dated. The second was drawn after looking at how Raycast, Linear and Wispr Flow present Mac apps in late 2026
+- The recordings and pictures are of the real app: its real panel and Settings, driven by the test harness over a made-up desktop with a stand-in chat window. Nothing in them comes from the maintainer's screen
+- Every speed and cost on the site, in the docs and in the README is measured: averages over 11 short writing tasks at the Fast setting, through the app's own client, on 12 November 2026
+- The response headers allow scripts, styles, pictures and recordings from the site itself only. That also blocks the analytics script Cloudflare tries to add to pages on this domain, so the page's statement that it has no analytics holds
+- Donations take one address: the `data-donate-url` attribute on the home page's `body`. Until it is set, Donate leads to the support section, which says donations open soon. The maintainer plans a PayPal link
+
