@@ -27,14 +27,16 @@ struct PanelComposeView: View {
                         .padding(.horizontal, 6)
                 }
 
-                StyleChipsView(
-                    styles: model.styles,
-                    selectedID: model.selectedStyleID,
-                    onSelect: { model.toggleComposeStyle($0) },
-                    onCreate: { model.openSettings() }
-                )
+                PanelControlsGroup {
+                    StyleChipsView(
+                        styles: model.styles,
+                        selectedID: model.selectedStyleID,
+                        onSelect: { model.toggleComposeStyle($0) },
+                        onCreate: { model.openSettings() }
+                    )
 
-                ContextSectionView(model: model)
+                    ContextSectionView(model: model)
+                }
 
                 HStack {
                     Spacer()

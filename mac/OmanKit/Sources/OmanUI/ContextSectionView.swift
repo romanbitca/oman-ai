@@ -41,7 +41,7 @@ struct ContextSectionView: View {
                     .focusEffectDisabled()
                     .frame(height: 84)
                     .padding(9)
-                    .liquidGlass(in: PanelShape.tile)
+                    .panelSurface(in: PanelShape.tile)
                     .overlay(alignment: .topLeading) {
                         if model.contextText.isEmpty {
                             Text("Paste messages for context")
@@ -76,7 +76,7 @@ private struct ContextChip: View {
             .frame(height: 32)
             .foregroundStyle(isOn ? Color.black : Color.secondary)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), tint: isOn ? Color.white : nil, interactive: true)
+            .toggleSurface(isOn: isOn)
         }
         .buttonStyle(GlassPressStyle())
         .animation(Liquid.press, value: isOn)
@@ -101,6 +101,6 @@ private struct ScreenshotThumbnail: View {
                 .padding(3)
         }
         .padding(7)
-        .liquidGlass(in: PanelShape.tile)
+        .panelSurface(in: PanelShape.tile)
     }
 }

@@ -19,14 +19,16 @@ struct PanelHomeView: View {
                         .help("See how a reader will understand your text")
                 }
 
-                StyleChipsView(
-                    styles: model.styles,
-                    selectedID: model.selectedStyleID,
-                    onSelect: { model.chooseStyleAndRewrite($0) },
-                    onCreate: { model.openSettings() }
-                )
+                PanelControlsGroup {
+                    StyleChipsView(
+                        styles: model.styles,
+                        selectedID: model.selectedStyleID,
+                        onSelect: { model.chooseStyleAndRewrite($0) },
+                        onCreate: { model.openSettings() }
+                    )
 
-                ContextSectionView(model: model)
+                    ContextSectionView(model: model)
+                }
 
                 composeRow
             }

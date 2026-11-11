@@ -83,6 +83,8 @@ public protocol SystemBridging: AnyObject {
 public protocol PanelPresenting: AnyObject {
     func hidePanel()
     func showPanel()
+    /// Closes the panel as a click outside it does.
+    func closePanel()
     func setPanelPinned(_ pinned: Bool)
     func openSettings()
 }

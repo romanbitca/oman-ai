@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Panel matched against Control Center on screen
+
+- The maintainer found 0.3.2 still looked bad next to Control Center and asked for the closest match, compared on several backgrounds
+- With the maintainer's permission, built a temporary preview that showed the panel and the real Control Center in the top-right corner over a white app, a dark app, a bright gradient and the desktop, and captured each. Nothing was committed from it
+- What the comparison settled: clear glass tiles; the style and context chips grouped in one tile with flat chips, solid white when on; a soft blur built into the panel's window behind and around the tiles, which closes the panel when clicked; disabled buttons dim only their label. The halo's mask had its fade inside the tiles at first, found by its tests and fixed
+- Remaining gap: over a dark app in light mode the blur is a light frosted card, because macOS has no public pure blur. Recorded in KNOWN_ISSUES.md
+- Verified: 313 tests pass, including where clicks land around the halo, and the app builds. Not verified: the panel in daily use with the halo, such as clicking just beside it
+
 ## 2026-11-11 — Backdrop removed
 
 - The maintainer installed 0.3.1 and sent screenshots with the panel open and closed: the backdrop grayed out half the screen without blurring it, and clear glass showed the app's text through the tiles. It looked very bad

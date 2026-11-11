@@ -27,6 +27,12 @@ public struct PanelRootView: View {
                         .transition(.opacity)
                 }
                 content
+                    // Pinned, the panel is a window to work beside, and the halo would cover its drag grip.
+                    .background {
+                        if !model.isPinned {
+                            PanelHalo { model.closePanel() }.padding(-PanelHalo.spread)
+                        }
+                    }
                     .frame(width: PanelMetrics.width)
                     .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
                     .padding(.top, model.isPinned ? PanelMetrics.sideMargin : 0)
@@ -35,6 +41,7 @@ public struct PanelRootView: View {
         }
         .environment(\.liquidSpace, space)
         .environment(\.panelIsFloating, model.isPinned)
+        .environment(\.liquidClearGlass, true)
         .withoutSystemWritingTools()
         .animation(Liquid.morph, value: model.screen)
         .animation(Liquid.morph, value: model.isPinned)

@@ -154,6 +154,10 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         panel.orderOut(nil)
     }
 
+    func closePanel() {
+        dismissPanel()
+    }
+
     func showPanel() {
         let wasDragged = placedOrigin.map { $0 != panel.frame.origin } ?? false
         if !(isPinned && wasDragged) {

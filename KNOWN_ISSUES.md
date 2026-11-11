@@ -4,6 +4,12 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — Over dark apps the panel's blur is lighter than Control Center's
+
+Control Center blurs what is behind it without tinting it, through a private API. OmanAI uses the public `fullScreenUI` material, which adds the system mode's tint, so in light mode the panel sits on a light frosted card even over a dark app or video. It matches Control Center closely over light apps.
+
+---
+
 ## 2026-11-11 — Back sometimes did nothing, and the panel can feel slow
 
 Up to 0.3.0, Apple's Writing Tools ran inside OmanAI's panel. After text in the panel was clicked or selected, macOS set up its floating Writing Tools button and a host window over the panel, which could sit on Back and take the click. The system log shows this as `CampoLightweightUI` events in OmanAI's process. Writing Tools is now off for OmanAI's own text, but Back has not been re-checked on screen. If it misses again, `/usr/bin/log show --last 1h --predicate 'subsystem == "com.romanbitca.oman"'` shows whether the press arrived.
@@ -109,6 +115,8 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - A SwiftUI shape drawn above a `WindowDragArea` takes the click and does nothing with it, so mark it `.allowsHitTesting(false)`.
 - Fully clear pixels in the panel pass clicks to the app behind. Liquid Glass in a custom `Shape` counts as clear, unlike glass in a capsule or rounded rectangle, and so did a dark bar drawn on it. A 2% white fill in the same shape, behind the drag area, makes it clickable. Unit tests can't see this: check with real mouse events.
 - `log` is a zsh builtin, so reading the system log needs `/usr/bin/log`.
+- Glass can be checked on screen, with the maintainer's OK: host the panel in a borderless window at the top right, let it draw for about a second, and capture that corner with `screencapture -R`. Control Center opens through Accessibility by pressing the "Control Center" item that `MenuBarAgent` owns in the menu bar (System Events can't see it); wait about three seconds before capturing it.
+- `NSVisualEffectView.maskImage` ignores an image with only an alpha channel. Give it black pixels with the fade in their alpha.
 - `gh` on this Mac has more than one account, and the active one may be a work account that can only read this repository. Then pushes and `gh variable get` fail with 403. Run them with the maintainer's account for that command only, `GH_TOKEN="$(gh auth token --user romanbitca)"`, rather than switching the active account.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.

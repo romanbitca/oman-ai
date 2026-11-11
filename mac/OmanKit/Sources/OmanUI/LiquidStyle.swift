@@ -33,13 +33,20 @@ extension EnvironmentValues {
     @Entry var panelIsFloating = false
     /// Turned off for Settings, which has no animation at all.
     @Entry var liquidMotion = true
+    /// Clear glass, as in Control Center. The panel uses it over its blurred halo; Settings keeps frosted glass.
+    @Entry var liquidClearGlass = false
+    /// Controls inside a glass tile are flat, because Apple's glass isn't meant to sit on glass.
+    @Entry var isInsideGlassTile = false
 }
 
-/// Which glass a shape gets. Kept apart from the view so the rule can be tested.
+/// Which glass a shape gets. Kept apart from the view so the rules can be tested.
 struct LiquidGlassChoice: Equatable {
+    let isClear: Bool
     let isInteractive: Bool
 
-    init(wantsInteraction: Bool, hasMotion: Bool) {
+    init(prefersClear: Bool, isTinted: Bool, wantsInteraction: Bool, hasMotion: Bool) {
+        // A tint is a solid colour, which clear glass would wash out.
+        isClear = prefersClear && !isTinted
         // Interactive glass lights up and flexes, and Settings has no motion at all.
         isInteractive = wantsInteraction && hasMotion
     }
@@ -132,9 +139,10 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     let interactive: Bool
     @Environment(\.liquidSpace) private var space
     @Environment(\.liquidMotion) private var hasMotion
+    @Environment(\.liquidClearGlass) private var prefersClear
 
     private var choice: LiquidGlassChoice {
-        LiquidGlassChoice(wantsInteraction: interactive, hasMotion: hasMotion)
+        LiquidGlassChoice(prefersClear: prefersClear, isTinted: tint != nil, wantsInteraction: interactive, hasMotion: hasMotion)
     }
 
     func body(content: Content) -> some View {
@@ -160,7 +168,8 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
 
     @available(macOS 26.0, *)
     private var glass: Glass {
-        let glass = tint.map { Glass.regular.tint($0) } ?? Glass.regular
+        let base = choice.isClear ? Glass.clear : Glass.regular
+        let glass = tint.map { base.tint($0) } ?? base
         return choice.isInteractive ? glass.interactive() : glass
     }
 }
@@ -216,17 +225,20 @@ struct LiquidButton: View {
     var prominent = false
     let action: () -> Void
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.liquidMotion) private var hasMotion
 
     var body: some View {
         Button(action: action) {
             label
                 .font(.system(size: 13, weight: .medium))
+                // In the panel only the label dims, as on macOS: faded glass looked gray over a dark background.
+                .opacity(isEnabled || !hasMotion ? 1 : 0.55)
                 .padding(.horizontal, 16)
                 .frame(height: 36)
                 .foregroundStyle(prominent ? Color.white : Color.primary)
                 .contentShape(Capsule())
                 .liquidGlass(in: Capsule(), tint: prominent ? Liquid.accent : nil, interactive: true)
-                .opacity(isEnabled ? 1 : 0.45)
+                .opacity(isEnabled || hasMotion ? 1 : 0.45)
         }
         .buttonStyle(GlassPressStyle())
     }

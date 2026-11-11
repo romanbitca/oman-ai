@@ -218,12 +218,67 @@ struct StyleChipsView: View {
             }
             .padding(.horizontal, 13)
             .frame(height: 32)
-            // Chosen is white, as an "on" toggle is in Control Center.
             .foregroundStyle(isSelected ? Color.black : Color.primary)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), tint: isSelected ? Color.white : nil, interactive: true)
+            .toggleSurface(isOn: isSelected)
         }
         .buttonStyle(GlassPressStyle())
+    }
+}
+
+private struct ToggleSurface: ViewModifier {
+    let isOn: Bool
+    @Environment(\.isInsideGlassTile) private var isInsideTile
+
+    func body(content: Content) -> some View {
+        if isOn {
+            // Solid, because tinted glass turns gray over a dark background.
+            content.background(Capsule().fill(Color.white))
+        } else if isInsideTile {
+            content.background(Capsule().fill(Color.primary.opacity(0.13)))
+        } else {
+            content.liquidGlass(in: Capsule(), interactive: true)
+        }
+    }
+}
+
+/// The style and context chips, together in one tile as a Control Center module holds its toggles,
+/// so an app's text never shows between them.
+struct PanelControlsGroup<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        GlassTile(padding: 10) {
+            VStack(alignment: .leading, spacing: PanelMetrics.gap) { content }
+        }
+        .environment(\.isInsideGlassTile, true)
+    }
+}
+
+private struct InnerSurface<S: Shape>: ViewModifier {
+    let shape: S
+    @Environment(\.isInsideGlassTile) private var isInsideTile
+
+    func body(content: Content) -> some View {
+        if isInsideTile {
+            content.background(shape.fill(Color.primary.opacity(0.08)))
+        } else {
+            content.liquidGlass(in: shape)
+        }
+    }
+}
+
+extension View {
+    /// Glass on its own, or a flat fill when it sits inside a glass tile.
+    func panelSurface<S: Shape>(in shape: S) -> some View {
+        modifier(InnerSurface(shape: shape))
+    }
+}
+
+extension View {
+    /// Glass when off and solid white when on, as a toggle is in Control Center.
+    func toggleSurface(isOn: Bool) -> some View {
+        modifier(ToggleSurface(isOn: isOn))
     }
 }
 

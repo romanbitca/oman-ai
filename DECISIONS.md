@@ -171,3 +171,14 @@ Supersedes the backdrop and clear-glass points of "The panel looks like Control 
 
 - The maintainer installed 0.3.1 and found it looked very bad. Over a white app the backdrop came out as a gray veil across half the screen with no visible blur, and clear glass let the app's text show through the tiles. Both are gone
 - Tiles are regular, frosted glass again. Kept from 0.3.1: the dark panel with white text when the theme is Match system, Apple's interactive glass on buttons, and white "on" chips
+
+## 2026-11-11 — Matched against Control Center on screen
+
+Supersedes "No backdrop, frosted glass again" for the panel's glass. Settings keeps frosted glass and no motion.
+
+- With the maintainer's permission, the panel and the real Control Center were shown in the top-right corner and captured on four backgrounds: a white app, a dark app, a bright gradient and the desktop. The choices below came from comparing them side by side
+- Tiles are clear glass, as Control Center's are
+- The style and context chips sit together in one glass tile, as a Control Center module holds its toggles, so an app's text never shows between them. Inside it they are flat: translucent when off and solid white when on. Outside a tile an "on" chip is solid white too, because tinted glass turned gray over dark backgrounds
+- A soft-edged blur built into the panel's window covers what is behind the tiles and fades out 22 points beyond them, in place of the blurred backdrop behind Control Center. It uses the `fullScreenUI` material in the system's light or dark mode. Control Center's backdrop is a pure blur, which no public API offers, and the public materials add a tint: over a dark app in light mode the panel sits on a light frosted card where Control Center stays dark. At less than full strength sharp copies of the app's text showed through, so the blur is always at full strength
+- A click on the blur's soft edge closes the panel, as a click beside Control Center does, because the panel's window takes that click. A pinned panel has no blur, because it would cover the drag grip
+- A disabled button in the panel dims only its label, as on macOS, instead of fading its glass

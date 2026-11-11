@@ -280,6 +280,10 @@ public final class PanelViewModel {
         panelLog.notice("Back pressed, now on \(String(describing: self.screen), privacy: .public)")
     }
 
+    func closePanel() {
+        presenter?.closePanel()
+    }
+
     func togglePin() {
         isPinned.toggle()
         presenter?.setPanelPinned(isPinned)
