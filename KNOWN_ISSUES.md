@@ -112,6 +112,7 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - `gh variable get` answers 403 with the signed-in token, so check a release's update key against the one in the installed app instead.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
+- The panel's backdrop is a behind-window blur, which offscreen rendering can't show either. Its strength is set by the constants at the top of `mac/App/PanelBackdrop.swift`.
 - The computer-use tools can't see OmanAI because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "OmanAI"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---

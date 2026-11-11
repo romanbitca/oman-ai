@@ -74,11 +74,11 @@ private struct ContextChip: View {
             }
             .padding(.horizontal, 12)
             .frame(height: 32)
-            .foregroundStyle(isOn ? Color.white : Color.secondary)
+            .foregroundStyle(isOn ? Color.black : Color.secondary)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), tint: isOn ? Liquid.accent : nil)
+            .liquidGlass(in: Capsule(), tint: isOn ? Color.white : nil, interactive: true)
         }
-        .buttonStyle(LiquidPressStyle())
+        .buttonStyle(GlassPressStyle())
         .animation(Liquid.press, value: isOn)
     }
 }

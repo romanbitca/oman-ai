@@ -4,6 +4,13 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Control Center look for the panel
+
+- The maintainer compared the panel with Control Center and asked for the native look, including Apple's glass buttons that flex when pressed
+- Added a click-through backdrop window that dims and slightly blurs the side of the screen behind the panel and fades out beyond it, hidden while the panel is pinned. The panel is dark with white text when the theme is Match system, its tiles are clear glass over the backdrop, its buttons use interactive glass, and chosen chips are white instead of purple. Settings is unchanged
+- The rules for which glass a shape gets and where the backdrop goes are plain code with tests. 310 tests pass and the app builds without warnings
+- Not verified: how any of it looks, because glass and behind-window blur don't render offscreen; that clicks still land on clear glass, which has the 2% fill as a precaution; and how strong the dim and blur feel. The maintainer reviews it on screen
+
 ## 2026-11-11 — Back covered by Apple's Writing Tools
 
 - The maintainer tried 0.3.0: Explain worked against the live API, but Back sometimes did nothing and the app sometimes felt slow

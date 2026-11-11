@@ -11,6 +11,7 @@ public struct PanelRootView: View {
 
     private let model: PanelViewModel
     @Namespace private var space
+    @Environment(\.colorScheme) private var colorScheme
 
     public init(model: PanelViewModel) {
         self.model = model
@@ -35,6 +36,9 @@ public struct PanelRootView: View {
         }
         .environment(\.liquidSpace, space)
         .environment(\.panelIsFloating, model.isPinned)
+        // Over the dimmed backdrop the tiles are clear glass with white text, as in Control Center. Pinned, the panel
+        // floats over whatever is behind it with no backdrop, and dark text on clear glass could get lost.
+        .environment(\.liquidClearGlass, !model.isPinned && colorScheme == .dark)
         .withoutSystemWritingTools()
         .animation(Liquid.morph, value: model.screen)
         .animation(Liquid.morph, value: model.isPinned)

@@ -78,9 +78,9 @@ struct ActionCard: View {
             .frame(maxWidth: .infinity)
             .frame(height: 40)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule())
+            .liquidGlass(in: Capsule(), interactive: true)
         }
-        .buttonStyle(LiquidPressStyle())
+        .buttonStyle(GlassPressStyle())
     }
 }
 
@@ -218,11 +218,12 @@ struct StyleChipsView: View {
             }
             .padding(.horizontal, 13)
             .frame(height: 32)
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
+            // Chosen is white, as an "on" toggle is in Control Center.
+            .foregroundStyle(isSelected ? Color.black : Color.primary)
             .contentShape(Capsule())
-            .liquidGlass(in: Capsule(), tint: isSelected ? Liquid.accent : nil)
+            .liquidGlass(in: Capsule(), tint: isSelected ? Color.white : nil, interactive: true)
         }
-        .buttonStyle(LiquidPressStyle())
+        .buttonStyle(GlassPressStyle())
     }
 }
 

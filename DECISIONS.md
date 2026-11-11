@@ -152,3 +152,15 @@ These follow a security review of the whole app and its release pipeline.
 
 - The panel and Settings turn off Apple's Writing Tools for their own text, with `writingToolsBehavior(.disabled)` on macOS 15 and later. OmanAI is a writing tool itself, and the system's floating Writing Tools button appeared beside selected text in the panel, where it could cover Back and take its clicks
 - Back writes one line to the system log (subsystem `com.romanbitca.oman`, category `panel`) naming the screen it went to, and no text, so a Back that seems to do nothing can be checked against one that never arrived
+
+## 2026-11-11 — The panel looks like Control Center
+
+Supersedes, for the panel, "Custom buttons replace the system glass button styles, which flex when pressed" from 2026-11-10. Settings is unchanged and still has no animation.
+
+- While the panel is open from the menu bar, a backdrop dims and slightly blurs the side of the screen it is on, fading out beyond it, as behind Control Center. It is a separate window that ignores the mouse, so a click beside the panel still reaches the app there and closes the panel. It goes away while the panel is pinned
+- The backdrop is a behind-window blur (`NSVisualEffectView`, full-screen UI material, dark) with a gradient mask, under a black gradient at 22%. The blurred picture is laid over the sharp one at 75%, which keeps the blur slight. AppKit has no lighter blur radius
+- With the theme set to Match system, the panel is dark, with white text, as Control Center is in light mode too. A theme chosen in Settings still applies
+- Over the backdrop the tiles are clear glass. Pinned, or with a light theme, they stay regular glass, because dark text on clear glass over an unknown background could get lost. Tinted glass is never clear
+- Buttons in the panel use Apple's interactive glass, which lights up under the pointer and flexes when pressed, at the maintainer's request ("as much close to native as possible"). Their labels no longer dim when pressed
+- A chosen style and a context chip that is on are white with black text, as an "on" toggle is in Control Center, instead of purple
+- Clear glass gets a 2% white fill in its own shape, because glass that adds no alpha to the window lets a click through to the app behind
