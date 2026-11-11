@@ -137,3 +137,25 @@ import Testing
         #expect(value(blur, of: short.blurFrame, x: short.tiles.midX, y: short.tiles.midY) > 128)
     }
 }
+
+@Suite struct SettingsWindowPlacementTests {
+    private let display = CGRect(x: 0, y: 70, width: 1440, height: 806)
+
+    @Test func aWindowThatStaysOnTheDisplayIsLeftWhereItIs() {
+        let frame = CGRect(x: 400, y: 200, width: 600, height: 500)
+        #expect(SettingsTabsController.keepingBottomOnDisplay(frame, visible: display) == frame)
+    }
+
+    @Test func aWindowThatWouldReachBelowTheDisplayMovesUpToItsBottomEdge() {
+        let frame = CGRect(x: 400, y: -120, width: 600, height: 685)
+        let kept = SettingsTabsController.keepingBottomOnDisplay(frame, visible: display)
+        #expect(kept == CGRect(x: 400, y: 70, width: 600, height: 685))
+    }
+
+    @Test func aWindowTallerThanTheDisplayKeepsItsTitleBarOnIt() {
+        let frame = CGRect(x: 400, y: -300, width: 600, height: 900)
+        let kept = SettingsTabsController.keepingBottomOnDisplay(frame, visible: display)
+        #expect(kept.maxY == display.maxY)
+    }
+}
+

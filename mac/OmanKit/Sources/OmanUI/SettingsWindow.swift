@@ -35,7 +35,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
 @MainActor
 public enum SettingsWindow {
     public static func make(model: SettingsViewModel) -> NSWindow {
-        // Room for the title bar and the toolbar above a page: 88 points on macOS 26, and some to spare.
+        // Room for the title bar and the toolbar above a page: 88 points on macOS 27, and some to spare.
         let chrome: CGFloat = 120
         let screenHeight = NSScreen.main?.visibleFrame.height ?? .greatestFiniteMagnitude
         let tabs = SettingsTabsController(
@@ -120,12 +120,24 @@ final class SettingsTabsController: NSTabViewController, NSWindowDelegate {
         fitWindow(toPageHeight: height, animated: view.window?.isVisible == true)
     }
 
+    /// A window low on the display that grows from its top edge would reach below the display, with the end of
+    /// its page out of reach. It moves up by as much as that, but never with its title bar above the display.
+    nonisolated static func keepingBottomOnDisplay(_ frame: NSRect, visible: NSRect) -> NSRect {
+        guard frame.minY < visible.minY else { return frame }
+        var frame = frame
+        frame.origin.y = min(visible.minY, visible.maxY - frame.height)
+        return frame
+    }
+
     /// Changes the window's height from its top edge, which stays where it is.
     private func fitWindow(toPageHeight height: CGFloat, animated: Bool) {
         guard let window = view.window else { return }
         let content = NSRect(x: 0, y: 0, width: SettingsMetrics.width, height: height)
         var frame = window.frameRect(forContentRect: content)
         frame.origin = NSPoint(x: window.frame.minX, y: window.frame.maxY - frame.height)
+        if let visible = window.screen?.visibleFrame {
+            frame = Self.keepingBottomOnDisplay(frame, visible: visible)
+        }
         guard frame != window.frame else { return }
         guard animated else {
             window.setFrame(frame, display: true)
