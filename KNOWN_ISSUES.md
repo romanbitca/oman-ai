@@ -6,7 +6,7 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ## 2026-11-11 — A release needs no approval until the setup script has run
 
-The release workflow and docs/RELEASING.md expect the six release secrets in a `release` environment that asks the maintainer for approval. On this repository the environment doesn't exist yet and the secrets are still stored on the repository itself, because `mac/scripts/setup-release-secrets.sh` has not run since it changed. Until it does, the build and publish jobs start without approval, because GitHub creates a missing environment with no rules, and a workflow on any branch can read the secrets. Only someone who can push to the repository can add such a workflow, and only admins can push a `v*` tag. Fix: run the script once, as step 5 of docs/RELEASING.md describes.
+The release workflow and docs/RELEASING.md expect the six release secrets in a `release` environment that asks the maintainer for approval. On this repository the environment has no rules and the secrets are still stored on the repository itself, because `mac/scripts/setup-release-secrets.sh` has not run since it changed. GitHub created the environment empty when 0.2.1 was released, which is what it does with a missing one. Until the script runs, the build and publish jobs start without approval, and a workflow on any branch can read the secrets. Only someone who can push to the repository can add such a workflow, and only admins can push a `v*` tag. Fix: run the script once, as step 5 of docs/RELEASING.md describes.
 
 ---
 
