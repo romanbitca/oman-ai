@@ -8,12 +8,14 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     private let services: AppServices
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let panel = FloatingPanel()
+    private let backdrop = PanelBackdrop()
     private var panelModel: PanelViewModel?
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
     private var outsideClickMonitor: Any?
     private var isPinned = false
     private var placedOrigin: NSPoint?
+    private var contentHeight: CGFloat = 0
 
     init(services: AppServices) {
         self.services = services
@@ -21,7 +23,9 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
         let model = PanelViewModel(services: services, presenter: self)
         panelModel = model
-        let hostingView = PanelHostingView(rootView: PanelRootView(model: model))
+        let hostingView = PanelHostingView(
+            rootView: PanelRootView(model: model, hasBackdrop: PanelBackdrop.isAvailable)
+        )
         hostingView.sizingOptions = []
         panel.setContentSize(PanelRootView.windowSize)
         panel.contentView = hostingView
@@ -151,12 +155,10 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
     func hidePanel() {
         stopWatchingOutsideClicks()
+        backdrop.hide()
         panel.orderOut(nil)
     }
 
-    func closePanel() {
-        dismissPanel()
-    }
 
     func showPanel() {
         let wasDragged = placedOrigin.map { $0 != panel.frame.origin } ?? false
@@ -168,6 +170,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         panel.orderFrontRegardless()
         panel.makeKey()
         startWatchingOutsideClicks()
+        updateBackdrop()
     }
 
     func setPanelPinned(_ pinned: Bool) {
@@ -176,6 +179,36 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         if isNewlyPinned, panel.isVisible {
             keepGripOnScreen()
         }
+        updateBackdrop()
+    }
+
+    func setPanelContentHeight(_ height: CGFloat) {
+        contentHeight = height
+        updateBackdrop()
+    }
+
+    /// The slight blur and darkening follow the tiles while the panel hangs from the menu bar. Pinned, it is a
+    /// window to work beside, so nothing behind it is touched.
+    private func updateBackdrop() {
+        let shows = PanelRootView.showsBackdrop(
+            isAvailable: PanelBackdrop.isAvailable,
+            isPinned: isPinned,
+            reduceTransparency: NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
+        )
+        guard shows, panel.isVisible, contentHeight > 0, let screen = panel.screen ?? NSScreen.main else {
+            backdrop.hide()
+            return
+        }
+        let margin = PanelRootView.windowSideMargin
+        let tiles = NSRect(
+            x: panel.frame.minX + margin,
+            y: panel.frame.maxY - contentHeight,
+            width: panel.frame.width - margin * 2,
+            height: contentHeight
+        )
+        var bounds = screen.frame
+        bounds.size.height = screen.visibleFrame.maxY - bounds.minY
+        backdrop.show(PanelBackdropLayout(tiles: tiles, bounds: bounds), below: panel)
     }
 
     /// Like Control Center, the panel is dark glass with white text, unless a theme was chosen in Settings.

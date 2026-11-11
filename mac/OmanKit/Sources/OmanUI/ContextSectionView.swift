@@ -41,7 +41,7 @@ struct ContextSectionView: View {
                     .focusEffectDisabled()
                     .frame(height: 84)
                     .padding(9)
-                    .panelSurface(in: PanelShape.tile)
+                    .panelSurface(in: PanelShape.tile, reading: true)
                     .overlay(alignment: .topLeading) {
                         if model.contextText.isEmpty {
                             Text("Paste messages for context")

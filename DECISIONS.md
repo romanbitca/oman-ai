@@ -182,3 +182,15 @@ Supersedes "No backdrop, frosted glass again" for the panel's glass. Settings ke
 - A soft-edged blur built into the panel's window covers what is behind the tiles and fades out 22 points beyond them, in place of the blurred backdrop behind Control Center. It uses the `fullScreenUI` material in the system's light or dark mode. Control Center's backdrop is a pure blur, which no public API offers, and the public materials add a tint: over a dark app in light mode the panel sits on a light frosted card where Control Center stays dark. At less than full strength sharp copies of the app's text showed through, so the blur is always at full strength
 - A click on the blur's soft edge closes the panel, as a click beside Control Center does, because the panel's window takes that click. A pinned panel has no blur, because it would cover the drag grip
 - A disabled button in the panel dims only its label, as on macOS, instead of fading its glass
+
+## 2026-11-11 — Backdrop and glass set by measuring Control Center
+
+Supersedes the backdrop and glass points of "Matched against Control Center on screen" above. The maintainer rejected that version, a blurred card behind the panel, as a box that was not really transparent, and a wider band of glass tried after it because it blurred everything.
+
+- Control Center was measured on macOS 27 with a checkerboard behind it. Around its modules it blurs what is behind by about 3 points and darkens it by 10%, with no tint: white becomes 90% and black stays black. The blur is full 45 points inside the modules' outline and gone 40 points outside. The darkening is full 34 points inside and gone 126 points outside. Through a tile, white is 73% and black 13%. `PanelBackdropLayout` holds these numbers
+- The backdrop uses the window server's own blur, `CGSSetWindowBackgroundBlurRadius`, because no public material or glass blurs without tinting. It is a private call, the one iTerm2 and Ghostty use for see-through windows. It is looked up at run time: without it the panel keeps frosted glass and has no backdrop
+- That blur is all or nothing inside a window's shape, so the soft edge is six nested windows whose small blurs add up to 3 points. A seventh window carries the darkening. None of them takes a click or covers the menu bar, and they follow the tiles as the panel changes height
+- Tiles are clear glass with a 29% layer of 13% gray over it, which gives Control Center's 73% and 13% exactly
+- Text to read or type stays on frosted glass: the result, the compose box, pasted context, setup and errors. Control Center shows no paragraphs, and long white text over a slightly blurred app is hard to read
+- Pinned, with the Light theme, or with Reduce Transparency on, every tile is frosted. Pinned or with Reduce Transparency on there is no backdrop either
+- Tiles are 12 points apart with a 26-point corner radius, up from 8 and 22, closer to Control Center's 13 to 14 points and its rounder modules

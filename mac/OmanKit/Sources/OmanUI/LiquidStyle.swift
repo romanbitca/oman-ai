@@ -5,6 +5,8 @@ enum Liquid {
     static let morph = Animation.smooth(duration: 0.28)
     static let press = Animation.easeOut(duration: 0.12)
     static let accent = Color(red: 0.40, green: 0.34, blue: 1.0)
+    /// Laid over clear glass so that it matches Control Center's tiles.
+    static let clearGlassShade = Color(white: 0.13, opacity: 0.29)
     static let iridescence: [Color] = [
         Color(red: 0.40, green: 0.34, blue: 1.0),
         Color(red: 0.82, green: 0.32, blue: 0.96),
@@ -33,7 +35,7 @@ extension EnvironmentValues {
     @Entry var panelIsFloating = false
     /// Turned off for Settings, which has no animation at all.
     @Entry var liquidMotion = true
-    /// Clear glass, as in Control Center. The panel uses it over its blurred halo; Settings keeps frosted glass.
+    /// Clear glass, as in Control Center. The panel uses it over its backdrop; Settings keeps frosted glass.
     @Entry var liquidClearGlass = false
     /// Controls inside a glass tile are flat, because Apple's glass isn't meant to sit on glass.
     @Entry var isInsideGlassTile = false
@@ -44,9 +46,11 @@ struct LiquidGlassChoice: Equatable {
     let isClear: Bool
     let isInteractive: Bool
 
-    init(prefersClear: Bool, isTinted: Bool, wantsInteraction: Bool, hasMotion: Bool) {
-        // A tint is a solid colour, which clear glass would wash out.
-        isClear = prefersClear && !isTinted
+    init(prefersClear: Bool, isTinted: Bool, isForReading: Bool = false, wantsInteraction: Bool, hasMotion: Bool) {
+        // A tint is a solid colour, which clear glass would wash out. Text someone reads or types stays on frosted
+        // glass: clear glass shows the app behind only slightly blurred, which is fine behind a button's label
+        // but not behind a paragraph.
+        isClear = prefersClear && !isTinted && !isForReading
         // Interactive glass lights up and flexes, and Settings has no motion at all.
         isInteractive = wantsInteraction && hasMotion
     }
@@ -137,17 +141,31 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     let tint: Color?
     let id: String?
     let interactive: Bool
+    let reading: Bool
     @Environment(\.liquidSpace) private var space
     @Environment(\.liquidMotion) private var hasMotion
     @Environment(\.liquidClearGlass) private var prefersClear
 
     private var choice: LiquidGlassChoice {
-        LiquidGlassChoice(prefersClear: prefersClear, isTinted: tint != nil, wantsInteraction: interactive, hasMotion: hasMotion)
+        LiquidGlassChoice(
+            prefersClear: prefersClear,
+            isTinted: tint != nil,
+            isForReading: reading,
+            wantsInteraction: interactive,
+            hasMotion: hasMotion
+        )
     }
 
     func body(content: Content) -> some View {
         if #available(macOS 26.0, *) {
-            glassed(content)
+            glassed(
+                content.background {
+                    // Clear glass alone leaves white almost white, and white text can't be read on it. Control
+                    // Center darkens its tiles: measured through one, white is 73% and black 13%. This layer over
+                    // the glass gives exactly that.
+                    if choice.isClear { shape.fill(Liquid.clearGlassShade) }
+                }
+            )
         } else {
             content
                 .background(.regularMaterial, in: shape)
@@ -177,8 +195,16 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
 extension View {
     /// `interactive` is for buttons: in the panel they get Apple's glass, which lights up under the pointer
     /// and flexes when pressed.
-    func liquidGlass<S: Shape>(in shape: S, tint: Color? = nil, id: String? = nil, interactive: Bool = false) -> some View {
-        modifier(LiquidGlassModifier(shape: shape, tint: tint, id: id, interactive: interactive))
+    ///
+    /// `reading` is for a surface that holds text to read or type. It keeps frosted glass in the panel too.
+    func liquidGlass<S: Shape>(
+        in shape: S,
+        tint: Color? = nil,
+        id: String? = nil,
+        interactive: Bool = false,
+        reading: Bool = false
+    ) -> some View {
+        modifier(LiquidGlassModifier(shape: shape, tint: tint, id: id, interactive: interactive, reading: reading))
     }
 }
 

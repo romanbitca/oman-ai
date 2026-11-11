@@ -10,10 +10,21 @@ public struct PanelRootView: View {
     public static let windowSideMargin = PanelMetrics.sideMargin
 
     private let model: PanelViewModel
+    private let hasBackdrop: Bool
     @Namespace private var space
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var colorScheme
 
-    public init(model: PanelViewModel) {
+    /// `hasBackdrop` says whether the app draws `PanelBackdrop` behind the unpinned panel.
+    public init(model: PanelViewModel, hasBackdrop: Bool = false) {
         self.model = model
+        self.hasBackdrop = hasBackdrop
+    }
+
+    /// The backdrop is what makes clear glass readable. Pinned, the panel floats over whatever the person is
+    /// working in with no backdrop, so it keeps frosted glass there.
+    public static func showsBackdrop(isAvailable: Bool, isPinned: Bool, reduceTransparency: Bool) -> Bool {
+        isAvailable && !isPinned && !reduceTransparency
     }
 
     public var body: some View {
@@ -27,12 +38,7 @@ public struct PanelRootView: View {
                         .transition(.opacity)
                 }
                 content
-                    // Pinned, the panel is a window to work beside, and the halo would cover its drag grip.
-                    .background {
-                        if !model.isPinned {
-                            PanelHalo { model.closePanel() }.padding(-PanelHalo.spread)
-                        }
-                    }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { model.contentHeightChanged($0) }
                     .frame(width: PanelMetrics.width)
                     .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
                     .padding(.top, model.isPinned ? PanelMetrics.sideMargin : 0)
@@ -41,7 +47,12 @@ public struct PanelRootView: View {
         }
         .environment(\.liquidSpace, space)
         .environment(\.panelIsFloating, model.isPinned)
-        .environment(\.liquidClearGlass, true)
+        // Clear glass is Control Center's dark glass with white text. With the Light theme the tiles stay frosted.
+        .environment(
+            \.liquidClearGlass,
+            colorScheme == .dark
+                && Self.showsBackdrop(isAvailable: hasBackdrop, isPinned: model.isPinned, reduceTransparency: reduceTransparency)
+        )
         .withoutSystemWritingTools()
         .animation(Liquid.morph, value: model.screen)
         .animation(Liquid.morph, value: model.isPinned)

@@ -280,8 +280,8 @@ public final class PanelViewModel {
         panelLog.notice("Back pressed, now on \(String(describing: self.screen), privacy: .public)")
     }
 
-    func closePanel() {
-        presenter?.closePanel()
+    func contentHeightChanged(_ height: CGFloat) {
+        presenter?.setPanelContentHeight(height)
     }
 
     func togglePin() {

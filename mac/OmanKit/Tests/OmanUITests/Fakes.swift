@@ -237,13 +237,13 @@ final class FakePresenter: PanelPresenting {
     var hideCount = 0
     var showCount = 0
     var settingsCount = 0
-    var closeCount = 0
     var pinnedValues: [Bool] = []
+    var contentHeights: [CGFloat] = []
 
     func hidePanel() { hideCount += 1 }
     func showPanel() { showCount += 1 }
-    func closePanel() { closeCount += 1 }
     func setPanelPinned(_ pinned: Bool) { pinnedValues.append(pinned) }
+    func setPanelContentHeight(_ height: CGFloat) { contentHeights.append(height) }
     func openSettings() { settingsCount += 1 }
 }
 

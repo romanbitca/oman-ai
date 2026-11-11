@@ -4,9 +4,9 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
-## 2026-11-11 — Over dark apps the panel's blur is lighter than Control Center's
+## 2026-11-11 — The backdrop depends on a private window-server call
 
-Control Center blurs what is behind it without tinting it, through a private API. OmanAI uses the public `fullScreenUI` material, which adds the system mode's tint, so in light mode the panel sits on a light frosted card even over a dark app or video. It matches Control Center closely over light apps.
+The slight blur behind the panel comes from `CGSSetWindowBackgroundBlurRadius`, which Apple doesn't document. If a future macOS removes it, `PanelBackdrop.isAvailable` turns false and the panel shows frosted glass with no backdrop, as 0.3.2 did. If it stays but behaves differently, the backdrop could look wrong: measure it again with the checkerboard method under Tooling gotchas. Its numbers were found on macOS 27.
 
 ---
 
@@ -115,12 +115,14 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - A SwiftUI shape drawn above a `WindowDragArea` takes the click and does nothing with it, so mark it `.allowsHitTesting(false)`.
 - Fully clear pixels in the panel pass clicks to the app behind. Liquid Glass in a custom `Shape` counts as clear, unlike glass in a capsule or rounded rectangle, and so did a dark bar drawn on it. A 2% white fill in the same shape, behind the drag area, makes it clickable. Unit tests can't see this: check with real mouse events.
 - `log` is a zsh builtin, so reading the system log needs `/usr/bin/log`.
-- Glass can be checked on screen, with the maintainer's OK: host the panel in a borderless window at the top right, let it draw for about a second, and capture that corner with `screencapture -R`. Control Center opens through Accessibility by pressing the "Control Center" item that `MenuBarAgent` owns in the menu bar (System Events can't see it); wait about three seconds before capturing it.
+- Glass can be checked on screen, with the maintainer's OK: host the panel in a borderless panel under the menu bar, make it the key window, let it draw for about a second, and capture that area with `screencapture -R`. Glass in a window that isn't key is drawn flat and gray, which made several captures misleading. Control Center opens through Accessibility by pressing the "Control Center" item that `MenuBarAgent` owns in the menu bar (System Events can't see it); wait about three seconds before capturing it.
+- To compare with Control Center by numbers, put a window with a black and white checkerboard of 32-point squares behind both, at level `.floating`. Per square, read the white level, the black level, and the width of the edge to the next square: the 10% to 90% width divided by 2.563 is the blur's sigma. The backdrop's numbers were found this way.
+- The window server's blur (`CGSSetWindowBackgroundBlurRadius`) only shows where the window's own pixels have an alpha of at least 2/255. It is all or nothing there, and three units of radius blur by about one point. Blurs in stacked windows add as the root of the sum of their squares.
 - `NSVisualEffectView.maskImage` ignores an image with only an alpha channel. Give it black pixels with the fade in their alpha.
 - `gh` on this Mac has more than one account, and the active one may be a work account that can only read this repository. Then pushes and `gh variable get` fail with 403. Run them with the maintainer's account for that command only, `GH_TOKEN="$(gh auth token --user romanbitca)"`, rather than switching the active account.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
-- A dimmed, blurred backdrop window behind the panel (`NSVisualEffectView`, behind-window, with a gradient mask) came out as a flat gray veil over other apps, with no visible blur, and clear glass let their text show through the tiles. Both were removed after one release; don't try them again without seeing them on screen first.
+- A backdrop made from `NSVisualEffectView` or from glass always shows a tint: a gray veil or card over a white app, a light one over a dark app. The maintainer rejected three such versions. Only the window server's blur is free of tint.
 - The computer-use tools can't see OmanAI because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "OmanAI"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---

@@ -83,9 +83,9 @@ public protocol SystemBridging: AnyObject {
 public protocol PanelPresenting: AnyObject {
     func hidePanel()
     func showPanel()
-    /// Closes the panel as a click outside it does.
-    func closePanel()
     func setPanelPinned(_ pinned: Bool)
+    /// How tall the panel's tiles are now, so that what is drawn behind them can follow.
+    func setPanelContentHeight(_ height: CGFloat)
     func openSettings()
 }
 

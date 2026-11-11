@@ -4,7 +4,7 @@ struct PanelSetupView: View {
     @Bindable var model: PanelViewModel
 
     var body: some View {
-        GlassTile(id: LiquidID.body, padding: 16) {
+        GlassTile(id: LiquidID.body, padding: 16, reading: true) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Set up OmanAI").font(.system(size: 15, weight: .semibold))
 

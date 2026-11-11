@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Backdrop rebuilt from measurements of Control Center
+
+- The maintainer rejected the blurred card behind the panel as a box that was not really transparent, and a wider band of glass because it blurred everything. Stopped judging by eye: put a checkerboard behind the real Control Center and read its blur and tone square by square
+- Found a slight, local effect with no tint: 3 points of blur and 10% darkening, fading within about 40 and 126 points of the modules. Every earlier version blurred several times more and tinted what it blurred
+- Rebuilt the backdrop on the window server's blur, in six nested windows plus one for the darkening, and tuned the tiles to Control Center's tone. On the same checkerboard ours reads 2.8 to 3.1 points of blur, 90% white, and 73% and 13% through a tile, against Control Center's 3.0, 90%, 73% and 13%
+- Earlier captures were misleading because the preview window was never the key window, and glass in such a window is drawn flat and gray
+- Text to read or type stays on frosted glass. Tiles are 12 points apart with rounder corners
+- Verified: 315 tests pass, the app builds, and the backdrop keeps its numbers after the panel closes, reopens and changes height. Captured next to Control Center over a white app, a dark app, a colour gradient and the desktop
+- Not verified: the real app with the new backdrop, since only the preview panel was captured, and how it looks while text streams in. Not released: using the private call is the maintainer's decision
+
 ## 2026-11-11 — Panel matched against Control Center on screen
 
 - The maintainer found 0.3.2 still looked bad next to Control Center and asked for the closest match, compared on several backgrounds

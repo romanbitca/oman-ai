@@ -17,7 +17,7 @@ struct PanelWorkingView: View {
             .scrollBounceBehavior(.basedOnSize)
             .frame(minHeight: 84, maxHeight: 340)
             .fixedSize(horizontal: false, vertical: true)
-            .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
+            .liquidGlass(in: PanelShape.tile, id: LiquidID.body, reading: true)
             .overlay { LiquidGlow(shape: PanelShape.tile) }
 
             HStack(spacing: 8) {
@@ -53,7 +53,7 @@ struct PanelResultView: View {
             .scrollBounceBehavior(.basedOnSize)
             .frame(minHeight: 60, maxHeight: 300)
             .fixedSize(horizontal: false, vertical: true)
-            .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
+            .liquidGlass(in: PanelShape.tile, id: LiquidID.body, reading: true)
             .animation(.easeOut(duration: 0.18), value: model.showOriginal)
 
             if let notice = model.notice {
@@ -114,7 +114,7 @@ struct PanelFailedView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: PanelMetrics.gap) {
-            GlassTile(id: LiquidID.body) {
+            GlassTile(id: LiquidID.body, reading: true) {
                 Label(model.errorMessage ?? "Something went wrong.", systemImage: "exclamationmark.triangle.fill")
                     .symbolRenderingMode(.multicolor)
                     .font(.system(size: 13))

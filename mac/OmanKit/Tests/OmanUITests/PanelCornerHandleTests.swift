@@ -18,12 +18,23 @@ import Testing
         return host.hitTest(host.convert(inHost, to: host.superview))
     }
 
+    // The curve's centre line, worked out from the same measurements the handle is built from.
+    private let thickness = PanelMetrics.gripThickness
+    private var radius: CGFloat { PanelMetrics.tileRadius + PanelMetrics.gap + thickness / 2 }
+    private var leadIn: CGFloat { PanelCornerHandle.side - thickness - radius }
+    private var center: CGPoint {
+        CGPoint(x: PanelCornerHandle.side - thickness / 2 - radius, y: thickness / 2 + radius)
+    }
+
     @Test func aClickOnTheMiddleOfTheCurveReachesTheDragView() {
-        #expect(viewUnderMouse(at: CGPoint(x: 39.46, y: 16.54)) is WindowDragArea.DragView)
+        let reach = radius / 2.0.squareRoot()
+        #expect(viewUnderMouse(at: CGPoint(x: center.x + reach, y: center.y - reach)) is WindowDragArea.DragView)
     }
 
     @Test func aClickAtEitherEndOfTheCurveReachesTheDragView() {
-        #expect(viewUnderMouse(at: CGPoint(x: 6, y: 6)) is WindowDragArea.DragView)
-        #expect(viewUnderMouse(at: CGPoint(x: 50, y: 50)) is WindowDragArea.DragView)
+        let start = CGPoint(x: center.x - leadIn, y: center.y - radius)
+        let end = CGPoint(x: center.x + radius, y: center.y + leadIn)
+        #expect(viewUnderMouse(at: start) is WindowDragArea.DragView)
+        #expect(viewUnderMouse(at: end) is WindowDragArea.DragView)
     }
 }

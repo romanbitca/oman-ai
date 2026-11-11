@@ -4,7 +4,7 @@ import SwiftUI
 
 enum PanelMetrics {
     static let width: CGFloat = 360
-    static let gap: CGFloat = 8
+    static let gap: CGFloat = 12
     /// Below `gap`, so tiles stay separate at rest and only flow together while they move.
     static let blend: CGFloat = 6
     static let gripThickness: CGFloat = 12
@@ -14,7 +14,7 @@ enum PanelMetrics {
     static let sideMargin = gap + gripThickness + shadowRoom
     static let bottomMargin: CGFloat = 24
     static let maxHeight: CGFloat = 640
-    static let tileRadius: CGFloat = 22
+    static let tileRadius: CGFloat = 26
 }
 
 enum PanelShape {
@@ -47,6 +47,8 @@ struct PanelScrollArea<Content: View>: View {
 struct GlassTile<Content: View>: View {
     var id: String?
     var padding: CGFloat = 13
+    /// For a tile that holds text to read or type.
+    var reading = false
     @ViewBuilder var content: Content
     @Environment(\.panelIsFloating) private var isFloating
 
@@ -55,7 +57,7 @@ struct GlassTile<Content: View>: View {
             .padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background { if isFloating { WindowDragArea() } }
-            .liquidGlass(in: PanelShape.tile, id: id)
+            .liquidGlass(in: PanelShape.tile, id: id, reading: reading)
     }
 }
 
@@ -257,21 +259,23 @@ struct PanelControlsGroup<Content: View>: View {
 
 private struct InnerSurface<S: Shape>: ViewModifier {
     let shape: S
+    let reading: Bool
     @Environment(\.isInsideGlassTile) private var isInsideTile
 
     func body(content: Content) -> some View {
         if isInsideTile {
-            content.background(shape.fill(Color.primary.opacity(0.08)))
+            // Text to read or type gets a darker, calmer patch of its clear tile.
+            content.background(shape.fill(reading ? Color.black.opacity(0.4) : Color.primary.opacity(0.08)))
         } else {
-            content.liquidGlass(in: shape)
+            content.liquidGlass(in: shape, reading: reading)
         }
     }
 }
 
 extension View {
     /// Glass on its own, or a flat fill when it sits inside a glass tile.
-    func panelSurface<S: Shape>(in shape: S) -> some View {
-        modifier(InnerSurface(shape: shape))
+    func panelSurface<S: Shape>(in shape: S, reading: Bool = false) -> some View {
+        modifier(InnerSurface(shape: shape, reading: reading))
     }
 }
 

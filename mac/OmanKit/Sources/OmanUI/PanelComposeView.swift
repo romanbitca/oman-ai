@@ -20,7 +20,7 @@ struct PanelComposeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(PanelShape.tile)
                     .onTapGesture { isPromptFocused = true }
-                    .liquidGlass(in: PanelShape.tile, id: LiquidID.body)
+                    .liquidGlass(in: PanelShape.tile, id: LiquidID.body, reading: true)
 
                 if model.capture.text != nil {
                     NoticeText(text: "Using your selected text as reference")
