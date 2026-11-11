@@ -63,7 +63,7 @@ Acceptance:
 - Rewrite and Compose work on the on-device model with no API key
 - The panel does not freeze after focus changes, such as taking a screenshot
 
-## W7: Releases and open source [IN PROGRESS]
+## W7: Releases and open source [DONE 2026-11-11]
 
 Signed and notarized builds published from a Git tag by GitHub Actions, automatic updates through Sparkle and GitHub Releases, and the files an open-source project needs.
 
