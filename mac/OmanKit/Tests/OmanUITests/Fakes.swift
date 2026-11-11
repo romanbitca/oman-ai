@@ -245,6 +245,35 @@ final class FakePresenter: PanelPresenting {
     func openSettings() { settingsCount += 1 }
 }
 
+final class FakeUsage: UsageStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [UsageEntry] = []
+    private var lastSince: Date?
+    private var failure: Error?
+
+    var since: Date? { lock.withLock { lastSince } }
+
+    func seed(_ entries: [UsageEntry]) {
+        lock.withLock { stored = entries }
+    }
+
+    func fail(with error: Error?) {
+        lock.withLock { failure = error }
+    }
+
+    func record(_ entry: UsageEntry) throws {
+        lock.withLock { stored.append(entry) }
+    }
+
+    func usageEntries(since date: Date) throws -> [UsageEntry] {
+        try lock.withLock {
+            lastSince = date
+            if let failure { throw failure }
+            return stored.filter { $0.date >= date }.sorted { $0.date < $1.date }
+        }
+    }
+}
+
 @MainActor
 final class FakeUpdates: AppUpdating {
     var installsUpdatesAutomatically = true
@@ -262,6 +291,7 @@ final class Harness {
     let system = FakeSystem()
     let presenter = FakePresenter()
     let updates = FakeUpdates()
+    let usage = FakeUsage()
 
     static let slack = SourceApp(name: "Slack", bundleID: "com.tinyspeck.slackmacgap", processID: 42)
 
@@ -270,7 +300,15 @@ final class Harness {
     }
 
     var services: AppServices {
-        AppServices(writing: writing, styles: styles, settings: settings, apiKeys: keys, system: system, updates: updates)
+        AppServices(
+            writing: writing,
+            styles: styles,
+            settings: settings,
+            apiKeys: keys,
+            system: system,
+            updates: updates,
+            usage: usage
+        )
     }
 
     func makePanel() -> PanelViewModel {

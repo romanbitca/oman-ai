@@ -15,6 +15,8 @@ struct PanelHomeView: View {
                 HStack(spacing: PanelMetrics.gap) {
                     ActionCard(title: "Proofread", symbol: "text.magnifyingglass") { model.proofread() }
                     ActionCard(title: "Rewrite", symbol: "arrow.trianglehead.2.clockwise") { model.rewrite() }
+                    ActionCard(title: "Explain", symbol: "lightbulb") { model.explain() }
+                        .help("See how a reader will understand your text")
                 }
 
                 StyleChipsView(

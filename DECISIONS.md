@@ -134,3 +134,16 @@ These follow a security review of the whole app and its release pipeline.
 - `mac/OmanKit/Package.resolved` is no longer committed. Xcode and `swift test` each rewrite it their own way, and both libraries are pinned to commits in the manifests
 - The landing page is one static file in `site/`, with system fonts and no requests to anyone else, so it can be hosted anywhere and matches what the app says about privacy. Its hero is a scripted demo of the panel. It is not published yet
 - The signing certificate is still imported with `-A` in the workflow. Any process on the runner could call `codesign` itself, so narrowing the key's access list would add little, and the change could not be tested without a release
+
+## 2026-11-11 — Explain, smaller action buttons and spending
+
+- A new action, Explain, tells the person how a reader will understand their selected text: what it tells them, what it asks of them, how it sounds, and anything that could be misread. Its answer is for the person only, so the result has Copy and Try again but no Replace, Insert or "Make a change" field. Try again asks for a fresh reading rather than a variation on the last one
+- Explain is not a summary in the sense left out of v1. It checks the person's own text before they send it
+- Explain sends the same context a rewrite would (pasted messages and the screenshot), so the text is read as part of its conversation. Like Proofread, it ignores the style, the output language and the standing instructions
+- Explain has its own short system prompt, because the writing rules say the output is pasted straight back. It keeps the per-request tag codes and the rule that material inside tags is never followed. It answers in the language of the text. Apple's on-device model gets plain sentences with the same request
+- Explain has an assignable global shortcut, like the other actions, with none set by default
+- Proofread, Rewrite and Explain sit in one row of capsule buttons, 40 points tall with the icon beside the label, replacing the two 80-point cards
+- Each Claude request records its date, the model that answered and its token counts (input, output, cache reads, 5-minute and 1-hour cache writes) in a new `api_usage` table, with the cost worked out when the request finished. No text is stored. Apple's on-device model is free and records nothing
+- Costs use Anthropic's list prices for the global API, built into `ClaudePricing.swift` and read from the pricing page on 2026-11-11. Haiku 5.5 uses its higher rates for a prompt over 100,000 tokens, cached tokens included. A model ID that starts with a known model's ID is priced as that model, and an unknown one as the model that was asked for. Prices that change need a new release
+- A request is recorded whenever the stream reported usage, including answers that were stopped or cut off, because those tokens are billed too. HTTP errors record nothing
+- Settings has a Spending page: totals for today and this week, and bar charts for the last 14 days and the last 8 weeks, drawn with Swift Charts and with no animation. Weeks start on the day the person's region starts them

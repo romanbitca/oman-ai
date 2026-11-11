@@ -105,6 +105,8 @@ public enum WritingTask: Equatable, Sendable {
     case proofread(text: String)
     case rewrite(text: String, instruction: String?)
     case compose(request: String, selectedText: String?)
+    /// Tells the person how a reader will understand their text. The answer is for them alone, never pasted.
+    case explain(text: String)
 }
 
 public struct Refinement: Equatable, Sendable {
@@ -243,16 +245,16 @@ public struct KeyCombo: Codable, Hashable, Sendable {
 }
 
 public enum ShortcutAction: Hashable, Sendable {
-    case openPanel, proofread, rewrite, compose
+    case openPanel, proofread, rewrite, explain, compose
     case style(UUID)
     case acceptResult, copyResult, tryAgain, toggleOriginal
 
-    public static let globalActions: [ShortcutAction] = [.openPanel, .proofread, .rewrite, .compose]
+    public static let globalActions: [ShortcutAction] = [.openPanel, .proofread, .rewrite, .explain, .compose]
     public static let panelActions: [ShortcutAction] = [.acceptResult, .copyResult, .tryAgain, .toggleOriginal]
 
     public var isGlobal: Bool {
         switch self {
-        case .openPanel, .proofread, .rewrite, .compose, .style: true
+        case .openPanel, .proofread, .rewrite, .explain, .compose, .style: true
         case .acceptResult, .copyResult, .tryAgain, .toggleOriginal: false
         }
     }
@@ -262,6 +264,7 @@ public enum ShortcutAction: Hashable, Sendable {
         case .openPanel: "openPanel"
         case .proofread: "proofread"
         case .rewrite: "rewrite"
+        case .explain: "explain"
         case .compose: "compose"
         case .style(let id): "style:\(id.uuidString)"
         case .acceptResult: "acceptResult"

@@ -24,6 +24,16 @@ public protocol AppSettingsStore: Sendable {
     func setPreferences(_ preferences: AppPreferences) throws
 }
 
+/// Takes what each Claude request used, so Settings can show what it cost.
+public protocol UsageRecording: Sendable {
+    func record(_ entry: UsageEntry) throws
+}
+
+public protocol UsageStore: UsageRecording {
+    /// Entries from `date` on, oldest first.
+    func usageEntries(since date: Date) throws -> [UsageEntry]
+}
+
 public protocol APIKeyStore: Sendable {
     /// Whether a key is saved, answered without reading the key itself where the store can.
     func hasAPIKey() throws -> Bool
@@ -92,6 +102,7 @@ public struct AppServices {
     public let apiKeys: any APIKeyStore
     public let system: any SystemBridging
     public let updates: (any AppUpdating)?
+    public let usage: (any UsageStore)?
 
     public init(
         writing: any WritingService,
@@ -99,7 +110,8 @@ public struct AppServices {
         settings: any AppSettingsStore,
         apiKeys: any APIKeyStore,
         system: any SystemBridging,
-        updates: (any AppUpdating)? = nil
+        updates: (any AppUpdating)? = nil,
+        usage: (any UsageStore)? = nil
     ) {
         self.writing = writing
         self.styles = styles
@@ -107,5 +119,6 @@ public struct AppServices {
         self.apiKeys = apiKeys
         self.system = system
         self.updates = updates
+        self.usage = usage
     }
 }

@@ -40,6 +40,9 @@ public final class SettingsViewModel {
     private(set) var installsUpdatesAutomatically = false
     var canUpdate: Bool { services.updates != nil }
 
+    private(set) var spending = SpendingSummary.make(from: [], now: Date(), calendar: .current)
+    private(set) var spendingError: String?
+
     public init(services: AppServices) {
         self.services = services
     }
@@ -63,11 +66,25 @@ public final class SettingsViewModel {
         if !styles.contains(where: { $0.id == selectedStyleID }) {
             selectedStyleID = styles.first?.id
         }
+        reloadSpending()
     }
 
     private func loadAPIKey() -> String? {
         guard let key = try? services.apiKeys.loadAPIKey(), !key.isEmpty else { return nil }
         return key
+    }
+
+    // MARK: Spending
+
+    func reloadSpending(now: Date = Date(), calendar: Calendar = .current) {
+        guard let store = services.usage else { return }
+        do {
+            let entries = try store.usageEntries(since: SpendingSummary.earliestDate(now: now, calendar: calendar))
+            spending = SpendingSummary.make(from: entries, now: now, calendar: calendar)
+            spendingError = nil
+        } catch {
+            spendingError = error.localizedDescription
+        }
     }
 
     // MARK: Updates
@@ -223,6 +240,7 @@ public final class SettingsViewModel {
         switch action {
         case .openPanel: "Open OmanAI"
         case .proofread: "Proofread selection"
+        case .explain: "Explain selection"
         case .rewrite: "Rewrite selection"
         case .compose: "Compose"
         case .style(let id): "Rewrite as \(styles.first { $0.id == id }?.displayName ?? "style")"

@@ -4,6 +4,12 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — Spending is an estimate
+
+The Spending page prices the token counts Anthropic reports with list prices built into the app, so it can drift from the real bill. A request stopped before it finished counts only the output reported so far, which is usually just the first token. When Sonnet or Opus declines and a fallback model answers, only the answer is counted. Requests made with the same key outside OmanAI, or from another Mac, are not included. Requests from before this version were never recorded. The Anthropic Console has the actual bill.
+
+---
+
 ## 2026-11-11 — A release needs no approval until the setup script has run
 
 The release workflow and docs/RELEASING.md expect the six release secrets in a `release` environment that asks the maintainer for approval. On this repository the environment has no rules and the secrets are still stored on the repository itself, because `mac/scripts/setup-release-secrets.sh` has not run since it changed. GitHub created the environment empty when 0.2.1 was released, which is what it does with a missing one. Until the script runs, the build and publish jobs start without approval, and a workflow on any branch can read the secrets. Only someone who can push to the repository can add such a workflow, and only admins can push a `v*` tag. Fix: run the script once, as step 5 of docs/RELEASING.md describes.

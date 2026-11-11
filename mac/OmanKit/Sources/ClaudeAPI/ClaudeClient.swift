@@ -3,23 +3,27 @@ import OmanCore
 
 public struct ClaudeClient: WritingService {
     private let session: URLSession
+    private let usage: (any UsageRecording)?
 
-    public init() {
+    public init(usage: (any UsageRecording)? = nil) {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 60
         configuration.urlCache = nil
-        self.init(session: URLSession(configuration: configuration))
+        self.init(session: URLSession(configuration: configuration), usage: usage)
     }
 
-    init(session: URLSession) {
+    init(session: URLSession, usage: (any UsageRecording)? = nil) {
         self.session = session
+        self.usage = usage
     }
 
     public func stream(_ request: WritingRequest, apiKey: String) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
-            let task = Task { [session] in
+            let task = Task { [session, usage] in
                 do {
-                    try await Self.run(request, apiKey: apiKey, session: session) { continuation.yield($0) }
+                    try await Self.run(request, apiKey: apiKey, session: session, usage: usage) {
+                        continuation.yield($0)
+                    }
                     continuation.finish()
                 } catch {
                     if let failure = Self.writingError(for: error) {
@@ -52,6 +56,7 @@ public struct ClaudeClient: WritingService {
         _ request: WritingRequest,
         apiKey: String,
         session: URLSession,
+        usage recorder: (any UsageRecording)?,
         yield: (String) -> Void
     ) async throws {
         let urlRequest = try RequestBuilder.messagesRequest(for: request, apiKey: apiKey)
@@ -68,6 +73,9 @@ public struct ClaudeClient: WritingService {
         var yieldedText = false
         var stopReason: String?
         var line: [UInt8] = []
+        var meter = UsageMeter()
+        // Tokens are billed even when the answer is stopped or cut off, so whatever was reported is kept.
+        defer { record(meter, for: request, to: recorder) }
 
         // AsyncBytes.lines also splits on U+2028, U+2029 and U+0085, which can sit unescaped inside JSON strings.
         lineLoop: for try await byte in bytes {
@@ -78,11 +86,18 @@ public struct ClaudeClient: WritingService {
             defer { line.removeAll(keepingCapacity: true) }
 
             switch StreamEventParser.event(fromLine: String(decoding: line, as: UTF8.self)) {
+            case .started(let model, let usage):
+                meter.start(model: model, usage: usage)
             case .text(let delta):
                 yieldedText = true
                 yield(delta)
-            case .stopReason(let reason):
-                stopReason = reason
+            case .delta(let reason, let usage):
+                if let reason {
+                    stopReason = reason
+                }
+                if let usage {
+                    meter.merge(usage)
+                }
             case .failure(let error):
                 throw error
             case .messageStop:
@@ -107,6 +122,14 @@ public struct ClaudeClient: WritingService {
         if !yieldedText {
             throw WritingError.noOutput
         }
+    }
+
+    private static func record(_ meter: UsageMeter, for request: WritingRequest, to recorder: (any UsageRecording)?) {
+        guard let recorder, let tokens = meter.tokens else { return }
+        let model = meter.model ?? request.model.rawValue
+        let cost = ClaudePricing.cost(of: tokens, servedModel: model, requested: request.model)
+        // A failed write only leaves a gap in the spending chart, which is no reason to fail the request.
+        try? recorder.record(UsageEntry(date: Date(), model: model, tokens: tokens, cost: cost))
     }
 
     private static func httpResponse(from response: URLResponse) throws -> HTTPURLResponse {

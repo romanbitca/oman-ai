@@ -13,12 +13,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         do {
             let database = try OmanDatabase.openDefault()
             let services = AppServices(
-                writing: WritingRouter(),
+                writing: WritingRouter(usage: database),
                 styles: database,
                 settings: database,
                 apiKeys: KeychainAPIKeyStore(),
                 system: MacSystemBridge(),
-                updates: UpdaterController.makeIfConfigured()
+                updates: UpdaterController.makeIfConfigured(),
+                usage: database
             )
             coordinator = MenuBarCoordinator(services: services)
         } catch {

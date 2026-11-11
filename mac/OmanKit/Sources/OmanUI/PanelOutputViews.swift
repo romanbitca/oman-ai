@@ -61,15 +61,20 @@ struct PanelResultView: View {
             }
 
             HStack(spacing: PanelMetrics.gap) {
-                LiquidButton(title: model.primaryActionTitle, prominent: true) { model.applyResult() }
-                    .disabled(!model.canApplyResult)
+                // An explanation is only for reading, so there is nothing to put back in the app.
+                if !model.isExplanation {
+                    LiquidButton(title: model.primaryActionTitle, prominent: true) { model.applyResult() }
+                        .disabled(!model.canApplyResult)
+                }
                 LiquidButton(title: "Copy", symbol: "doc.on.doc") { model.copyResult() }
                 LiquidButton(title: "Try again", symbol: "arrow.trianglehead.2.clockwise") { model.tryAgain() }
             }
             .labelStyle(.titleOnly)
 
-            PanelInputField(symbol: "sparkle", prompt: "Make a change…", text: $model.adjustment) {
-                model.applyAdjustment()
+            if !model.isExplanation {
+                PanelInputField(symbol: "sparkle", prompt: "Make a change…", text: $model.adjustment) {
+                    model.applyAdjustment()
+                }
             }
         }
     }

@@ -109,6 +109,26 @@ struct WritingPreferencesTests {
         #expect(!prompt.contains("<"))
     }
 
+    @Test func onDeviceExplainAsksHowTheReaderUnderstandsTheText() {
+        let style = WritingStyle(name: "Slack", samples: [StyleSample(text: "yep on it")])
+        let request = WritingRequest(
+            task: .explain(text: "can we move it?"),
+            style: style,
+            context: WritingContext(pastedText: "Lunch on Friday?"),
+            model: .appleOnDevice,
+            outputLanguage: "English"
+        )
+        let instructions = AppleOnDeviceClient.instructions(for: request)
+        #expect(instructions.contains("check how a text they wrote will be understood"))
+        #expect(!instructions.contains("Reply with only the finished text"))
+        #expect(!instructions.contains("yep on it"))
+        #expect(!instructions.contains("English"))
+
+        let prompt = AppleOnDeviceClient.prompt(for: request)
+        #expect(prompt.contains("How will the reader understand this text?\n\ncan we move it?"))
+        #expect(prompt.contains("Background, for understanding only:\nLunch on Friday?"))
+    }
+
     @Test func onDeviceModelNeverGoesToAnthropicHeaders() throws {
         let urlRequest = try RequestBuilder.messagesRequest(
             for: WritingRequest(task: .rewrite(text: "hi", instruction: nil), model: .appleOnDevice),

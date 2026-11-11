@@ -13,7 +13,7 @@ enum OmanDatabaseError: LocalizedError, Equatable {
     }
 }
 
-public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
+public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Sendable {
     private static let selectedModelKey = "selected_model"
     private static let preferencesKey = "app_preferences"
 
@@ -79,6 +79,22 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL
                 );
+                """)
+        }
+        migrator.registerMigration("v2") { db in
+            try db.execute(sql: """
+                CREATE TABLE api_usage (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    created_at DOUBLE NOT NULL,
+                    model TEXT NOT NULL,
+                    input_tokens INTEGER NOT NULL,
+                    output_tokens INTEGER NOT NULL,
+                    cache_read_tokens INTEGER NOT NULL,
+                    cache_write_5m_tokens INTEGER NOT NULL,
+                    cache_write_1h_tokens INTEGER NOT NULL,
+                    cost_usd DOUBLE NOT NULL
+                );
+                CREATE INDEX api_usage_created_at ON api_usage(created_at);
                 """)
         }
         return migrator
@@ -214,6 +230,52 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, Sendable {
                     """,
                 arguments: [Self.preferencesKey, json]
             )
+        }
+    }
+
+    // MARK: UsageStore
+
+    public func record(_ entry: UsageEntry) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO api_usage (
+                        created_at, model, input_tokens, output_tokens, cache_read_tokens,
+                        cache_write_5m_tokens, cache_write_1h_tokens, cost_usd
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                arguments: [
+                    entry.date.timeIntervalSince1970, entry.model, entry.tokens.input, entry.tokens.output,
+                    entry.tokens.cacheRead, entry.tokens.cacheWrite5m, entry.tokens.cacheWrite1h, entry.cost,
+                ]
+            )
+        }
+    }
+
+    public func usageEntries(since date: Date) throws -> [UsageEntry] {
+        try writer.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT created_at, model, input_tokens, output_tokens, cache_read_tokens,
+                        cache_write_5m_tokens, cache_write_1h_tokens, cost_usd
+                    FROM api_usage WHERE created_at >= ? ORDER BY created_at, id
+                    """,
+                arguments: [date.timeIntervalSince1970]
+            ).map { row in
+                UsageEntry(
+                    date: Date(timeIntervalSince1970: row["created_at"]),
+                    model: row["model"],
+                    tokens: TokenUsage(
+                        input: row["input_tokens"],
+                        output: row["output_tokens"],
+                        cacheRead: row["cache_read_tokens"],
+                        cacheWrite5m: row["cache_write_5m_tokens"],
+                        cacheWrite1h: row["cache_write_1h_tokens"]
+                    ),
+                    cost: row["cost_usd"]
+                )
+            }
         }
     }
 }

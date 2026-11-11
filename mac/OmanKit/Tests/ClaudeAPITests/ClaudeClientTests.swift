@@ -22,20 +22,32 @@ private func sse(_ events: [String]) -> Data {
     Data(events.map { "data: \($0)\n\n" }.joined().utf8)
 }
 
-private func makeClient() -> ClaudeClient {
+final class UsageRecorderSpy: UsageRecording, @unchecked Sendable {
+    private let lock = NSLock()
+    private var recorded: [UsageEntry] = []
+
+    var entries: [UsageEntry] { lock.withLock { recorded } }
+
+    func record(_ entry: UsageEntry) throws {
+        lock.withLock { recorded.append(entry) }
+    }
+}
+
+private func makeClient(usage: (any UsageRecording)? = nil) -> ClaudeClient {
     let configuration = URLSessionConfiguration.ephemeral
     configuration.protocolClasses = [StubURLProtocol.self]
-    return ClaudeClient(session: URLSession(configuration: configuration))
+    return ClaudeClient(session: URLSession(configuration: configuration), usage: usage)
 }
 
 private func collect(
     _ request: WritingRequest,
-    reply: StubReply
+    reply: StubReply,
+    usage: (any UsageRecording)? = nil
 ) async -> (text: String, deltas: [String], error: (any Error)?) {
     StubStore.shared.reset(reply: reply)
     var deltas: [String] = []
     do {
-        for try await delta in makeClient().stream(request, apiKey: "test-key") {
+        for try await delta in makeClient(usage: usage).stream(request, apiKey: "test-key") {
             deltas.append(delta)
         }
         return (deltas.joined(), deltas, nil)
@@ -758,5 +770,175 @@ struct ClaudeClientTests {
                 return
             }
         }
+    }
+
+    // MARK: Explain
+
+    @Test func explainUsesTheReadingRulesWithoutStyleOrPreferences() async throws {
+        let (json, _) = try await capturedBody(
+            of: WritingRequest(
+                task: .explain(text: "can we move it to next monday?"),
+                style: style,
+                outputLanguage: "German",
+                customInstructions: "Sign off with Roman."
+            )
+        )
+        let blocks = try systemBlocks(json)
+        try #require(blocks.count == 1)
+        #expect(blocks[0]["cache_control"] == nil)
+        let rules = try #require(blocks[0]["text"] as? String)
+        #expect(rules.hasPrefix("You are the reading check inside a macOS menu bar tool."))
+        #expect(rules.contains("It is never sent or pasted."))
+        #expect(!rules.contains("ready to paste"))
+
+        let text = try userText(json)
+        #expect(text.contains("<task-CODE>Read the source text as the person it is written for will read it."))
+        #expect(text.hasSuffix("<source_text-CODE>can we move it to next monday?</source_text-CODE>"))
+        #expect(!text.contains("preferences"))
+        #expect(!text.contains("German"))
+        #expect(!text.contains("Sign off"))
+    }
+
+    @Test func explainReadsTheTextWithItsContextAndScreenshot() async throws {
+        let (json, _) = try await capturedBody(
+            of: WritingRequest(
+                task: .explain(text: "sounds good"),
+                context: WritingContext(pastedText: "Can you send the report by Friday?", screenshot: screenshot)
+            )
+        )
+        let blocks = try userBlocks(json)
+        try #require(blocks.count == 2)
+        #expect(blocks[0]["type"] as? String == "image")
+
+        let text = try userText(json)
+        #expect(text.contains("Do not imitate its voice.\n\nCan you send the report by Friday?</context-CODE>"))
+        #expect(text.contains("Use it to understand the conversation the text belongs to."))
+        #expect(!text.contains("do not imitate the voice of other people"))
+    }
+
+    // MARK: Usage
+
+    @Test func recordsWhatTheStreamReportsAtTheAnsweringModelsPrices() async throws {
+        let recorder = UsageRecorderSpy()
+        let events = [
+            #"{"type":"message_start","message":{"model":"claude-sonnet-5-5","usage":{"input_tokens":1200,"cache_read_input_tokens":3000,"cache_creation_input_tokens":2000,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":2000},"output_tokens":1}}}"#,
+            successEvents[0],
+            #"{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":300}}"#,
+            #"{"type":"message_stop"}"#,
+        ]
+        let result = await collect(
+            WritingRequest(task: .rewrite(text: "hi", instruction: nil), model: .sonnet),
+            reply: StubReply(body: sse(events)),
+            usage: recorder
+        )
+
+        #expect(result.error == nil)
+        try #require(recorder.entries.count == 1)
+        let entry = recorder.entries[0]
+        #expect(entry.model == "claude-sonnet-5-5")
+        #expect(entry.tokens == TokenUsage(input: 1200, output: 300, cacheRead: 3000, cacheWrite5m: 0, cacheWrite1h: 2000))
+        // Per million tokens: 1,200 × $2 + 300 × $10 + 3,000 × $0.10 + 2,000 × $4.
+        #expect(abs(entry.cost - 0.0137) < 1e-12)
+    }
+
+    @Test func cacheWritesWithoutABreakdownCountAsTheHourLongStyleCache() async throws {
+        let recorder = UsageRecorderSpy()
+        let events = [
+            #"{"type":"message_start","message":{"model":"claude-haiku-5-5","usage":{"input_tokens":100,"cache_creation_input_tokens":500,"output_tokens":1}}}"#,
+            successEvents[0],
+            #"{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":20}}"#,
+            #"{"type":"message_stop"}"#,
+        ]
+        _ = await collect(
+            WritingRequest(task: .rewrite(text: "hi", instruction: nil)),
+            reply: StubReply(body: sse(events)),
+            usage: recorder
+        )
+
+        let entry = try #require(recorder.entries.first)
+        #expect(entry.tokens == TokenUsage(input: 100, output: 20, cacheWrite1h: 500))
+        // Per million tokens: 100 × $0.10 + 20 × $0.50 + 500 × $0.20.
+        #expect(abs(entry.cost - 0.00012) < 1e-12)
+    }
+
+    @Test func aRunningTotalInTheFinalDeltaReplacesTheStartingCount() async throws {
+        let recorder = UsageRecorderSpy()
+        let events = [
+            #"{"type":"message_start","message":{"model":"claude-haiku-5-5","usage":{"input_tokens":100,"output_tokens":1}}}"#,
+            successEvents[0],
+            #"{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"input_tokens":140,"output_tokens":9}}"#,
+            #"{"type":"message_stop"}"#,
+        ]
+        _ = await collect(
+            WritingRequest(task: .rewrite(text: "hi", instruction: nil)),
+            reply: StubReply(body: sse(events)),
+            usage: recorder
+        )
+
+        #expect(recorder.entries.first?.tokens == TokenUsage(input: 140, output: 9))
+    }
+
+    @Test func aCutOffAnswerIsStillRecorded() async throws {
+        let recorder = UsageRecorderSpy()
+        let events = [
+            #"{"type":"message_start","message":{"model":"claude-opus-5-5","usage":{"input_tokens":50,"output_tokens":1}}}"#,
+            successEvents[0],
+            #"{"type":"message_delta","delta":{"stop_reason":"max_tokens"},"usage":{"output_tokens":16000}}"#,
+            #"{"type":"message_stop"}"#,
+        ]
+        let result = await collect(
+            WritingRequest(task: .rewrite(text: "hi", instruction: nil), model: .opus),
+            reply: StubReply(body: sse(events)),
+            usage: recorder
+        )
+
+        #expect(result.error as? WritingError == .truncated)
+        #expect(recorder.entries.first?.tokens == TokenUsage(input: 50, output: 16000))
+    }
+
+    @Test func anHTTPErrorRecordsNothing() async {
+        let recorder = UsageRecorderSpy()
+        _ = await collect(
+            WritingRequest(task: .rewrite(text: "hi", instruction: nil)),
+            reply: StubReply(status: 529, body: Data("{}".utf8)),
+            usage: recorder
+        )
+
+        #expect(recorder.entries.isEmpty)
+    }
+}
+
+@Suite struct ClaudePricingTests {
+    private func cost(_ tokens: TokenUsage, model: String = "claude-haiku-5-5", requested: WritingModel = .haiku) -> Double {
+        ClaudePricing.cost(of: tokens, servedModel: model, requested: requested)
+    }
+
+    @Test func haikuMovesToItsLongPromptRatesAboveOneHundredThousandTokens() {
+        // Cached tokens count toward the prompt's length.
+        let atTheLimit = TokenUsage(input: 90_000, output: 1_000, cacheRead: 10_000)
+        let overIt = TokenUsage(input: 90_001, output: 1_000, cacheRead: 10_000)
+
+        #expect(abs(cost(atTheLimit) - 0.0096) < 1e-12)
+        #expect(abs(cost(overIt) - 0.0480005) < 1e-12)
+    }
+
+    @Test func aDatedModelIDIsPricedAsItsModel() {
+        let tokens = TokenUsage(input: 1_000, output: 1_000)
+        #expect(abs(cost(tokens, model: "claude-opus-5-5-20261101", requested: .haiku) - 0.024) < 1e-12)
+    }
+
+    @Test func anUnknownModelIsPricedAsTheModelAskedFor() {
+        let tokens = TokenUsage(input: 1_000, output: 1_000)
+        #expect(abs(cost(tokens, model: "claude-opus-4-8", requested: .opus) - 0.024) < 1e-12)
+    }
+
+    @Test func cacheWritesAndReadsHaveTheirOwnRates() {
+        let tokens = TokenUsage(cacheRead: 1_000_000, cacheWrite5m: 1_000_000, cacheWrite1h: 1_000_000)
+        #expect(abs(cost(tokens, model: "claude-sonnet-5-5", requested: .sonnet) - (0.10 + 2.50 + 4)) < 1e-9)
+        #expect(abs(cost(tokens, model: "claude-opus-5-5", requested: .opus) - (0.20 + 5 + 8)) < 1e-9)
+    }
+
+    @Test func appleOnDeviceIsFree() {
+        #expect(cost(TokenUsage(input: 500, output: 500), model: "apple-on-device", requested: .appleOnDevice) == 0)
     }
 }

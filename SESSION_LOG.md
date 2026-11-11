@@ -4,6 +4,15 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Explain, smaller buttons and spending
+
+- Added Explain to the panel: it reads the selected text as its recipient would and says what they will understand, how it sounds and what could be misread. It uses the conversation's context, has its own short system prompt and an assignable shortcut, and its result can be copied but never pasted
+- Proofread, Rewrite and Explain are now one row of 40-point capsule buttons instead of two 80-point cards
+- Added a Spending page to Settings with totals for today and this week and bar charts for the last 14 days and 8 weeks. Each Claude request now records its token counts in a new `api_usage` table, priced with Anthropic's list prices from 2026-11-11. No text is stored
+- Verified: 300 tests pass, 29 of them new, and the app builds. Offscreen renders checked the button row, the explanation screen and the Spending page in light and dark, with real charts. Glass doesn't render offscreen, so the buttons' shapes were measured instead: the widest label needs 104 of its 115 points
+- Not verified: Explain against the live API, which needs a few real requests with the maintainer's key, and the new buttons as glass on screen. The costs are checked against hand-worked figures, not against a real Anthropic bill
+- Removed this session's leftover build copies from LaunchServices. Only `/Applications/OmanAI.app` and an older copy in the Trash are still registered
+
 ## 2026-11-11 — Security review and fixes
 
 - Reviewed what leaves the Mac, the clipboard handling, the API key, prompt injection, the two permissions, Sparkle updates, the release pipeline and the repository's history, then fixed what the review found. The choices made are in DECISIONS.md

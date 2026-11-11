@@ -335,3 +335,70 @@ struct FileBackedTests {
         }
     }
 }
+
+@Suite("Usage")
+struct UsageStorageTests {
+    private func withTemporaryDirectory(_ body: (URL) throws -> Void) throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("oman-usage-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try body(directory)
+    }
+
+    @Test func theUsageTableHasItsColumns() throws {
+        let database = try makeDatabase()
+        let columns = try database.writer.read { db in try db.columns(in: "api_usage").map(\.name) }
+
+        #expect(columns == [
+            "id", "created_at", "model", "input_tokens", "output_tokens", "cache_read_tokens",
+            "cache_write_5m_tokens", "cache_write_1h_tokens", "cost_usd",
+        ])
+    }
+
+    @Test func keepsEntriesAndReadsBackThoseSinceADate() throws {
+        let database = try makeDatabase()
+        let older = UsageEntry(
+            date: Date(timeIntervalSince1970: 1_000),
+            model: "claude-haiku-5-5",
+            tokens: TokenUsage(input: 1, output: 2, cacheRead: 3, cacheWrite5m: 4, cacheWrite1h: 5),
+            cost: 0.5
+        )
+        let newer = UsageEntry(
+            date: Date(timeIntervalSince1970: 2_000),
+            model: "claude-opus-5-5",
+            tokens: TokenUsage(input: 10),
+            cost: 1.25
+        )
+        try database.record(newer)
+        try database.record(older)
+
+        #expect(try database.usageEntries(since: Date(timeIntervalSince1970: 0)) == [older, newer])
+        #expect(try database.usageEntries(since: Date(timeIntervalSince1970: 2_000)) == [newer])
+        #expect(try database.usageEntries(since: Date(timeIntervalSince1970: 2_001)).isEmpty)
+    }
+
+    @Test func aDatabaseFromTheFirstVersionGainsTheTableAndKeepsItsStyles() throws {
+        try withTemporaryDirectory { directory in
+            let path = directory.appendingPathComponent("writing.sqlite").path
+            // The schema and migration record an earlier OmanAI left behind.
+            try DatabaseQueue(path: path).write { db in
+                try db.execute(sql: """
+                    CREATE TABLE styles (id TEXT PRIMARY KEY, name TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', created_at DOUBLE NOT NULL);
+                    CREATE TABLE style_samples (id TEXT PRIMARY KEY, style_id TEXT NOT NULL REFERENCES styles(id) ON DELETE CASCADE, body TEXT NOT NULL, position INTEGER NOT NULL);
+                    CREATE TABLE app_style_preferences (bundle_id TEXT PRIMARY KEY, style_id TEXT NOT NULL REFERENCES styles(id) ON DELETE CASCADE);
+                    CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                    CREATE TABLE grdb_migrations (identifier TEXT NOT NULL PRIMARY KEY);
+                    INSERT INTO grdb_migrations VALUES ('v1');
+                    INSERT INTO styles VALUES ('8D3B5C2A-0B1E-4F5A-9C3D-2E4F6A8B0C1D', 'Kept', '', 1);
+                    """)
+            }
+
+            let upgraded = try OmanDatabase.open(path: path)
+
+            #expect(try upgraded.loadStyles().map(\.name) == ["Kept"])
+            try upgraded.record(UsageEntry(date: Date(), model: "claude-haiku-5-5", tokens: TokenUsage(input: 1), cost: 0))
+            #expect(try upgraded.usageEntries(since: Date(timeIntervalSince1970: 0)).count == 1)
+        }
+    }
+}

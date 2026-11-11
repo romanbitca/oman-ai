@@ -108,6 +108,8 @@ public final class PanelViewModel {
             proofread()
         case .rewrite:
             rewrite()
+        case .explain:
+            explain()
         case .compose:
             openCompose()
         case .style(let id):
@@ -295,6 +297,12 @@ public final class PanelViewModel {
         startWithContext(task: .rewrite(text: text, instruction: typed.isEmpty ? nil : typed), style: selectedStyle)
     }
 
+    /// Asks how a reader will understand the selection, with the same context a rewrite would get.
+    func explain() {
+        guard let text = capture.text else { return }
+        startWithContext(task: .explain(text: text), style: nil)
+    }
+
     func chooseStyleAndRewrite(_ style: WritingStyle) {
         selectedStyleID = style.id
         if preferences.remembersStylePerApp, let bundleID = capture.app?.bundleID {
@@ -315,13 +323,18 @@ public final class PanelViewModel {
 
     func tryAgain() {
         guard var request = lastRequest else { return }
+        if isExplanation {
+            // A fresh reading, rather than a variation on the last one.
+            perform(request)
+            return
+        }
         request.refinement = Refinement(currentDraft: draft, adjustment: "Write a different version of this.")
         perform(request)
     }
 
     func applyAdjustment() {
         let typed = adjustment.trimmed
-        guard !typed.isEmpty, var request = lastRequest else { return }
+        guard !typed.isEmpty, !isExplanation, var request = lastRequest else { return }
         request.refinement = Refinement(currentDraft: draft, adjustment: typed)
         adjustment = ""
         perform(request)
@@ -454,17 +467,24 @@ public final class PanelViewModel {
         return false
     }
 
+    /// An explanation is for the person to read, so it is never pasted.
+    var isExplanation: Bool {
+        if case .explain = lastRequest?.task { return true }
+        return false
+    }
+
     var primaryActionTitle: String { lastTaskIsCompose ? "Insert" : "Replace" }
-    var canApplyResult: Bool { capture.app != nil }
+    var canApplyResult: Bool { capture.app != nil && !isExplanation }
 
     var originalText: String? {
         switch lastRequest?.task {
-        case .proofread(let text), .rewrite(let text, _): text
+        case .proofread(let text), .rewrite(let text, _), .explain(let text): text
         default: nil
         }
     }
 
     func applyResult() {
+        guard !isExplanation else { return }
         if SensitiveApps.isTerminal(bundleID: capture.app?.bundleID), !terminalPasteConfirmed {
             terminalPasteConfirmed = true
             let app = capture.app?.name ?? "a terminal"

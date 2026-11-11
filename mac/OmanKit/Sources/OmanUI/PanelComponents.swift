@@ -66,15 +66,19 @@ struct ActionCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 7) {
+            HStack(spacing: 6) {
                 Image(systemName: symbol)
-                    .font(.system(size: 21, weight: .regular))
+                    .font(.system(size: 13, weight: .medium))
                     .symbolRenderingMode(.hierarchical)
-                Text(title).font(.system(size: 13, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(1)
             }
-            .frame(maxWidth: .infinity, minHeight: 80)
-            .contentShape(PanelShape.tile)
-            .liquidGlass(in: PanelShape.tile)
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .contentShape(Capsule())
+            .liquidGlass(in: Capsule())
         }
         .buttonStyle(LiquidPressStyle())
     }

@@ -72,6 +72,16 @@ Acceptance:
 - An older installed version finds the new one and installs it, and Accessibility keeps working afterwards
 - Someone without an Apple Developer account can clone the repo, build it and run the tests
 
+## W8: Explain and spending [IN PROGRESS]
+
+An Explain action that tells the person how a reader will understand their text, smaller action buttons, and a Spending page in Settings with charts per day and per week.
+
+Acceptance:
+- Explain on a selection says what a reader will take from it and names anything unclear, in the language of the text
+- An explanation can't be pasted, and Try again gives a new reading
+- Proofread, Rewrite and Explain fit on one row
+- Spending shows today, this week, the last 14 days and the last 8 weeks, and a Claude request appears there straight after it finishes
+
 ---
 
 # Meeting recorder (parked 2026-11-10)

@@ -9,10 +9,12 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 ## What it does
 
 - **Proofread and Rewrite** selected text in any app.
+- **Explain** tells you how a reader will understand what you wrote, and what they might misread.
 - **Styles** built from messages you really wrote, so you can sound like yourself in Slack and like yourself in email.
 - **Compose** new text from a short instruction.
 - **Context** from the window you are writing in, pasted messages or the clipboard.
 - **Your choice of model**: Claude Haiku, Sonnet or Opus with your own Anthropic API key, or Apple's on-device model for free.
+- **Spending** per day and per week in Settings, estimated from what each Claude request used.
 - **Shortcuts** for any action, and a panel you can pin and drag anywhere.
 
 ## Install
@@ -27,7 +29,7 @@ OmanAI updates itself from this repository's releases. You can turn that off in 
 
 ## Privacy
 
-- Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain.
+- Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain. For the spending charts, the database also keeps each Claude request's date, model and token counts, never its text.
 - With Claude, each request sends the selected text, the chosen style's messages and any context you added to Anthropic, using your own API key.
 - With Apple's on-device model, your writing stays on your Mac.
 - The screen is included only when you turn that on, and the panel shows a preview of what will be sent.
