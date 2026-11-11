@@ -4,9 +4,11 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
-## 2026-11-11 — The backdrop depends on a private window-server call
+## 2026-11-11 — The backdrop depends on Core Animation classes outside the public headers
 
-The slight blur behind the panel comes from `CGSSetWindowBackgroundBlurRadius`, which Apple doesn't document. If a future macOS removes it, `PanelBackdrop.isAvailable` turns false and the panel shows frosted glass with no backdrop, as 0.3.2 did. If it stays but behaves differently, the backdrop could look wrong: measure it again with the checkerboard method under Tooling gotchas. Its numbers were found on macOS 27.
+The slight blur behind the panel is a `CABackdropLayer` with a `CAFilter` of type `variableBlur`, neither of which Apple documents. `BackdropBlur` looks them up at run time. If a future macOS removes them, `PanelBackdrop.isAvailable` turns false and the panel shows frosted glass with no backdrop, as 0.3.2 did. If only `variableBlur` goes, it falls back to one even blur shown through a fading mask, which also has no line but blurs less just outside the tiles. If they stay but behave differently, the backdrop could look wrong: measure it again with the checkerboard method under Tooling gotchas.
+
+The filter's numbers were found on macOS 27 on a display with two pixels per point: a radius of 1.5 blurs by 3 points. Not checked: a display with one pixel per point, and macOS 26.
 
 ---
 
@@ -22,7 +24,7 @@ Not checked: what else in the panel reads the same answer, such as the colour of
 
 Up to 0.3.0, Apple's Writing Tools ran inside OmanAI's panel. After text in the panel was clicked or selected, macOS set up its floating Writing Tools button and a host window over the panel, which could sit on Back and take the click. The system log shows this as `CampoLightweightUI` events in OmanAI's process. Writing Tools is now off for OmanAI's own text, but Back has not been re-checked on screen. If it misses again, `/usr/bin/log show --last 1h --predicate 'subsystem == "com.romanbitca.oman"'` shows whether the press arrived.
 
-The lag is not explained yet. macOS recorded no hang and never marked OmanAI unresponsive. Each time the panel opens with a focused text field, the system's text cursor indicator is moved about 60 times while the panel animates, and its service sometimes fails to connect (ViewBridge error 18).
+The lag had two causes, both in the panel since before 0.3.0 and both fixed after 0.3.2. While Claude was writing, the glow around the tile was drawn again for every frame and kept the main thread 99% busy. And every screen change ran at about 34 frames a second on a 120 Hz display, because the tiles sat in Apple's glass container. macOS recorded no hang because the app never stopped answering. To measure again, count how many of the display's refreshes the main thread answers on time while a screen changes; `sample` on the running app shows where the time goes, though attaching it adds stalls of its own.
 
 ---
 
@@ -70,7 +72,9 @@ Invisible windows and windows smaller than 50 points are skipped, but a large po
 
 ## 2026-11-10 — Freeze in AppKit's Password AutoFill check
 
-The main thread spun at 100% in `NSAutoFillHeuristicController`, walking SwiftUI's key views (`FocusNavigationSequence.next`). It showed up after focus changes such as taking a screenshot, and buttons then looked broken. Worked around in `OmanMain.swift` with the `NSAutoFillHeuristicsEnabled` default. It could not be reproduced on demand, so if the app freezes again, run `sample $(pgrep -x OmanAI) 2` to see where it is stuck.
+The main thread spun at 100% in `NSAutoFillHeuristicController`, walking SwiftUI's key views (`FocusNavigationSequence.next`), and buttons then looked broken. Worked around in `OmanMain.swift` with the `NSAutoFillHeuristicsEnabled` default.
+
+Since 2026-11-11 it can be reproduced on demand, in a window that hosts the panel without that default: click the instruction field on the home screen, then press Compose. The main thread never comes back. With the default set, the same clicks run through with no stall, which is the first check that the workaround holds. Anything that hosts the panel outside the app, such as a preview, must set the default too. If the app freezes anyway, run `sample $(pgrep -x OmanAI) 2` to see where it is stuck.
 
 ---
 
@@ -125,16 +129,22 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - `log` is a zsh builtin, so reading the system log needs `/usr/bin/log`.
 - Glass can be checked on screen, with the maintainer's OK: host the panel in a borderless panel under the menu bar, make it the key window, let it draw for about a second, and capture that area with `screencapture -R`. Glass in a window that isn't key is drawn flat and gray, which made several captures misleading. Control Center opens through Accessibility by pressing the "Control Center" item that `MenuBarAgent` owns in the menu bar (System Events can't see it); wait about three seconds before capturing it.
 - To compare with Control Center by numbers, put a window with a black and white checkerboard of 32-point squares behind both, at level `.floating`. Per square, read the white level, the black level, and the width of the edge to the next square: the 10% to 90% width divided by 2.563 is the blur's sigma. The backdrop's numbers were found this way.
-- The window server's blur (`CGSSetWindowBackgroundBlurRadius`) only shows where the window's own pixels have an alpha of at least 2/255. It is all or nothing there, and three units of radius blur by about one point. Blurs in stacked windows add as the root of the sum of their squares.
+- The window server's blur (`CGSSetWindowBackgroundBlurRadius`) only shows where the window's own pixels have an alpha of at least 2/255. It is all or nothing there, so a soft edge needs stacked windows, and every step between them shows as a line on text. The app used it until `CABackdropLayer` replaced it.
 - To compare a tile's colour with Control Center, put a plain colour behind both and read the colour through a tile and in the gap beside it. The gap gives what the tile sees. Control Center's tile turns 0/0/0 into 13/13/13, 45/45/45 into 43/43/43, 90/90/90 into 73/73/73, 81/27/18 into 89/24/11, 85/54/18 into 84/46/0, 18/36/81 into 15/37/91 and 18/63/27 into 0/60/15 (percent, macOS 27).
 - Inside a `GlassEffectContainer` the container draws the glass for every view in it. A filter such as `.saturation` on one of those views changes its content and not its glass, so it has to go on the container. A blend mode on a layer drawn over the glass does work on a single view.
 - A filter on the content of a glass view cuts that content off from the glass. With `.saturation` on a tile's content, a text field's placeholder turned from light to dark gray.
 - Glass in a window that isn't key can't be kept active from SwiftUI: setting `appearsActive` or `controlActiveState` in the environment changes nothing. It follows the window's `hasKeyAppearance`.
+- A `GlassEffectContainer` makes every animated frame expensive: the panel's screen changes ran at 34 frames a second inside one and at 119 without, measured in an optimised build. Its spacing and glass identities made no difference.
+- Glass is drawn again for every size it takes, so a `scaleEffect` on glass runs at about half the display's rate. Moving glass with `offset` or matched geometry is cheap.
+- A SwiftUI animation that draws, such as an `AngularGradient` whose angle changes in a `TimelineView`, is rasterized on the main thread for every frame. A `CAGradientLayer` with a `CABasicAnimation` costs the app nothing while it runs.
+- To measure smoothness, add a display link to the hosting view and count the gaps between its callbacks: a gap of two refreshes is a frame the main thread missed. Read the main thread's own processor time alongside it. Use an optimised build (`swift test -c release -Xswiftc -enable-testing`), and don't force `CATransaction.flush()` in the loop, which makes SwiftUI draw more often than the display refreshes.
+- A test that shows the panel and waits in a loop holds the main actor, so the panel's own tasks, such as an answer arriving, never run. Call `await Task.yield()` in the loop.
+- Clicks can be tested without moving the pointer: make `NSEvent.mouseEvent` values for the panel's window and hand them to `NSApp.postEvent`.
 - `NSVisualEffectView.maskImage` ignores an image with only an alpha channel. Give it black pixels with the fade in their alpha.
 - `gh` on this Mac has more than one account, and the active one may be a work account that can only read this repository. Then pushes and `gh variable get` fail with 403. Run them with the maintainer's account for that command only, `GH_TOKEN="$(gh auth token --user romanbitca)"`, rather than switching the active account.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
-- A backdrop made from `NSVisualEffectView` or from glass always shows a tint: a gray veil or card over a white app, a light one over a dark app. The maintainer rejected three such versions. Only the window server's blur is free of tint.
+- A backdrop made from `NSVisualEffectView` or from glass always shows a tint: a gray veil or card over a white app, a light one over a dark app. The maintainer rejected three such versions. A `CABackdropLayer` with only a blur filter on it has no tint, and fading its window fades the blur.
 - The computer-use tools can't see OmanAI because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "OmanAI"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---

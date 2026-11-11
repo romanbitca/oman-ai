@@ -2,7 +2,14 @@ import AppKit
 import SwiftUI
 
 enum Liquid {
-    static let morph = Animation.smooth(duration: 0.28)
+    /// Tiles move and resize into their counterparts on the next screen with this.
+    static let morph = Animation.smooth(duration: 0.26)
+    /// What is on the tiles changes faster than the tiles move, so two screens are never readable on top of
+    /// each other.
+    static var swap: AnyTransition {
+        .opacity.animation(.easeOut(duration: 0.12))
+    }
+
     static let press = Animation.easeOut(duration: 0.12)
     static let accent = Color(red: 0.40, green: 0.34, blue: 1.0)
     /// Laid over clear glass with a luminosity blend, so it sets how bright a tile is and leaves the colour of
@@ -150,7 +157,8 @@ struct PanelCornerHandle: View {
     }
 }
 
-/// Lets neighbouring glass shapes flow into each other while they animate.
+/// Draws neighbouring glass shapes together. Settings uses it, where nothing moves. The panel's tiles left
+/// theirs: a container makes every frame of a screen change expensive.
 struct LiquidContainer<Content: View>: View {
     var spacing: CGFloat
     @ViewBuilder var content: Content
@@ -185,16 +193,21 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     }
 
     func body(content: Content) -> some View {
+        matched(surface(content))
+    }
+
+    @ViewBuilder
+    private func surface(_ content: Content) -> some View {
         if #available(macOS 26.0, *) {
-            glassed(
-                content.background {
+            content
+                .background {
                     // Clear glass alone leaves white almost white, and white text can't be read on it. Control
                     // Center darkens its tiles: measured through one, white is 73% and black 13%. A gray layer
                     // over the glass gives that but washes out the colours behind it, so this one changes
                     // brightness only.
                     if choice.isClear { shape.fill(Liquid.clearGlassShade).blendMode(.luminosity) }
                 }
-            )
+                .glassEffect(glass, in: shape)
         } else {
             content
                 .background(.regularMaterial, in: shape)
@@ -203,13 +216,15 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
         }
     }
 
-    @available(macOS 26.0, *)
+    /// A tile with an identity moves and resizes into the tile with the same identity on the next screen.
+    /// Apple's own way to do this, a glass container with glass identities, cost the panel two thirds of
+    /// its frames during a screen change: measured, 34 frames a second with it and 119 without.
     @ViewBuilder
-    private func glassed(_ view: some View) -> some View {
+    private func matched(_ view: some View) -> some View {
         if let id, let space {
-            view.glassEffect(glass, in: shape).glassEffectID(id, in: space)
+            view.matchedGeometryEffect(id: id, in: space)
         } else {
-            view.glassEffect(glass, in: shape)
+            view
         }
     }
 
@@ -312,20 +327,95 @@ struct LiquidButton: View {
 struct LiquidGlow<S: InsettableShape>: View {
     let shape: S
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Room for the soft edge outside the tile.
+    private var spread: CGFloat { 30 }
 
     var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
-            let seconds = timeline.date.timeIntervalSinceReferenceDate
-            let gradient = AngularGradient(
-                colors: Liquid.iridescence,
-                center: .center,
-                angle: .degrees(seconds.truncatingRemainder(dividingBy: 3.2) / 3.2 * 360)
-            )
-            ZStack {
-                shape.strokeBorder(gradient, lineWidth: 7).blur(radius: 9).opacity(0.75)
-                shape.strokeBorder(gradient, lineWidth: 1.5)
+        // The colours turn in a Core Animation layer, which the system animates outside the app, and show through
+        // an edge that stays still. Drawn again by SwiftUI for every frame, they kept a whole processor core
+        // busy for as long as Claude was writing.
+        SpinningColors(isSpinning: !reduceMotion)
+            .mask {
+                ZStack {
+                    shape.strokeBorder(lineWidth: 7).blur(radius: 9).opacity(0.75)
+                    shape.strokeBorder(lineWidth: 1.5)
+                }
+                .padding(spread)
             }
+            // Larger than the tile on every side, so the soft edge isn't cut off at the tile's outline.
+            .padding(-spread)
+            .allowsHitTesting(false)
+    }
+}
+
+private struct SpinningColors: NSViewRepresentable {
+    let isSpinning: Bool
+
+    func makeNSView(context: Context) -> SpinningColorsView {
+        SpinningColorsView()
+    }
+
+    func updateNSView(_ view: SpinningColorsView, context: Context) {
+        view.isSpinning = isSpinning
+    }
+}
+
+private final class SpinningColorsView: NSView {
+    private static let spinKey = "spin"
+    private let gradient = CAGradientLayer()
+
+    var isSpinning = true {
+        didSet {
+            if isSpinning != oldValue { updateSpin() }
         }
-        .allowsHitTesting(false)
+    }
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        gradient.type = .conic
+        gradient.startPoint = CGPoint(x: 0.5, y: 0.5)
+        gradient.endPoint = CGPoint(x: 1, y: 0.5)
+        // A layer's gradient runs the other way round from SwiftUI's, so the colours go in reversed.
+        gradient.colors = Liquid.iridescence.reversed().map { NSColor($0).cgColor }
+        layer?.addSublayer(gradient)
+    }
+
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+
+    override func layout() {
+        super.layout()
+        // A square that still covers the view at any angle.
+        let side = (bounds.width * bounds.width + bounds.height * bounds.height).squareRoot()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        gradient.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+        gradient.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        CATransaction.commit()
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        // Core Animation drops a layer's animations when its view leaves a window.
+        updateSpin()
+    }
+
+    private func updateSpin() {
+        gradient.removeAnimation(forKey: Self.spinKey)
+        guard isSpinning, window != nil else { return }
+        let spin = CABasicAnimation(keyPath: "transform.rotation.z")
+        spin.fromValue = 0
+        // Clockwise on screen, as before.
+        spin.toValue = -2 * Double.pi
+        spin.duration = 3.2
+        spin.repeatCount = .infinity
+        spin.isRemovedOnCompletion = false
+        gradient.add(spin, forKey: Self.spinKey)
     }
 }

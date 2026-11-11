@@ -46,20 +46,34 @@ import Testing
     private let tiles = CGRect(x: 1012, y: 779, width: 360, height: 300)
     private var layout: PanelBackdropLayout { PanelBackdropLayout(tiles: tiles, bounds: screen, cornerRadius: 22) }
 
-    @Test func theBlurStepsAddUpToControlCentersThreePoints() {
-        // Three units of radius blur by one point, and stacked blurs add as the root of the sum of squares.
-        let total = PanelBackdropLayout.blurSteps.map { pow(Double($0.radius) / 3, 2) }.reduce(0, +).squareRoot()
-        #expect(abs(total - 3) < 0.15)
+    private func value(_ map: (values: [UInt8], width: Int, height: Int), of area: CGRect, x: CGFloat, y: CGFloat) -> UInt8 {
+        map.values[Int((area.maxY - y) / 2) * map.width + Int((x - area.minX) / 2)]
     }
 
-    @Test func theStepsNestFromTheOutsideIn() {
-        let frames = PanelBackdropLayout.blurSteps.map { layout.frame(for: $0) }
-        for (outer, inner) in zip(frames, frames.dropFirst()) {
-            #expect(outer.contains(inner))
-            #expect(outer != inner)
+    @Test func theBlurIsFullBehindTheTilesAndGoneJustOutsideThem() {
+        #expect(PanelBackdropLayout.blur(atDistance: -100) == 1)
+        #expect(PanelBackdropLayout.blur(atDistance: -45) == 1)
+        #expect(PanelBackdropLayout.blur(atDistance: 0) == 0.5)
+        #expect(PanelBackdropLayout.blur(atDistance: 45) == 0)
+        #expect(PanelBackdropLayout.blur(atDistance: 200) == 0)
+    }
+
+    @Test func theBlurMatchesControlCentersJustOutsideItsModules() {
+        // Measured: half a point of blur 30 points out, and one point 14 points out.
+        #expect(abs(PanelBackdropLayout.blur(atDistance: 30) * PanelBackdropLayout.blurPoints - 0.5) < 0.05)
+        #expect(abs(PanelBackdropLayout.blur(atDistance: 14) * PanelBackdropLayout.blurPoints - 1.0) < 0.05)
+    }
+
+    @Test func theBlurFadesWithoutAStep() {
+        // Spots a point apart never differ by more than a fiftieth of the full blur, so there is no line to see
+        // where it begins.
+        var previous = PanelBackdropLayout.blur(atDistance: 60)
+        for distance in stride(from: 59.0, through: -60, by: -1) {
+            let share = PanelBackdropLayout.blur(atDistance: distance)
+            #expect(share >= previous)
+            #expect(share - previous < 0.02)
+            previous = share
         }
-        #expect(layout.shape(for: PanelBackdropLayout.blurSteps[0]).cornerRadius == 53)
-        #expect(layout.shape(for: PanelBackdropLayout.blurSteps[5]).cornerRadius == 0)
     }
 
     @Test func theDarkeningIsFullBehindTheTilesAndGoneFarFromThem() {
@@ -70,21 +84,12 @@ import Testing
         #expect(PanelBackdropLayout.dim(atDistance: 300) == 0)
     }
 
-    @Test(arguments: [-60.0, -30, -5, 8, 20, 40, 90])
-    func theDimLayerAndTheBlurFillsTogetherGiveTheMeasuredDarkening(distance: Double) {
-        let fills = PanelBackdropLayout.blurSteps.filter { distance <= $0.outset }.count
-        let layer = PanelBackdropLayout.dimLayerAlpha(atDistance: distance)
-        let total = 1 - (1 - layer) * pow(1 - 3.0 / 255, Double(fills))
-        #expect(abs(total - PanelBackdropLayout.dim(atDistance: distance)) < 1e-9)
-    }
-
     @Test func nothingIsDrawnOverTheMenuBar() {
-        // The panel hangs 5 points under the menu bar, so every part of the backdrop is cut off there.
-        #expect(layout.dimFrame.maxY == screen.maxY)
-        #expect(layout.dimFrame == CGRect(x: 886, y: 653, width: 612, height: 431))
-        for step in PanelBackdropLayout.blurSteps {
-            #expect(layout.frame(for: step).maxY <= screen.maxY)
-        }
+        // The panel hangs 5 points under the menu bar, so both parts of the backdrop are cut off there.
+        #expect(layout.frame == CGRect(x: 886, y: 653, width: 612, height: 431))
+        #expect(layout.blurFrame == CGRect(x: 967, y: 734, width: 450, height: 350))
+        #expect(layout.frame.maxY == screen.maxY)
+        #expect(layout.frame.contains(layout.blurFrame))
     }
 
     @Test func distanceFollowsTheTilesRoundedOutline() {
@@ -96,29 +101,29 @@ import Testing
         #expect(abs(corner - (22 * 2.0.squareRoot() - 22)) < 1e-9)
     }
 
-    @Test func aShortPanelStillLeavesEveryStepSomethingToBlur() {
-        let short = PanelBackdropLayout(tiles: CGRect(x: 1012, y: 1039, width: 360, height: 40), bounds: screen, cornerRadius: 22)
-        for step in PanelBackdropLayout.blurSteps {
-            let frame = short.frame(for: step)
-            #expect(frame.width > 0)
-            #expect(frame.height > 0)
-        }
-    }
-
-    @Test func theDimLayerIsDrawnTopRowFirstAndDarkestBehindTheTiles() {
-        let dim = layout.dimPixels(pointsPerPixel: 2)
+    @Test func theDarkeningIsMappedTopRowFirstAndStrongestBehindTheTiles() {
+        let dim = layout.map(of: layout.frame, pointsPerPixel: 2, PanelBackdropLayout.dim)
         #expect(dim.width == 306)
         #expect(dim.height == 216)
-        func alpha(x: CGFloat, y: CGFloat) -> UInt8 {
-            let column = Int((x - layout.dimFrame.minX) / 2)
-            let row = Int((layout.dimFrame.maxY - y) / 2)
-            return dim.pixels[(row * dim.width + column) * 4 + 3]
-        }
-        // Behind the tiles all six blur fills are in front, so the layer itself adds the rest of the 10%.
-        let behindTiles = UInt8((PanelBackdropLayout.dimLayerAlpha(atDistance: -150) * 255).rounded())
-        #expect(alpha(x: tiles.midX, y: tiles.midY) == behindTiles)
-        #expect(alpha(x: layout.dimFrame.minX + 1, y: tiles.midY) == 0)
+        // A tenth of 255.
+        #expect(value(dim, of: layout.frame, x: tiles.midX, y: tiles.midY) == 26)
+        #expect(value(dim, of: layout.frame, x: layout.frame.minX + 1, y: tiles.midY) == 0)
         // Just under the menu bar, right above the tiles, it is still dark.
-        #expect(alpha(x: tiles.midX, y: screen.maxY - 1) > 0)
+        #expect(value(dim, of: layout.frame, x: tiles.midX, y: screen.maxY - 1) > 0)
+    }
+
+    @Test func theBlurIsMappedFullBehindTheTilesAndClearAtItsEdge() {
+        let blur = layout.map(of: layout.blurFrame, pointsPerPixel: 2, PanelBackdropLayout.blur)
+        #expect(blur.width == 225)
+        #expect(value(blur, of: layout.blurFrame, x: tiles.midX, y: tiles.midY) == 255)
+        // A point inside its edge it has barely begun: 3 parts in 255.
+        #expect(value(blur, of: layout.blurFrame, x: layout.blurFrame.minX + 1, y: tiles.midY) == 3)
+    }
+
+    @Test func aShortPanelIsStillBlurred() {
+        let short = PanelBackdropLayout(tiles: CGRect(x: 1012, y: 1039, width: 360, height: 40), bounds: screen, cornerRadius: 22)
+        #expect(!short.blurFrame.isEmpty)
+        let blur = short.map(of: short.blurFrame, pointsPerPixel: 2, PanelBackdropLayout.blur)
+        #expect(value(blur, of: short.blurFrame, x: short.tiles.midX, y: short.tiles.midY) > 128)
     }
 }

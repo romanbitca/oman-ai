@@ -5,8 +5,6 @@ import SwiftUI
 enum PanelMetrics {
     static let width: CGFloat = 360
     static let gap: CGFloat = 12
-    /// Below `gap`, so tiles stay separate at rest and only flow together while they move.
-    static let blend: CGFloat = 6
     static let gripThickness: CGFloat = 12
     /// Clear space outside the glass, so the window edge doesn't cut off its shadow.
     static let shadowRoom: CGFloat = 10
@@ -21,12 +19,13 @@ enum PanelShape {
     static let tile = RoundedRectangle(cornerRadius: PanelMetrics.tileRadius, style: .continuous)
 }
 
-/// Morph identities shared between screens, so one tile flows into the next.
+/// Identities shared between screens, so a tile moves and resizes into its counterpart on the next screen.
 enum LiquidID {
     static let header = "header"
     static let body = "body"
     static let input = "input"
     static let actions = "actions"
+    static let controls = "controls"
 }
 
 struct PanelScrollArea<Content: View>: View {
@@ -251,7 +250,7 @@ struct PanelControlsGroup<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        GlassTile(padding: 10) {
+        GlassTile(id: LiquidID.controls, padding: 10) {
             VStack(alignment: .leading, spacing: PanelMetrics.gap) { content }
         }
         .environment(\.isInsideGlassTile, true)

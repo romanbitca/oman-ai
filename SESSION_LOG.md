@@ -4,6 +4,17 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Lag found and fixed, a fading backdrop, faster screen changes
+
+- The maintainer tried the preview: it looked better, but a click made it lag, the blur began at a visible straight line, and the animation after a click should be very fast and smooth
+- The lag in the preview was the preview: its process was stuck in AppKit's Password AutoFill check, which the app switches off and the preview did not. That freeze can now be reproduced on demand, and the app's guard was checked against it for the first time. The preview also never let an answer arrive, so it stayed on the writing screen
+- Measuring the panel properly then found two real causes of lag, both older than 0.3.0. The writing glow kept the main thread 99% busy, and screen changes ran at 34 frames a second because of Apple's glass container
+- Took the tiles out of the container and matched them between screens instead: 111 to 119 frames a second. Made the content swap faster than the tiles move, after slow-motion captures showed two screens readable at once. Rebuilt the glow as a turning Core Animation layer: 1% of a core
+- Rebuilt the backdrop as one window with Core Animation's backdrop layer and a blur that varies in strength, so it fades instead of beginning in steps, and fades in when the panel opens. On a finer checkerboard its fade outside the tiles reads 0.6 and 1.0 points where Control Center's reads 0.5 and 1.0, and 3.0 points behind the tiles
+- The panel now arrives with a fade and a short drop from the menu bar, at 120 frames a second. Growing into place ran at 60 and was dropped. Closing is unchanged
+- Verified: 318 tests pass and the app builds. In an optimised build on a 120 Hz display: still screens use 1% of the main thread, the writing screen 1%, screen changes hold 111 to 117 frames a second, opening holds 120. Tiles read the same against Control Center as before, on seven fields. The pinned panel and the Light theme look as before
+- Not verified: the installed app, since only the preview panel was measured; a display with one pixel per point; macOS 26; how it feels by hand. Each screen change still starts with one stall of 30 to 55 ms while the new screen is built, and the first use of a screen after launch takes between a tenth and a third of a second. Not released
+
 ## 2026-11-11 — Tile colour and focus matched to Control Center
 
 - The maintainer liked the measured backdrop, but found the tiles too dark and not glassy enough next to Control Center, and noticed the panel turning darker when it lost focus

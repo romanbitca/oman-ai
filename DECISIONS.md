@@ -205,3 +205,17 @@ Supersedes the tile point of "Backdrop and glass set by measuring Control Center
 - Without clear glass there is no boost. Pinned, with the Light theme, or with Reduce Transparency on, the panel looks as before
 - The panel keeps one look whether or not it has the keyboard. macOS draws glass darker and flat in a window that isn't key, and turns a tinted button gray. A pinned panel sits beside the app being typed in and is rarely key. The panel's window answers AppKit's `hasKeyAppearance` with yes. That method isn't in the public headers. SwiftUI's own switches for this, `appearsActive` and `controlActiveState`, were tried first and don't reach glass
 
+## 2026-11-11 — A smooth panel: matched tiles, a cheap glow and a backdrop that fades
+
+Supersedes how the backdrop is drawn in "Backdrop and glass set by measuring Control Center" above, and the glass container the panel's tiles sat in. The maintainer found a click laggy, saw a straight line where the blur began, and asked for a very fast and smooth animation.
+
+- Everything here was decided by measuring: a counter of how many of the display's refreshes the main thread answers on time, and the share of a processor core in use, in an optimised build on a 120 Hz display
+- The panel's tiles are no longer in Apple's glass container. With it a screen change ran at 34 frames a second; without it at 111 to 119. The container costs that much whatever its spacing, and whether or not tiles carry glass identities. Settings keeps its container, since nothing moves there
+- A tile with an identity now moves and resizes into the tile with the same identity on the next screen, by matched geometry. The style and context tile has an identity too, so it slides instead of showing twice
+- What is on the tiles swaps in 0.12 seconds while the tiles take 0.26 to settle. With one timing for both, the old and the new screen were readable on top of each other for most of the change
+- The glow around the tile while Claude writes is a Core Animation layer that turns behind a still edge. Drawn by SwiftUI for every frame it kept the main thread 99% busy for as long as the answer took; now it is 1%. It looks the same, checked side by side
+- The backdrop is one window with one layer, Core Animation's own backdrop layer with a blur whose strength varies from spot to spot, and the darkening over it. The seven stacked windows it replaces could only blur all or nothing, so their blur began in steps, each a visible line. The new blur measures half a point 30 points from the tiles and one point 14 points from them, as Control Center's does, and 3 points behind the tiles. It also fades in with its window when the panel opens, instead of appearing at once
+- `CABackdropLayer` and `CAFilter` are not in the public headers. They are looked up at run time; without them, or before macOS 26, the panel keeps frosted glass and no backdrop. This replaces the private window-server call, which is no longer used
+- The panel arrives with a fast fade and a drop of 8 points from the menu bar. Growing into place, as Control Center does, was tried and halved the frame rate while it played, because glass is drawn again for every size and only moved for a slide
+- Closing stays immediate. Fading out would keep the keyboard in the panel for longer, and putting text back into the app depends on that hand-over
+

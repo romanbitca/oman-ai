@@ -3,31 +3,16 @@ import AppKit
 /// The numbers behind the panel's backdrop, measured from Control Center on macOS 27 with a checkerboard behind it.
 ///
 /// Around its modules Control Center blurs what is behind by about 3 points and darkens it by 10%, with no tint:
-/// white becomes 90% and black stays black. Both fade with the distance from the modules' outline. The blur is
-/// at full strength 45 points inside it and gone 40 points outside. The darkening is full 34 points inside and
-/// gone 126 points outside. Everything further away is untouched.
+/// white becomes 90% and black stays black. Both fade with the distance from the modules' outline. The blur
+/// grows evenly from nothing 45 points outside it to its full strength 45 points inside: it measures half a
+/// point 30 points out and one point 14 points out. The darkening is full 34 points inside and gone 126 points
+/// outside. Everything further away is untouched.
 public struct PanelBackdropLayout: Equatable, Sendable {
-    public struct BlurStep: Equatable, Sendable {
-        /// How far this step reaches beyond the tiles. Negative is inside their outline.
-        public let outset: CGFloat
-        /// The window server's blur radius. Three units blur by about one point.
-        public let radius: Int32
-    }
-
-    /// From the outside in. The window server's blur is all or nothing inside a window's shape, so the soft edge
-    /// is built from nested windows. Each blurs what the ones before it left, and the strengths add up as the
-    /// root of the sum of their squares: 0.7, 1.2, 1.6, 2.1, 2.5 and 3 points.
-    public static let blurSteps = [
-        BlurStep(outset: 31, radius: 2),
-        BlurStep(outset: 14, radius: 3),
-        BlurStep(outset: 1, radius: 3),
-        BlurStep(outset: -11, radius: 4),
-        BlurStep(outset: -24, radius: 4),
-        BlurStep(outset: -37, radius: 5),
-    ]
-
-    /// Each blur window needs a fill the window server can see. Together the fills are part of the darkening.
-    static let blurFillAlpha: CGFloat = 3.0 / 255
+    static let blurPoints: CGFloat = 3
+    /// The blur is full this far inside the tiles' outline...
+    static let blurFullInset: CGFloat = 45
+    /// ...and gone this far outside it.
+    public static let blurReach: CGFloat = 45
     static let dimStrength: CGFloat = 0.10
     /// The darkening is full this far inside the tiles' outline...
     static let dimFullInset: CGFloat = 34
@@ -50,20 +35,14 @@ public struct PanelBackdropLayout: Equatable, Sendable {
         self.cornerRadius = cornerRadius
     }
 
-    /// The outline of one blur step, which may reach past `bounds`.
-    public func shape(for step: BlurStep) -> (rect: CGRect, cornerRadius: CGFloat) {
-        // A step never insets the tiles to nothing, however short the panel is.
-        let deepest = max(0, min(tiles.width, tiles.height) / 2 - 1)
-        let outset = max(step.outset, -deepest)
-        return (tiles.insetBy(dx: -outset, dy: -outset), max(0, cornerRadius + outset))
-    }
-
-    public func frame(for step: BlurStep) -> CGRect {
-        shape(for: step).rect.intersection(bounds)
-    }
-
-    public var dimFrame: CGRect {
+    /// Everything the backdrop touches, which is as far as the darkening reaches.
+    public var frame: CGRect {
         tiles.insetBy(dx: -Self.dimReach, dy: -Self.dimReach).intersection(bounds)
+    }
+
+    /// The part of `frame` that is blurred at all.
+    public var blurFrame: CGRect {
+        tiles.insetBy(dx: -Self.blurReach, dy: -Self.blurReach).intersection(bounds)
     }
 
     /// How far a point is outside the tiles' rounded outline. Negative inside.
@@ -75,85 +54,61 @@ public struct PanelBackdropLayout: Equatable, Sendable {
         return outside + min(max(qx, qy), 0) - radius
     }
 
+    /// How much of the full blur there is at that distance from the tiles, from 0 to 1. It grows a little with
+    /// every point, so there is no line where the blur begins.
+    public static func blur(atDistance distance: CGFloat) -> CGFloat {
+        min(max((blurReach - distance) / (blurReach + blurFullInset), 0), 1)
+    }
+
     /// The darkening Control Center has at that distance from its modules.
     public static func dim(atDistance distance: CGFloat) -> CGFloat {
         let ramp = (dimReach - distance) / (dimReach + dimFullInset)
         return dimStrength * min(max(ramp, 0), 1)
     }
 
-    /// What the dim layer adds at that distance, so that with the blur windows' own faint fills over it the
-    /// total is `dim(atDistance:)`.
-    public static func dimLayerAlpha(atDistance distance: CGFloat) -> CGFloat {
-        var fills = 0
-        for step in blurSteps where distance <= step.outset {
-            fills += 1
-        }
-        let seenThroughFills = pow(1 - blurFillAlpha, CGFloat(fills))
-        return max(0, 1 - (1 - dim(atDistance: distance)) / seenThroughFills)
-    }
-
-    /// The dim layer as black pixels with the darkening in their alpha, one pixel for every `pointsPerPixel` points
-    /// of `dimFrame`, top row first.
-    func dimPixels(pointsPerPixel: CGFloat) -> (pixels: [UInt8], width: Int, height: Int) {
-        let frame = dimFrame
-        let width = max(1, Int((frame.width / pointsPerPixel).rounded(.up)))
-        let height = max(1, Int((frame.height / pointsPerPixel).rounded(.up)))
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+    /// One value from 0 to 255 for every `pointsPerPixel` points of `area`, top row first, from the distance
+    /// of each spot to the tiles.
+    func map(of area: CGRect, pointsPerPixel: CGFloat, _ value: (CGFloat) -> CGFloat) -> (values: [UInt8], width: Int, height: Int) {
+        let width = max(1, Int((area.width / pointsPerPixel).rounded(.up)))
+        let height = max(1, Int((area.height / pointsPerPixel).rounded(.up)))
+        var values = [UInt8](repeating: 0, count: width * height)
         for row in 0..<height {
-            let y = frame.maxY - (CGFloat(row) + 0.5) * pointsPerPixel
+            let y = area.maxY - (CGFloat(row) + 0.5) * pointsPerPixel
             for column in 0..<width {
-                let x = frame.minX + (CGFloat(column) + 0.5) * pointsPerPixel
-                let alpha = Self.dimLayerAlpha(atDistance: distance(to: CGPoint(x: x, y: y)))
-                pixels[(row * width + column) * 4 + 3] = UInt8((alpha * 255).rounded())
+                let x = area.minX + (CGFloat(column) + 0.5) * pointsPerPixel
+                values[row * width + column] = UInt8((value(distance(to: CGPoint(x: x, y: y))) * 255).rounded())
             }
         }
-        return (pixels, width, height)
+        return (values, width, height)
     }
 }
 
-/// The slight blur and darkening behind the panel, as behind Control Center. Its windows never take a click, so a
-/// click beside the panel still reaches the app there and closes the panel.
+/// The slight blur and darkening behind the panel, as behind Control Center. Its window never takes a click, so
+/// a click beside the panel still reaches the app there and closes the panel.
 @MainActor
 public final class PanelBackdrop {
-    /// False when the window server's blur can't be found. The panel then keeps frosted glass and no backdrop.
-    public static var isAvailable: Bool { WindowBlur.isAvailable }
-
-    private final class ShapeView: NSView {
-        var shape = CGRect.zero
-        var cornerRadius: CGFloat = 0
-
-        override var isFlipped: Bool { true }
-
-        override func draw(_ dirtyRect: NSRect) {
-            NSColor.black.withAlphaComponent(PanelBackdropLayout.blurFillAlpha).setFill()
-            NSBezierPath(roundedRect: shape, xRadius: cornerRadius, yRadius: cornerRadius).fill()
+    /// False when Core Animation's backdrop blur can't be found, and before macOS 26: the clear look was
+    /// measured with that system's glass. The panel then keeps frosted glass and no backdrop.
+    public static var isAvailable: Bool {
+        if #available(macOS 26.0, *) {
+            BackdropBlur.isAvailable
+        } else {
+            false
         }
     }
 
-    private let dimWindow = PanelBackdrop.makeWindow()
-    private let dimView = NSView()
-    private var dimLayer: CALayer?
-    private let blurWindows: [NSWindow]
-    private let blurViews: [ShapeView]
+    /// The blur and the darkening change slowly from point to point, so a quarter of the pixels is plenty.
+    private static let pointsPerPixel: CGFloat = 2
+
+    private let window: NSWindow
+    private let view = NSView()
+    /// The layers that show the present layout: the blur with its fade, and the darkening over it.
+    private var layers: CALayer?
     private var layout: PanelBackdropLayout?
     private var isShown = false
 
     public init() {
-        dimView.wantsLayer = true
-        dimWindow.contentView = dimView
-        blurWindows = PanelBackdropLayout.blurSteps.map { _ in PanelBackdrop.makeWindow() }
-        blurViews = blurWindows.map { window in
-            let view = ShapeView()
-            window.contentView = view
-            return view
-        }
-        for (window, step) in zip(blurWindows, PanelBackdropLayout.blurSteps) {
-            WindowBlur.set(radius: step.radius, for: window)
-        }
-    }
-
-    private static func makeWindow() -> NSWindow {
-        let window = NSWindow(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: false)
+        window = NSWindow(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: false)
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
@@ -162,7 +117,8 @@ public final class PanelBackdrop {
         window.animationBehavior = .none
         window.level = .popUpMenu
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .transient]
-        return window
+        view.wantsLayer = true
+        window.contentView = view
     }
 
     /// Puts the backdrop around the panel's tiles, just below `panel`, which must already be on screen.
@@ -170,87 +126,65 @@ public final class PanelBackdrop {
     public func show(_ layout: PanelBackdropLayout, below panel: NSWindow) {
         guard Self.isAvailable, layout != self.layout || !isShown else { return }
         // Tiles that are off their screen leave nothing to draw.
-        guard !layout.dimFrame.isEmpty, !layout.frame(for: PanelBackdropLayout.blurSteps[0]).isEmpty else {
+        guard !layout.frame.isEmpty, !layout.blurFrame.isEmpty else {
             hide()
             return
         }
         let previous = isShown ? self.layout : nil
         self.layout = layout
 
-        for (index, step) in PanelBackdropLayout.blurSteps.enumerated() {
-            let frame = layout.frame(for: step)
-            let shape = layout.shape(for: step)
-            guard !frame.isEmpty else {
-                blurWindows[index].orderOut(nil)
-                continue
-            }
-            blurWindows[index].setFrame(frame, display: false)
-            // The views count from the top left, where the panel hangs, so a taller panel only adds below.
-            blurViews[index].shape = CGRect(
-                x: shape.rect.minX - frame.minX,
-                y: frame.maxY - shape.rect.maxY,
-                width: shape.rect.width,
-                height: shape.rect.height
-            )
-            blurViews[index].cornerRadius = shape.cornerRadius
-            blurViews[index].needsDisplay = true
-        }
         let jump = abs(layout.tiles.height - (previous?.tiles.height ?? 0)) + abs(layout.tiles.minX - (previous?.tiles.minX ?? 0))
-        dimWindow.setFrame(layout.dimFrame, display: false)
+        window.setFrame(layout.frame, display: false)
         // While text streams in the panel grows a line at a time, which is too small a step to cross-fade.
-        replaceDimLayer(for: layout, fading: isShown && jump > 40)
-
-        // Lowest first: each lands just under the panel, above the ones before it.
-        dimWindow.order(.below, relativeTo: panel.windowNumber)
-        for (window, step) in zip(blurWindows, PanelBackdropLayout.blurSteps) where !layout.frame(for: step).isEmpty {
-            window.order(.below, relativeTo: panel.windowNumber)
-        }
+        replaceLayers(for: layout, fading: isShown && jump > 40)
+        window.order(.below, relativeTo: panel.windowNumber)
 
         guard !isShown else { return }
         isShown = true
-        dimWindow.alphaValue = 0
+        window.alphaValue = 0
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
-            dimWindow.animator().alphaValue = 1
+            window.animator().alphaValue = 1
         }
     }
 
     public func hide() {
         guard isShown else { return }
         isShown = false
-        dimWindow.orderOut(nil)
-        blurWindows.forEach { $0.orderOut(nil) }
+        window.orderOut(nil)
     }
 
-    private func replaceDimLayer(for layout: PanelBackdropLayout, fading: Bool) {
-        // The darkening changes slowly from point to point, so a quarter of the pixels is plenty.
-        let pointsPerPixel: CGFloat = 2
-        let dim = layout.dimPixels(pointsPerPixel: pointsPerPixel)
-        guard let provider = CGDataProvider(data: Data(dim.pixels) as CFData),
-              let image = CGImage(
-                  width: dim.width, height: dim.height, bitsPerComponent: 8, bitsPerPixel: 32,
-                  bytesPerRow: dim.width * 4, space: CGColorSpaceCreateDeviceRGB(),
-                  bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                  provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent
-              )
-        else { return }
-
-        let old = dimLayer
+    private func replaceLayers(for layout: PanelBackdropLayout, fading: Bool) {
+        let frame = layout.frame
         let new = CALayer()
-        new.contents = image
-        new.magnificationFilter = .linear
-        dimLayer = new
+        // The window's layers count from its bottom left.
+        func placed(_ area: CGRect) -> CGRect {
+            CGRect(x: area.minX - frame.minX, y: area.minY - frame.minY, width: area.width, height: area.height)
+        }
 
-        // Both layers hang from the top of the window, where the panel does.
-        let top = layout.dimFrame.height
-        let size = CGSize(width: CGFloat(dim.width) * pointsPerPixel, height: CGFloat(dim.height) * pointsPerPixel)
+        let strength = layout.map(of: layout.blurFrame, pointsPerPixel: Self.pointsPerPixel, PanelBackdropLayout.blur)
+        if let image = Self.image(strength, isMask: true),
+           let blur = BackdropBlur.makeLayer(points: PanelBackdropLayout.blurPoints, strength: image, frame: placed(layout.blurFrame)) {
+            new.addSublayer(blur)
+        }
+        if let shade = Self.image(layout.map(of: frame, pointsPerPixel: Self.pointsPerPixel, PanelBackdropLayout.dim), isMask: false) {
+            let dim = CALayer()
+            dim.frame = placed(frame)
+            dim.contents = shade
+            dim.magnificationFilter = .linear
+            new.addSublayer(dim)
+        }
+
+        let old = layers
+        layers = new
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        new.frame = CGRect(x: 0, y: top - size.height, width: size.width, height: size.height)
+        new.frame = CGRect(origin: .zero, size: frame.size)
+        // The old layers hang from the top of the window, where the panel does, while the window changes height.
         if let old {
-            old.frame.origin.y = top - old.frame.height
+            old.frame.origin.y = frame.height - old.frame.height
         }
-        dimView.layer?.addSublayer(new)
+        view.layer?.addSublayer(new)
         if fading { new.opacity = 0 }
         CATransaction.commit()
 
@@ -258,12 +192,32 @@ public final class PanelBackdrop {
             old?.removeFromSuperlayer()
             return
         }
-        // A panel that changes height cross-fades to its new darkening instead of jumping.
+        // A panel that changes height cross-fades to its new backdrop instead of jumping.
         CATransaction.begin()
         CATransaction.setAnimationDuration(0.25)
         CATransaction.setCompletionBlock { old?.removeFromSuperlayer() }
         new.opacity = 1
         old?.opacity = 0
         CATransaction.commit()
+    }
+
+    /// The map as a picture. A mask is white with the value in its alpha; the darkening is black with it.
+    private static func image(_ map: (values: [UInt8], width: Int, height: Int), isMask: Bool) -> CGImage? {
+        var pixels = [UInt8](repeating: 0, count: map.width * map.height * 4)
+        for (index, value) in map.values.enumerated() {
+            if isMask {
+                pixels[index * 4] = value
+                pixels[index * 4 + 1] = value
+                pixels[index * 4 + 2] = value
+            }
+            pixels[index * 4 + 3] = value
+        }
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
+        return CGImage(
+            width: map.width, height: map.height, bitsPerComponent: 8, bitsPerPixel: 32,
+            bytesPerRow: map.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent
+        )
     }
 }

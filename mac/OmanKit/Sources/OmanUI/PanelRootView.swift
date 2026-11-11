@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// How far along the panel is in appearing.
+struct PanelEntrance {
+    /// Points above its resting place when it starts.
+    static let startLift: CGFloat = 8
+    var opacity = 1.0
+    var lift: CGFloat = 0
+}
+
 public struct PanelRootView: View {
     /// The window keeps this size so the glass can reshape without the window server resizing it.
     public static let windowSize = CGSize(
@@ -34,22 +42,20 @@ public struct PanelRootView: View {
     }
 
     public var body: some View {
-        LiquidContainer(spacing: PanelMetrics.blend) {
-            ZStack(alignment: .topTrailing) {
-                // Behind the tiles, so the pin and settings buttons in the corner keep their clicks.
-                if model.isPinned {
-                    PanelCornerHandle()
-                        .padding(.top, PanelMetrics.shadowRoom)
-                        .padding(.trailing, PanelMetrics.shadowRoom)
-                        .transition(.opacity)
-                }
-                content
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { model.contentHeightChanged($0) }
-                    .frame(width: PanelMetrics.width)
-                    .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
-                    .padding(.top, model.isPinned ? PanelMetrics.sideMargin : 0)
-                    .padding(.horizontal, PanelMetrics.sideMargin)
+        ZStack(alignment: .topTrailing) {
+            // Behind the tiles, so the pin and settings buttons in the corner keep their clicks.
+            if model.isPinned {
+                PanelCornerHandle()
+                    .padding(.top, PanelMetrics.shadowRoom)
+                    .padding(.trailing, PanelMetrics.shadowRoom)
+                    .transition(.opacity)
             }
+            content
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { model.contentHeightChanged($0) }
+                .frame(width: PanelMetrics.width)
+                .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
+                .padding(.top, model.isPinned ? PanelMetrics.sideMargin : 0)
+                .padding(.horizontal, PanelMetrics.sideMargin)
         }
         .saturation(Liquid.colorBoost(usesClearGlass: usesClearGlass))
         .environment(\.liquidColorBoost, Liquid.colorBoost(usesClearGlass: usesClearGlass))
@@ -59,11 +65,22 @@ public struct PanelRootView: View {
         .withoutSystemWritingTools()
         .animation(Liquid.morph, value: model.screen)
         .animation(Liquid.morph, value: model.isPinned)
-        .keyframeAnimator(initialValue: 1.0, trigger: model.session) { view, opacity in
-            view.opacity(opacity)
+        // The panel arrives from the menu bar it hangs under: it fades in fast while it drops the last few points.
+        // Growing instead, as Control Center does, halved the frame rate while it played: glass is redrawn
+        // for every size, and only moved for a slide.
+        .keyframeAnimator(initialValue: PanelEntrance(), trigger: model.session) { view, entrance in
+            view
+                .opacity(entrance.opacity)
+                .offset(y: -entrance.lift)
         } keyframes: { _ in
-            MoveKeyframe(0)
-            LinearKeyframe(1, duration: 0.12)
+            KeyframeTrack(\.opacity) {
+                MoveKeyframe(0)
+                LinearKeyframe(1, duration: 0.1)
+            }
+            KeyframeTrack(\.lift) {
+                MoveKeyframe(PanelEntrance.startLift)
+                SpringKeyframe(0, duration: 0.26, spring: .smooth)
+            }
         }
         .padding(.bottom, PanelMetrics.bottomMargin)
         .frame(
@@ -76,12 +93,12 @@ public struct PanelRootView: View {
     @ViewBuilder
     private var content: some View {
         switch model.screen {
-        case .setup: PanelSetupView(model: model)
-        case .home: PanelHomeView(model: model)
-        case .compose: PanelComposeView(model: model)
-        case .working: PanelWorkingView(model: model)
-        case .result: PanelResultView(model: model)
-        case .failed: PanelFailedView(model: model)
+        case .setup: PanelSetupView(model: model).transition(Liquid.swap)
+        case .home: PanelHomeView(model: model).transition(Liquid.swap)
+        case .compose: PanelComposeView(model: model).transition(Liquid.swap)
+        case .working: PanelWorkingView(model: model).transition(Liquid.swap)
+        case .result: PanelResultView(model: model).transition(Liquid.swap)
+        case .failed: PanelFailedView(model: model).transition(Liquid.swap)
         }
     }
 }
