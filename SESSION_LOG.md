@@ -12,6 +12,7 @@ Date-stamped log of what each work session accomplished.
 - Verified: 301 tests pass, 30 of them new, and the app builds. Token counts are read separately from the stop reason, so a change in how Anthropic reports usage can't make answers look cut off. Offscreen renders checked the button row, the explanation screen and the Spending page in light and dark, with real charts. Glass doesn't render offscreen, so the buttons' shapes were measured instead: the widest label needs 104 of its 115 points
 - Not verified: Explain against the live API, which needs a few real requests with the maintainer's key, and the new buttons as glass on screen. The costs are checked against hand-worked figures, not against a real Anthropic bill
 - Removed this session's leftover build copies from LaunchServices. Only `/Applications/OmanAI.app` and an older copy in the Trash are still registered
+- Published 0.3.0 from a tag on `main`, after CI passed on pull request #7. All three release jobs passed. Checked from outside: Gatekeeper accepts it as notarized Developer ID with the ticket stapled, Sparkle's helpers are signed by the same team, it is version 0.3.0 (3000), the zip's and the feed's signatures both verify with the update key inside the installed 0.2.1, and the public feed address serves 0.3.0. Not checked: the update itself on the maintainer's Mac
 
 ## 2026-11-11 — Security review and fixes
 
