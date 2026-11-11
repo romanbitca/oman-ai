@@ -9,6 +9,7 @@ Date-stamped log of what each work session accomplished.
 - The maintainer installed 0.3.1 and sent screenshots with the panel open and closed: the backdrop grayed out half the screen without blurring it, and clear glass showed the app's text through the tiles. It looked very bad
 - Removed the backdrop window and clear glass. Tiles are frosted glass again; the dark panel with white text, interactive glass buttons and white "on" chips stay
 - Verified: 305 tests pass and the app builds. Not verified: how it looks on screen
+- Published 0.3.2 from a tag on `main`, with the release's test step standing in for the pull request's check again. All three release jobs passed; the command waiting on them lost its connection to GitHub, which looked like a failure until the run was read. Checked from outside: Gatekeeper accepts it as notarized Developer ID, it is version 0.3.2 (3002), and the zip's and the feed's signatures verify with the update key inside the installed app. The maintainer's Mac had already updated itself to 0.3.2
 
 ## 2026-11-11 — Control Center look for the panel
 
