@@ -1,0 +1,55 @@
+/* The documentation: a list of sections that stays put, and plain reading beside it. */
+.docs-hero { position: relative; isolation: isolate; overflow: clip; padding: clamp(140px, 18vh, 190px) 0 clamp(40px, 6vw, 72px); }
+.docs-hero .aurora { height: 70vh; }
+.docs-hero h1 { font-size: clamp(2.6rem, 6.4vw, 5rem); margin-top: 22px; }
+.docs-hero .lede { margin-top: 22px; }
+
+.docs-shell { display: grid; gap: 40px; padding-top: 28px; padding-bottom: clamp(80px, 10vw, 140px); }
+.toc { display: none; }
+@media (min-width: 1000px) {
+  .docs-shell { grid-template-columns: 240px minmax(0, 1fr); gap: clamp(40px, 6vw, 96px); align-items: start; }
+  .toc { display: block; position: sticky; top: 96px; max-height: calc(100vh - 120px); overflow-y: auto; scrollbar-width: none; }
+  .toc::-webkit-scrollbar { display: none; }
+}
+.toc p { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); margin: 0 0 14px 14px; }
+.toc a { display: block; padding: 7px 14px; border-left: 1px solid var(--line); color: var(--dim); text-decoration: none; font-size: 0.92rem; transition: color 0.2s ease, border-color 0.2s ease; }
+.toc a:hover { color: var(--ink); }
+.toc a.is-current { color: var(--ink); border-left-color: var(--mint); }
+
+.prose { max-width: 780px; min-width: 0; }
+.prose section { padding: 0 0 clamp(56px, 7vw, 88px); }
+.prose section + section { padding-top: clamp(48px, 6vw, 72px); border-top: 1px solid var(--line); }
+.prose h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin-top: 0; max-width: none; }
+.prose h3 { font-size: 1.24rem; margin-top: 40px; }
+.prose p, .prose ul, .prose ol { margin-top: 16px; color: var(--dim); }
+.prose p strong, .prose li strong, .prose dd strong { color: var(--ink); font-weight: 600; }
+.prose ul li, .prose ol li { position: relative; padding-left: 22px; margin-top: 8px; }
+.prose ul li::before { content: ""; position: absolute; left: 4px; top: 0.66em; width: 5px; height: 5px; border-radius: 50%; background: var(--mint); }
+.prose ol { counter-reset: n; }
+.prose ol li { counter-increment: n; padding-left: 34px; }
+.prose ol li::before { content: "0" counter(n); position: absolute; left: 0; top: 0.42em; font: 500 0.72rem/1 var(--mono); letter-spacing: 0.08em; color: var(--mint); }
+.prose figure { margin-top: 28px; }
+.prose figure img { border-radius: 18px; box-shadow: 0 0 0 1px var(--line-2), 0 40px 80px -40px #000; }
+.prose figure.window img { box-shadow: none; filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.4)); border-radius: 14px; }
+.prose figure.narrow { max-width: 540px; }
+.prose figcaption { margin-top: 12px; font-size: 0.86rem; color: var(--mute); }
+
+/* One control and what it does */
+.controls { display: grid; margin-top: 24px; border-top: 1px solid var(--line); }
+.controls > div { display: grid; gap: 6px 24px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+@media (min-width: 640px) { .controls > div { grid-template-columns: 190px minmax(0, 1fr); align-items: baseline; } }
+.controls dt { font-weight: 600; color: var(--ink); }
+.controls dt small { display: block; margin-top: 5px; font: 500 0.72rem/1.3 var(--mono); letter-spacing: 0.04em; color: var(--mute); }
+.controls dd { color: var(--dim); }
+
+.callout { margin-top: 24px; padding: 18px 20px; border-radius: 18px; background: rgba(110, 242, 200, 0.07); box-shadow: inset 0 0 0 1px rgba(110, 242, 200, 0.22); color: var(--dim); }
+.callout strong { color: var(--ink); }
+.callout.warn { background: rgba(255, 111, 160, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 111, 160, 0.25); }
+
+.table { width: 100%; margin-top: 24px; border-collapse: collapse; font-size: 0.95rem; }
+.table th, .table td { text-align: left; padding: 13px 14px 13px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table thead th { font: 500 0.7rem/1.2 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
+.table tbody th { font-weight: 600; white-space: nowrap; }
+.table td { color: var(--dim); }
+.table-scroll { overflow-x: auto; }
+code { font: 500 0.86em/1 var(--mono); padding: 2px 6px; border-radius: 6px; background: var(--glass-2); color: var(--ink); word-break: break-word; }

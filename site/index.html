@@ -3,525 +3,509 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OmanAI</title>
+<title>OmanAI: your words, in your own voice</title>
 <meta name="description" content="A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages. Free and open source.">
+<link rel="canonical" href="https://oman-ai.romanbitca.com/">
 <meta property="og:title" content="OmanAI: your words, in your own voice">
 <meta property="og:description" content="A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages. Free and open source.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="og.png">
+<meta property="og:url" content="https://oman-ai.romanbitca.com/">
+<meta property="og:image" content="https://oman-ai.romanbitca.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f2f5f3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#07191e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#050607">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<style>
-/* Layout: a Mac desktop in miniature opens the page, with the product's panel hanging from its menu bar
-   icon. Everything after it is quiet text in one or two columns. */
-:root {
-  --bg: #f2f5f3;
-  --surface: #ffffff;
-  --ink: #0c2b33;
-  --muted: #536c74;
-  --line: rgba(12, 43, 51, 0.13);
-  --brand: #08906e;
-  --brand-ink: #06495f;
-  --brand-soft: #dcf2e9;
-  --on-brand: #ffffff;
-  --violet: #6657ff;
-
-  /* The desktop scene. The wallpaper takes the app icon's gradient. */
-  --wall-a: #17cf9b;
-  --wall-b: #0a7f8c;
-  --wall-c: #083a5e;
-  --glass: rgba(255, 255, 255, 0.66);
-  --glass-edge: rgba(255, 255, 255, 0.75);
-  --glass-ink: #14232a;
-  --glass-muted: #5c6b72;
-  --glass-press: rgba(20, 35, 42, 0.07);
-  --window: #ffffff;
-  --window-bar: #eef1f0;
-  --bubble: #eaeeed;
-  --select: rgba(10, 132, 255, 0.28);
-  --scene-shadow: rgba(4, 30, 40, 0.28);
-
-  --display: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+<link rel="preload" as="image" href="media/poster-rewrite.webp" type="image/webp">
+<link rel="stylesheet" href="styles.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "OmanAI",
+  "operatingSystem": "macOS 14 or later",
+  "applicationCategory": "ProductivityApplication",
+  "description": "A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://github.com/romanbitca/oman-ai/blob/main/LICENSE",
+  "url": "https://oman-ai.romanbitca.com/",
+  "downloadUrl": "https://github.com/romanbitca/oman-ai/releases/latest"
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #07191e;
-    --surface: #0e2830;
-    --ink: #e7f2ef;
-    --muted: #93abb0;
-    --line: rgba(231, 242, 239, 0.15);
-    --brand: #36d6a7;
-    --brand-ink: #9fe9d4;
-    --brand-soft: #0f3a38;
-    --on-brand: #04201c;
-    --violet: #8478ff;
-    --glass: rgba(24, 36, 42, 0.62);
-    --glass-edge: rgba(255, 255, 255, 0.16);
-    --glass-ink: #eef4f2;
-    --glass-muted: #a3b2b6;
-    --glass-press: rgba(255, 255, 255, 0.1);
-    --window: #172a31;
-    --window-bar: #1f343b;
-    --bubble: #25404a;
-    --select: rgba(64, 156, 255, 0.4);
-    --scene-shadow: rgba(0, 0, 0, 0.5);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #07191e;
-  --surface: #0e2830;
-  --ink: #e7f2ef;
-  --muted: #93abb0;
-  --line: rgba(231, 242, 239, 0.15);
-  --brand: #36d6a7;
-  --brand-ink: #9fe9d4;
-  --brand-soft: #0f3a38;
-  --on-brand: #04201c;
-  --violet: #8478ff;
-  --glass: rgba(24, 36, 42, 0.62);
-  --glass-edge: rgba(255, 255, 255, 0.16);
-  --glass-ink: #eef4f2;
-  --glass-muted: #a3b2b6;
-  --glass-press: rgba(255, 255, 255, 0.1);
-  --window: #172a31;
-  --window-bar: #1f343b;
-  --bubble: #25404a;
-  --select: rgba(64, 156, 255, 0.4);
-  --scene-shadow: rgba(0, 0, 0, 0.5);
-  color-scheme: dark;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-[hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: 1.0625rem/1.6 var(--body);
-  -webkit-font-smoothing: antialiased;
-}
-img, svg { max-width: 100%; }
-a { color: inherit; }
-h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
-ol, ul { padding: 0; list-style: none; }
-button { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 6px; }
-
-.wrap {
-  max-width: 1160px;
-  margin-inline: auto;
-  padding-left: max(20px, env(safe-area-inset-left, 0px));
-  padding-right: max(20px, env(safe-area-inset-right, 0px));
-}
-.icon { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-
-/* The site's own menu bar */
-.menubar { border-bottom: 1px solid var(--line); }
-.menubar .wrap { display: flex; align-items: center; gap: 22px; min-height: 52px; }
-.brand { display: inline-flex; align-items: center; gap: 9px; font: 700 1.05rem/1 var(--display); text-decoration: none; letter-spacing: -0.01em; }
-.brand svg { width: 26px; height: 26px; }
-.menubar nav { display: flex; gap: 20px; margin-right: auto; }
-.menubar nav a, .menubar .quiet { font-size: 0.92rem; color: var(--muted); text-decoration: none; }
-.menubar nav a:hover, .menubar .quiet:hover { color: var(--ink); }
-.menubar .get {
-  font: 600 0.9rem/1 var(--body); text-decoration: none; color: var(--on-brand);
-  background: var(--brand); padding: 9px 15px; border-radius: 999px;
-}
-@media (max-width: 760px) {
-  .menubar nav { display: none; }
-  .menubar .wrap { justify-content: space-between; }
-  .menubar .quiet { margin-left: auto; }
-}
-
-/* Hero */
-.hero { padding-block: clamp(36px, 6vw, 72px) clamp(40px, 6vw, 80px); }
-.hero .wrap { display: grid; gap: clamp(28px, 5vw, 56px); align-items: center; }
-@media (min-width: 980px) { .hero .wrap { grid-template-columns: minmax(0, 5fr) minmax(0, 6.4fr); } }
-.kicker { font: 600 0.82rem/1.2 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
-h1 {
-  font: 700 clamp(2.5rem, 4.6vw + 1.1rem, 4.5rem)/1.02 var(--display);
-  letter-spacing: -0.028em; text-wrap: balance; margin-top: 14px;
-}
-.lede { margin-top: 20px; max-width: 34em; font-size: clamp(1.06rem, 0.5vw + 0.98rem, 1.22rem); color: var(--muted); }
-.lede strong { color: var(--ink); font-weight: 600; }
-.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.button {
-  display: inline-flex; align-items: center; gap: 9px; text-decoration: none;
-  font: 600 1rem/1 var(--body); padding: 15px 22px; border-radius: 999px;
-  transition: opacity 0.14s ease-out;
-}
-.button:hover { opacity: 0.86; }
-.button.primary { background: var(--ink); color: var(--bg); }
-.button.ghost { border: 1px solid var(--line); color: var(--ink); }
-.button .icon { font-size: 1.15em; }
-.fine { margin-top: 16px; font-size: 0.9rem; color: var(--muted); }
-
-/* The desktop scene */
-.scene {
-  position: relative; isolation: isolate; overflow: hidden;
-  border-radius: 28px; padding: 0 14px 16px;
-  background:
-    radial-gradient(120% 90% at 8% 0%, var(--wall-a) 0%, transparent 58%),
-    radial-gradient(90% 80% at 100% 18%, #4ad6e8 0%, transparent 55%),
-    linear-gradient(160deg, var(--wall-b) 10%, var(--wall-c) 100%);
-  box-shadow: 0 30px 60px -28px var(--scene-shadow);
-  color: var(--glass-ink);
-  font: 13px/1.38 var(--body);
-}
-.scene-bar {
-  display: flex; align-items: center; gap: 14px; height: 28px; margin: 0 -14px;
-  padding: 0 14px; background: var(--glass); backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  font-size: 12px; white-space: nowrap;
-}
-.scene-bar b { font-weight: 700; }
-.scene-bar span { color: var(--glass-muted); }
-.scene-bar .status { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--glass-ink); }
-.scene-bar .mark { display: grid; place-items: center; width: 26px; height: 20px; border-radius: 5px; background: var(--glass-press); }
-.scene-bar .mark svg { width: 17px; height: 17px; }
-@media (max-width: 520px) { .scene-bar .menus { display: none; } }
-
-.stage { display: grid; gap: 12px; padding-top: 12px; }
-.window {
-  background: var(--window); border-radius: 12px; overflow: hidden;
-  box-shadow: 0 18px 40px -18px var(--scene-shadow), 0 0 0 0.5px rgba(0, 0, 0, 0.18);
-}
-.window-bar { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; background: var(--window-bar); font-weight: 600; font-size: 12px; }
-.window-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--glass-muted); opacity: 0.45; }
-.window-bar em { font-style: normal; margin-left: 8px; }
-.thread { display: grid; gap: 8px; padding: 14px 14px 6px; }
-.msg { justify-self: start; max-width: 85%; padding: 7px 11px; border-radius: 14px; background: var(--bubble); }
-.msg small { display: block; font-size: 11px; font-weight: 600; color: var(--glass-muted); }
-.composer { margin: 8px 12px 12px; padding: 9px 11px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--line); min-height: 4.6em; }
-.composer mark { background: var(--select); color: inherit; border-radius: 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
-.composer.done mark { background: transparent; }
-
-.panel { display: grid; gap: 8px; align-content: start; width: 100%; max-width: 344px; justify-self: center; }
-.tile, .pill, .card {
-  background: var(--glass); backdrop-filter: blur(22px) saturate(1.7); -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  box-shadow: inset 0 0 0 0.5px var(--glass-edge), 0 10px 24px -14px var(--scene-shadow);
-}
-.tile { border-radius: 22px; padding: 12px 13px; }
-.pill { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 15px; border-radius: 999px; color: var(--glass-muted); }
-.pill .icon { font-size: 14px; }
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.card {
-  display: grid; justify-items: center; gap: 6px; padding: 15px 8px 13px; border: 0; border-radius: 22px;
-  font-weight: 600; cursor: pointer; transition: opacity 0.12s ease-out;
-}
-.card .icon { font-size: 21px; stroke-width: 1.5; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 5px; height: 31px; padding: 0 13px; border: 0; border-radius: 999px;
-  font-size: 12px; font-weight: 500; cursor: pointer; transition: opacity 0.12s ease-out;
-  background: var(--glass); backdrop-filter: blur(22px) saturate(1.7); -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  box-shadow: inset 0 0 0 0.5px var(--glass-edge);
-}
-.chip.quiet { color: var(--glass-muted); cursor: default; }
-.chip .icon { font-size: 12px; }
-.chip.on, .act.primary { background: var(--violet); color: #fff; box-shadow: none; }
-.card:hover, .chip:not(.quiet):hover, .act:hover { opacity: 0.8; }
-.card.pressed, .chip.pressed { opacity: 0.62; }
-.head { display: flex; align-items: flex-start; gap: 9px; }
-.head .app { width: 20px; height: 20px; border-radius: 6px; flex: none; background: linear-gradient(140deg, #ffb24d, #ff5d73); }
-.head .what { min-width: 0; flex: 1; }
-.head small { display: block; font-size: 11px; font-weight: 500; color: var(--glass-muted); }
-.head p { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.head .tools { display: flex; gap: 9px; color: var(--glass-muted); font-size: 13px; padding-top: 2px; }
-.out { min-height: 6.9em; font-size: 14px; line-height: 1.45; }
-.working { position: relative; }
-.working::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none;
-  background: conic-gradient(from var(--turn, 0deg), #6657ff, #d152f5, #ff6b8f, #ffad5c, #4dd1f5, #6657ff);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-}
-.row { display: flex; align-items: center; gap: 8px; }
-.row .grow { margin-right: auto; color: var(--glass-muted); font-size: 12px; font-weight: 500; padding-left: 6px; }
-.act {
-  height: 35px; padding: 0 15px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 500; cursor: pointer;
-  background: var(--glass); backdrop-filter: blur(22px) saturate(1.7); -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  box-shadow: inset 0 0 0 0.5px var(--glass-edge); transition: opacity 0.12s ease-out;
-}
-.link { border: 0; background: none; padding: 4px 6px; cursor: pointer; color: var(--glass-muted); font-size: 12px; font-weight: 500; }
-.view { display: grid; gap: 8px; }
-.note { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 0.86rem; color: var(--muted); }
-.note button { border: 0; background: none; padding: 0; cursor: pointer; color: var(--brand); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-
-@media (min-width: 700px) {
-  .scene { padding: 0 20px 22px; }
-  .scene-bar { margin: 0 -20px; padding: 0 16px; }
-  .stage { grid-template-columns: minmax(0, 1fr) 316px; align-items: start; gap: 0; min-height: 500px; }
-  .window { grid-column: 1 / -1; grid-row: 1; width: 56%; align-self: end; margin-top: 218px; }
-  .msg { max-width: 74%; }
-  .panel { grid-column: 2; grid-row: 1; justify-self: end; z-index: 1; }
-}
-@supports (animation-timeline: auto) or (background: conic-gradient(from 1deg, red, blue)) {
-  @property --turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-  @media (prefers-reduced-motion: no-preference) {
-    .working::before { animation: turn 3.2s linear infinite; }
-  }
-}
-@keyframes turn { to { --turn: 360deg; } }
-
-/* Sections */
-section { padding-block: clamp(44px, 7vw, 88px); }
-section + section { border-top: 1px solid var(--line); }
-h2 { font: 700 clamp(1.75rem, 2.2vw + 1.05rem, 2.6rem)/1.1 var(--display); letter-spacing: -0.022em; text-wrap: balance; max-width: 21em; }
-.sub { margin-top: 14px; max-width: 38em; color: var(--muted); }
-h3 { font: 650 1.08rem/1.3 var(--body); letter-spacing: -0.005em; }
-
-.steps { display: grid; gap: 28px 40px; margin-top: 36px; counter-reset: step; }
-@media (min-width: 820px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.steps li { counter-increment: step; display: grid; gap: 8px; align-content: start; }
-.steps li::before {
-  content: counter(step); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
-  font: 700 0.98rem/1 var(--display); background: var(--brand-soft); color: var(--brand-ink); margin-bottom: 4px;
-}
-.steps p, .features p, .cols p, .faq p { color: var(--muted); }
-kbd { font: 600 0.82em/1 var(--mono); padding: 3px 6px; border-radius: 6px; background: var(--brand-soft); color: var(--brand-ink); white-space: nowrap; }
-
-.split { display: grid; gap: clamp(28px, 5vw, 64px); align-items: center; }
-@media (min-width: 900px) { .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-.voices { display: grid; gap: 14px; }
-.voice { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; }
-.voice header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.voice header b { font: 700 0.95rem/1 var(--display); }
-.voice header span { font-size: 0.82rem; color: var(--muted); }
-.voice p { font-size: 1rem; }
-.voice.rough { background: transparent; border-style: dashed; }
-.voice.rough p { font-family: var(--mono); font-size: 0.92rem; color: var(--muted); }
-
-.features { display: grid; gap: 30px 48px; margin-top: 36px; }
-@media (min-width: 720px) { .features { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (min-width: 1020px) { .features { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.features li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-content: start; }
-.features .icon { grid-row: span 2; font-size: 1.45rem; color: var(--brand); margin-top: 2px; }
-
-.cols { display: grid; gap: 18px; margin-top: 36px; }
-@media (min-width: 820px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cols.three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.box { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; display: grid; gap: 10px; align-content: start; }
-.box ul { display: grid; gap: 8px; color: var(--muted); }
-.box li { padding-left: 18px; position: relative; }
-.box li::before { content: ""; position: absolute; left: 2px; top: 0.72em; width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
-.tag { justify-self: start; font: 600 0.74rem/1 var(--body); letter-spacing: 0.07em; text-transform: uppercase; color: var(--brand-ink); background: var(--brand-soft); padding: 6px 9px; border-radius: 999px; }
-.after { margin-top: 22px; max-width: 46em; color: var(--muted); }
-.after a, .faq a, .foot a { color: var(--ink); text-underline-offset: 3px; }
-
-.install { display: grid; gap: 28px 56px; align-items: start; }
-@media (min-width: 900px) { .install { grid-template-columns: minmax(0, 5fr) minmax(0, 4fr); } }
-.install ol { display: grid; gap: 12px; margin-top: 22px; counter-reset: step; }
-.install ol li { counter-increment: step; display: grid; grid-template-columns: 1.6em minmax(0, 1fr); }
-.install ol li::before { content: counter(step) "."; font: 700 1rem/1.6 var(--display); color: var(--brand); }
-.needs { display: grid; gap: 10px; }
-.needs div { display: grid; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-.needs dt { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-
-.faq { display: grid; gap: 0; margin-top: 28px; max-width: 46em; }
-.faq details { border-bottom: 1px solid var(--line); }
-.faq summary { cursor: pointer; padding: 16px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
-.faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; font: 400 1.3rem/1 var(--body); color: var(--muted); }
-.faq details[open] summary::after { content: "−"; }
-.faq p { padding-bottom: 18px; max-width: 42em; }
-
-.foot { border-top: 1px solid var(--line); padding-block: 32px 44px; font-size: 0.9rem; color: var(--muted); }
-.foot .wrap { display: grid; gap: 14px; }
-.foot nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
-</style>
+</script>
 </head>
-<body>
+<!-- To take donations, put the page's address in data-donate-url. Every Donate button then leads there. -->
+<body data-donate-url="">
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="g-icon" x1="0.2" y1="0" x2="0.8" y2="1">
       <stop offset="0" stop-color="#06cc92"/><stop offset="1" stop-color="#033f66"/>
     </linearGradient>
-    <symbol id="i-wave" viewBox="0 0 64 64"><path d="M8 37l3.6-10 3.6 12 3.6-13 3.6 12 3.4-8.5C30.500 20.500 37 20.500 42 31c4.200 8.800 9.600 8.800 14.500-3" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-proof" viewBox="0 0 24 24"><path d="M4 6h9M4 10h6M4 14h5"/><circle cx="15.500" cy="14.500" r="3.800"/><path d="M18.300 17.300L21 20"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 64 64"><path d="M8 37l3.6-10 3.6 12 3.6-13 3.6 12 3.4-8.500C30.500 20.500 37 20.500 42 31c4.200 8.800 9.600 8.800 14.500-3" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 18 18"><path d="M2.2 11.4C4.4 2.4 7 3.2 9 9C11 14.8 13.6 15.6 15.8 6.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-proof" viewBox="0 0 24 24"><path d="M4 6h9M4 10h6M4 14h5"/><circle cx="15.5" cy="14.5" r="3.8"/><path d="M18.300 17.300L21 20"/></symbol>
     <symbol id="i-rewrite" viewBox="0 0 24 24"><path d="M19.500 9.500A8 8 0 0 0 5.200 8"/><path d="M5 4v4.200h4.200"/><path d="M4.500 14.500A8 8 0 0 0 18.800 16"/><path d="M19 20v-4.200h-4.200"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 17.500h6M10 20.500h4"/><path d="M12 3.500a5.800 5.800 0 0 0-3.400 10.500c.6.500.9 1.100.9 1.800h5c0-.7.3-1.300.9-1.800A5.800 5.800 0 0 0 12 3.500z"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3.500l1.900 5.100 5.100 1.900-5.100 1.900L12 17.500l-1.900-5.100L5 10.500l5.100-1.900z"/><path d="M18.500 16.500v4M16.500 18.500h4"/></symbol>
     <symbol id="i-compose" viewBox="0 0 24 24"><path d="M11 5H6.500A2.500 2.500 0 0 0 4 7.500v10A2.500 2.500 0 0 0 6.500 20h10a2.500 2.500 0 0 0 2.500-2.500V13"/><path d="M17.800 3.700a1.800 1.800 0 0 1 2.500 2.500L12 14.500 8.800 15.200l.7-3.200z"/></symbol>
-    <symbol id="i-window" viewBox="0 0 24 24"><rect x="3.500" y="5" width="17" height="14" rx="2.500"/><path d="M3.500 9h17"/></symbol>
+    <symbol id="i-window" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M3.500 9h17"/></symbol>
     <symbol id="i-lines" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></symbol>
-    <symbol id="i-clip" viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="15" rx="2.200"/><path d="M9.500 5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><rect x="6" y="5" width="12" height="15" rx="2.2"/><path d="M9.500 5V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/></symbol>
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.500M12 18.500V21M3 12h2.500M18.500 12H21M5.600 5.600l1.800 1.800M16.600 16.600l1.800 1.800M5.600 18.400l1.800-1.800M16.600 7.400l1.800-1.800"/></symbol>
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.500 5.500L8 12l6.500 6.500"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9.500 5.500L16 12l-6.500 6.500"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10.500l5 5 5-5M5 20h14"/></symbol>
-    <symbol id="i-keys" viewBox="0 0 24 24"><rect x="3" y="6.500" width="18" height="11" rx="2.500"/><path d="M7 10.500h.01M11 10.500h.01M15 10.500h.01M8 14h8"/></symbol>
-    <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 14l2.200-6 2.200 8 2.200-9 2 7c1.500-5 4-5 5.600 0 .9 2.600 1.900 2.600 2.800 0"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.300-7-9.600A4.100 4.100 0 0 1 12 8a4.100 4.100 0 0 1 7 2.400C19 15.700 12 20 12 20z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.800l2.500 5.200 5.700.8-4.100 4 1 5.700-5.100-2.700-5.100 2.700 1-5.700-4.100-4 5.700-.8z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.500v13l10.500-6.500z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5.500v13M16 5.500v13" stroke-width="2.6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.500V8a4 4 0 0 1 8 0v2.500"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.500h9.500A3.500 3.500 0 0 1 18 8v11.500H8.500A3.500 3.500 0 0 1 5 16z"/><path d="M5 16a3.500 3.500 0 0 1 3.500-3.500H18"/></symbol>
+    <symbol id="i-bug" viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="11" rx="4"/><path d="M12 8V5.500M9 5l1.500 1.500M15 5l-1.500 1.500M4.500 13H8M16 13h3.500M5 18.500l3-1.500M19 18.500l-3-1.500M5 8l3 1.500M19 8l-3 1.500"/></symbol>
     <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4 1.300-4-2-5.500-2.500M14.500 21v-3.300a2.800 2.800 0 0 0-.8-2.200c2.700-.3 5.500-1.300 5.500-6a4.600 4.600 0 0 0-1.300-3.200 4.300 4.300 0 0 0-.1-3.200s-1-.3-3.300 1.300a11.400 11.400 0 0 0-6 0C6.200 2.800 5.200 3.100 5.200 3.100a4.300 4.300 0 0 0-.1 3.200A4.600 4.600 0 0 0 3.800 9.500c0 4.700 2.800 5.700 5.500 6a2.800 2.800 0 0 0-.8 2.200V21"/></symbol>
   </defs>
 </svg>
 
-<header class="menubar">
-  <div class="wrap">
-    <a class="brand" href="#top" aria-label="OmanAI">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="url(#g-icon)"/><circle cx="38" cy="31" r="13.500" fill="#fff" opacity="0.26"/><use href="#i-wave" color="#fff"/></svg>
-      OmanAI
-    </a>
-    <nav aria-label="Sections">
-      <a href="#how">How it works</a>
-      <a href="#styles">Styles</a>
-      <a href="#privacy">Privacy</a>
-      <a href="#questions">Questions</a>
-    </nav>
-    <a class="quiet" href="https://github.com/romanbitca/oman-ai">GitHub</a>
-    <a class="get" href="https://github.com/romanbitca/oman-ai/releases/latest">Download</a>
+<a class="skip" href="#main">Skip to the content</a>
+
+<header class="nav" data-nav>
+  <a class="brand" href="#top" aria-label="OmanAI, back to the top">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="url(#g-icon)"/><circle cx="38" cy="31" r="13.5" fill="#fff" opacity="0.26"/><use href="#i-flow" color="#fff"/></svg>
+    <span>OmanAI</span>
+  </a>
+  <nav aria-label="Sections">
+    <a href="#use">Use cases</a>
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#privacy">Privacy</a>
+    <a href="docs/">Docs</a>
+  </nav>
+  <div class="nav-tools">
+    <a class="icon-link" href="https://github.com/romanbitca/oman-ai" aria-label="OmanAI on GitHub"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></a>
+    <a class="icon-link heart" href="#support" data-donate aria-label="Donate"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></a>
+    <a class="btn small" href="https://github.com/romanbitca/oman-ai/releases/latest" data-download>Download</a>
   </div>
 </header>
 
-<main id="top">
-  <div class="hero">
+<main id="main">
+
+  <section class="hero" id="top">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="wrap">
-      <div>
-        <p class="kicker">Menu bar app for macOS</p>
-        <h1>Your words, in your own voice.</h1>
-        <p class="lede">Select what you wrote in any app and click the OmanAI icon in your menu bar. It proofreads or rewrites the text in <strong>a style built from your own messages</strong>, and one click puts it back in place.</p>
-        <div class="cta">
-          <a class="button primary" href="https://github.com/romanbitca/oman-ai/releases/latest"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
-          <a class="button ghost" href="https://github.com/romanbitca/oman-ai"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg>View the source</a>
-        </div>
-        <p class="fine">Free and open source. Needs macOS 14 or later.</p>
+      <a class="pill-news" href="https://github.com/romanbitca/oman-ai/releases/latest" data-rise>
+        <span class="dot" aria-hidden="true"></span><span data-version-pill>Free and open source for macOS</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+      </a>
+      <h1 data-rise style="--d: 80ms">Your words,<br><em>in your own voice.</em></h1>
+      <p class="lede" data-rise style="--d: 160ms">Select what you wrote in any app and click the wave in your menu bar. OmanAI proofreads or rewrites it in a style built from your own messages. One click puts it back.</p>
+      <div class="cta" data-rise style="--d: 240ms">
+        <a class="btn" href="https://github.com/romanbitca/oman-ai/releases/latest" data-download><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
+        <a class="btn ghost" href="docs/"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Read the docs</a>
       </div>
+      <p class="fine" data-rise style="--d: 300ms"><span data-version>macOS 14 or later</span> · no account · MIT license</p>
 
-      <div>
-        <div class="scene" data-demo aria-label="A demo of the OmanAI panel that you can try">
-          <div class="scene-bar" aria-hidden="true">
-            <b>Chat</b><span class="menus">File &nbsp; Edit &nbsp; View &nbsp; Window</span>
-            <div class="status"><span class="mark"><svg viewBox="0 0 64 64"><use href="#i-wave"/></svg></span><span>Tue 9:41</span></div>
-          </div>
-          <div class="stage">
-            <div class="window">
-              <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><em>Dana Reyes</em></div>
-              <div class="thread">
-                <p class="msg"><small>Dana</small>Morning! I'm putting the board deck together today.</p>
-                <p class="msg"><small>Dana</small>Do you have the Q3 numbers?</p>
-              </div>
-              <p class="composer" data-composer><mark>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</mark></p>
-            </div>
-
-            <div class="panel" data-panel>
-              <div class="view" data-view="home">
-                <div class="tile head">
-                  <span class="app" aria-hidden="true"></span>
-                  <div class="what"><small>Chat</small><p data-selected>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</p></div>
-                  <span class="tools" aria-hidden="true"><svg class="icon"><use href="#i-pin"/></svg><svg class="icon"><use href="#i-gear"/></svg></span>
-                </div>
-                <div class="pill" aria-hidden="true"><svg class="icon"><use href="#i-spark"/></svg>Describe your change</div>
-                <div class="cards">
-                  <button class="card" type="button" data-run="proofread"><svg class="icon" aria-hidden="true"><use href="#i-proof"/></svg>Proofread</button>
-                  <button class="card" type="button" data-run="rewrite"><svg class="icon" aria-hidden="true"><use href="#i-rewrite"/></svg>Rewrite</button>
-                </div>
-                <div class="chips" role="group" aria-label="Your styles">
-                  <button class="chip" type="button" data-run="work">Work</button>
-                  <button class="chip" type="button" data-run="friends">Friends</button>
-                </div>
-                <div class="chips" aria-hidden="true">
-                  <span class="chip quiet"><svg class="icon"><use href="#i-window"/></svg>Screen</span>
-                  <span class="chip quiet"><svg class="icon"><use href="#i-lines"/></svg>Messages</span>
-                  <span class="chip quiet"><svg class="icon"><use href="#i-clip"/></svg>Clipboard</span>
-                </div>
-                <div class="pill" aria-hidden="true" style="color: var(--glass-ink); font-weight: 600;"><svg class="icon"><use href="#i-compose"/></svg>Compose<svg class="icon" style="margin-left:auto; color: var(--glass-muted); font-size: 12px;"><use href="#i-chevron"/></svg></div>
-              </div>
-
-              <div class="view" data-view="working" hidden>
-                <div class="tile working"><p class="out" data-stream aria-hidden="true"></p></div>
-                <div class="row"><span class="grow">Writing…</span><button class="act" type="button" data-stop>Stop</button></div>
-              </div>
-
-              <div class="view" data-view="result" hidden>
-                <div class="tile row" style="padding: 8px 10px;">
-                  <button class="link" type="button" data-back aria-label="Back"><svg class="icon" aria-hidden="true" style="font-size:14px; vertical-align:-2px;"><use href="#i-back"/></svg></button>
-                  <button class="link" type="button" data-original aria-pressed="false">Show original</button>
-                </div>
-                <div class="tile"><p class="out" data-out aria-live="polite"></p></div>
-                <div class="row">
-                  <button class="act primary" type="button" data-replace>Replace</button>
-                  <button class="act" type="button" data-copy>Copy</button>
-                  <button class="act" type="button" data-again>Try again</button>
-                </div>
-                <div class="pill" aria-hidden="true"><svg class="icon"><use href="#i-spark"/></svg>Make a change…</div>
-              </div>
-            </div>
-          </div>
+      <figure class="display" data-tilt data-rise style="--d: 380ms">
+        <div class="display-glow" aria-hidden="true"></div>
+        <div class="clip" data-clip>
+          <video data-autoplay muted loop playsinline preload="metadata" poster="media/poster-rewrite.webp" width="1488" height="780" aria-label="A recording of OmanAI rewriting a chat message in a work style and putting it back">
+            <source src="media/demo-rewrite.webm" type="video/webm">
+            <source src="media/demo-rewrite.mp4" type="video/mp4">
+          </video>
+          <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
         </div>
-        <p class="note"><span>A scripted demo that runs in your browser. Try the buttons. Nothing is sent anywhere.</span><button type="button" data-reset>Start over</button></p>
-      </div>
+        <figcaption>The real app, recorded on a Mac. The chat window behind it is a stand-in.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="logos" aria-label="Apps it works in">
+    <p class="label">Works where you already write</p>
+    <div class="marquee">
+      <ul>
+        <li>Slack</li><li>Mail</li><li>Messages</li><li>WhatsApp</li><li>Telegram</li><li>Notion</li><li>Linear</li><li>Gmail</li><li>Notes</li><li>LinkedIn</li><li>Discord</li><li>GitHub</li><li>Teams</li><li>Pages</li>
+      </ul>
+      <ul aria-hidden="true">
+        <li>Slack</li><li>Mail</li><li>Messages</li><li>WhatsApp</li><li>Telegram</li><li>Notion</li><li>Linear</li><li>Gmail</li><li>Notes</li><li>LinkedIn</li><li>Discord</li><li>GitHub</li><li>Teams</li><li>Pages</li>
+      </ul>
     </div>
   </div>
 
-  <section id="how">
+  <!-- The idea, in one paragraph that lights up as it is read. -->
+  <section class="manifesto" id="why">
     <div class="wrap">
-      <h2>You never leave the app you are writing in</h2>
-      <p class="sub">OmanAI lives in the menu bar. Its panel opens under the icon and closes when you are done. Nothing ever appears in or near the field you are typing in.</p>
-      <ol class="steps">
-        <li><h3>Select what you wrote</h3><p>In Slack, Mail, Telegram, a browser tab, or almost anywhere else you type.</p></li>
-        <li><h3>Click the icon in the menu bar</h3><p>Or press a shortcut you chose. The panel shows your text and what you can do with it.</p></li>
-        <li><h3>Choose, read, Replace</h3><p>The result streams into the panel so you can read it first. Replace puts it where your selection was, and <kbd>⌘Z</kbd> in that app brings the original back.</p></li>
-      </ol>
+      <p class="label" data-rise>Why it exists</p>
+      <p class="statement" data-words>Most AI writing sounds like AI. OmanAI learns from the messages you already sent, so a rewrite sounds like you on a good day. It lives in your menu bar, it never touches the field you are typing in, and nothing is pasted until you say so.</p>
     </div>
   </section>
 
-  <section id="styles">
-    <div class="wrap split">
-      <div>
-        <h2>It sounds like you because you teach it with your own messages</h2>
-        <p class="sub">A style is a handful of messages you really sent. Paste a few from Slack and a few from email, give each set a name, and OmanAI picks up your sentence length, your greetings and sign-offs, your punctuation and how you use emoji.</p>
-        <p class="sub">It takes the voice from those messages and nothing else. It also remembers which style you last used in each app, so the right one is already selected.</p>
+  <section class="versus" id="voice">
+    <div class="wrap">
+      <p class="label" data-rise>The difference</p>
+      <h2 data-rise>Anyone can tell <span class="dim">when a machine wrote it.</span></h2>
+      <div class="versus-grid">
+        <article class="card generic" data-rise>
+          <header><span class="tag-line">The usual AI rewrite</span></header>
+          <p>I hope this message finds you well! I wanted to <mark>reach out</mark> and let you know that I will <mark>promptly</mark> provide the Q3 numbers <mark>—</mark> I am simply taking a moment to <mark>meticulously</mark> verify the churn figure. <mark>Please don't hesitate</mark> to let me know if you need anything further!</p>
+          <footer>Longer than what you typed, and nobody you know talks like this.</footer>
+        </article>
+        <article class="card yours" data-rise style="--d: 90ms">
+          <header><span class="tag-line">OmanAI, in your work style</span></header>
+          <p>Hi Dana, yes. I'll send the Q3 numbers over shortly, I just want to double-check the churn figure first.</p>
+          <footer>Your greeting, your length, your punctuation. Learned from six emails you sent.</footer>
+        </article>
       </div>
-      <div class="voices" aria-label="One rough note in two of your styles">
-        <div class="voice rough"><header><b>What you typed</b></header><p>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</p></div>
-        <div class="voice"><header><b>Work</b><span>from your emails</span></header><p>Hi Dana, yes. I'll send the Q3 numbers over shortly, I just want to double-check the churn figure first.</p></div>
-        <div class="voice"><header><b>Friends</b><span>from your group chat</span></header><p>yep! sending the q3 numbers in a sec, just double checking the churn figure 👀</p></div>
-      </div>
     </div>
   </section>
 
-  <section id="more">
+  <section class="cases" id="use">
     <div class="wrap">
-      <h2>Everything it does fits in one small panel</h2>
-      <ul class="features">
-        <li><svg class="icon" aria-hidden="true"><use href="#i-proof"/></svg><h3>Proofread</h3><p>Fixes spelling, grammar and punctuation, and leaves your wording and tone alone.</p></li>
-        <li><svg class="icon" aria-hidden="true"><use href="#i-rewrite"/></svg><h3>Rewrite</h3><p>Type what you want changed, such as shorter or warmer. Then try again or ask for one more change.</p></li>
-        <li><svg class="icon" aria-hidden="true"><use href="#i-compose"/></svg><h3>Compose</h3><p>With nothing selected, describe what you need in a line. Insert puts the text at your cursor.</p></li>
-        <li><svg class="icon" aria-hidden="true"><use href="#i-window"/></svg><h3>Context</h3><p>Add the window you are writing in, pasted messages or your clipboard, so a reply fits the conversation.</p></li>
-        <li><svg class="icon" aria-hidden="true"><use href="#i-keys"/></svg><h3>Shortcuts</h3><p>Give any action its own global shortcut, including each of your styles.</p></li>
-        <li><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg><h3>A panel that stays</h3><p>Pin the panel and it becomes a small floating window you can drag anywhere.</p></li>
-      </ul>
-    </div>
-  </section>
+      <p class="label" data-rise>Use cases</p>
+      <h2 data-rise>Four things <span class="dim">you will use every day.</span></h2>
 
-  <section id="models">
-    <div class="wrap">
-      <h2>Pick the model that does the writing</h2>
-      <div class="cols">
-        <div class="box">
-          <span class="tag">Best at your voice</span>
-          <h3>Claude, with your own API key</h3>
-          <p>Choose Haiku for speed, or Sonnet or Opus when the wording matters more. You add your Anthropic API key once, and Anthropic bills you for what you use.</p>
+      <div class="player" data-rise>
+        <div class="player-list" role="tablist" aria-orientation="vertical" aria-label="Use cases" data-tabs>
+          <button role="tab" type="button" id="tab-rewrite" aria-controls="case-rewrite" aria-selected="true">
+            <span class="num">01</span><span class="name">Rewrite in your style</span>
+            <span class="more">Type the thought the way it comes. Choose a style, press Rewrite, and read the result before anything changes in your app. <kbd>⌘Z</kbd> brings the original back.</span>
+            <i aria-hidden="true"></i>
+          </button>
+          <button role="tab" type="button" id="tab-proofread" aria-controls="case-proofread" aria-selected="false" tabindex="-1">
+            <span class="num">02</span><span class="name">Proofread</span>
+            <span class="more">Fixes spelling, grammar and punctuation, and leaves your wording alone. With a style chosen it keeps that style's habits, so lower case stays lower case.</span>
+            <i aria-hidden="true"></i>
+          </button>
+          <button role="tab" type="button" id="tab-explain" aria-controls="case-explain" aria-selected="false" tabindex="-1">
+            <span class="num">03</span><span class="name">Explain</span>
+            <span class="more">Reads your text as the person it is written for, and tells you what they will understand, how it will sound and what could be misread.</span>
+            <i aria-hidden="true"></i>
+          </button>
+          <button role="tab" type="button" id="tab-compose" aria-controls="case-compose" aria-selected="false" tabindex="-1">
+            <span class="num">04</span><span class="name">Compose</span>
+            <span class="more">With nothing selected, describe the message in a line. Pick a style, and Insert puts the text at your cursor.</span>
+            <i aria-hidden="true"></i>
+          </button>
         </div>
-        <div class="box">
-          <span class="tag">Free and private</span>
-          <h3>Apple's on-device model</h3>
-          <p>No key and no cost, and your writing never leaves your Mac. It needs macOS 26 with Apple Intelligence turned on. It works with text only and is weaker at matching a voice.</p>
+
+        <div class="player-screen">
+          <div class="case" role="tabpanel" id="case-rewrite" aria-labelledby="tab-rewrite">
+            <div class="clip framed" data-clip>
+              <video muted playsinline preload="none" poster="media/poster-rewrite.webp" width="1488" height="780" aria-label="A recording of Rewrite with a work style">
+                <source src="media/demo-rewrite.webm" type="video/webm">
+                <source src="media/demo-rewrite.mp4" type="video/mp4">
+              </video>
+              <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+            </div>
+          </div>
+          <div class="case" role="tabpanel" id="case-proofread" aria-labelledby="tab-proofread" hidden>
+            <div class="clip framed" data-clip>
+              <video muted playsinline preload="none" poster="media/poster-proofread.webp" width="1488" height="780" aria-label="A recording of Proofread fixing a message">
+                <source src="media/demo-proofread.webm" type="video/webm">
+                <source src="media/demo-proofread.mp4" type="video/mp4">
+              </video>
+              <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+            </div>
+          </div>
+          <div class="case" role="tabpanel" id="case-explain" aria-labelledby="tab-explain" hidden>
+            <div class="clip framed" data-clip>
+              <video muted playsinline preload="none" poster="media/poster-explain.webp" width="1488" height="780" aria-label="A recording of Explain reading a short reply">
+                <source src="media/demo-explain.webm" type="video/webm">
+                <source src="media/demo-explain.mp4" type="video/mp4">
+              </video>
+              <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+            </div>
+          </div>
+          <div class="case" role="tabpanel" id="case-compose" aria-labelledby="tab-compose" hidden>
+            <div class="clip framed" data-clip>
+              <video muted playsinline preload="none" poster="media/poster-compose.webp" width="1488" height="780" aria-label="A recording of Compose writing a short message">
+                <source src="media/demo-compose.webm" type="video/webm">
+                <source src="media/demo-compose.mp4" type="video/mp4">
+              </video>
+              <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+            </div>
+          </div>
+          <p class="caption">Recordings of the app itself. No sound.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="privacy">
+  <section class="bento-section" id="features">
     <div class="wrap">
-      <h2>What leaves your Mac, and what never does</h2>
-      <div class="cols three">
-        <div class="box">
+      <p class="label" data-rise>Features</p>
+      <h2 data-rise>Everything fits <span class="dim">in one small panel.</span></h2>
+
+      <div class="bento">
+        <article class="tile t-styles" data-rise data-glow>
+          <div class="tile-text">
+            <h3>Teach it how you write</h3>
+            <p>A style is a handful of messages you really sent. OmanAI picks up your length, your greetings, your punctuation and your emoji. Try one.</p>
+          </div>
+          <div class="voicebox" data-voices>
+            <p class="rough"><small>What you typed</small>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</p>
+            <div class="chips" role="group" aria-label="Choose a style to hear it">
+              <button class="chip" type="button" data-voice="written" aria-pressed="true">As written</button>
+              <span class="divider" aria-hidden="true"></span>
+              <button class="chip" type="button" data-voice="work" aria-pressed="false">Work</button>
+              <button class="chip" type="button" data-voice="friends" aria-pressed="false">Friends</button>
+              <button class="chip" type="button" data-voice="linkedin" aria-pressed="false">LinkedIn</button>
+            </div>
+            <p class="said" aria-live="polite"><small data-voice-source>Your own voice, tidied up</small><span data-voice-out>yes! sending you the Q3 numbers in a sec, just double-checking the churn figure first</span></p>
+            <div class="learned">
+              <small>Learned from</small>
+              <ul data-voice-samples>
+                <li>Nothing to learn. As written keeps the voice of the text itself.</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <article class="tile t-context" data-rise data-glow style="--d: 60ms">
+          <div class="tile-text">
+            <h3>It sees what you switch on</h3>
+            <p>Three switches for context. Everything that is on is shown to you before it is sent.</p>
+          </div>
+          <div class="sendbox" data-send>
+            <div class="chips" role="group" aria-label="Context switches">
+              <button class="chip" type="button" data-send-toggle="screen" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-window"/></svg>Screen</button>
+              <button class="chip" type="button" data-send-toggle="messages" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-lines"/></svg>Messages</button>
+              <button class="chip" type="button" data-send-toggle="clipboard" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-clip"/></svg>Clipboard</button>
+            </div>
+            <ul class="send-list" aria-live="polite">
+              <li class="on">Your selected text</li>
+              <li class="on">The chosen style's messages</li>
+              <li data-send-item="screen">A picture of the window</li>
+              <li data-send-item="messages">Messages you pasted</li>
+              <li data-send-item="clipboard">Your clipboard</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="tile t-explain" data-rise data-glow>
+          <div class="tile-text">
+            <h3>Hear it as they will</h3>
+            <p>Explain reads your text as its reader, before you press send.</p>
+          </div>
+          <div class="bubble-demo">
+            <p class="bubble">Fine. Do whatever you think is best, I guess.</p>
+            <p class="reading"><svg class="icon" aria-hidden="true"><use href="#i-bulb"/></svg>Alex will likely hear this as annoyed. "Fine" and "I guess" sound like you disagree but don't want to argue.</p>
+          </div>
+        </article>
+
+        <article class="tile t-keys" data-rise data-glow style="--d: 60ms">
+          <div class="tile-text">
+            <h3>A shortcut for every action</h3>
+            <p>Anywhere on your Mac, and one for each of your styles.</p>
+          </div>
+          <div class="keys" data-keys aria-hidden="true">
+            <span class="keycap">⌃</span><span class="keycap">⌥</span><span class="keycap" data-key>R</span>
+            <span class="key-name" data-key-name>Rewrite selection</span>
+          </div>
+        </article>
+
+        <article class="tile t-models" data-rise data-glow style="--d: 120ms">
+          <div class="tile-text">
+            <h3>Pick the model that writes</h3>
+            <p>Claude with your own API key, or Apple's model on your Mac for free.</p>
+          </div>
+          <table class="speed" aria-label="Measured speed and cost for each model">
+            <thead><tr><th scope="col">Model</th><th scope="col">First word</th><th scope="col">A message costs</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Claude Haiku</th><td><span class="bar" style="--w: 30%"></span>0.6 s</td><td>$0.0001</td></tr>
+              <tr><th scope="row">Claude Sonnet</th><td><span class="bar" style="--w: 34%"></span>0.7 s</td><td>$0.0015</td></tr>
+              <tr><th scope="row">Claude Opus</th><td><span class="bar" style="--w: 52%"></span>1.1 s</td><td>$0.0044</td></tr>
+              <tr><th scope="row">Apple, on device</th><td><span class="bar" style="--w: 38%"></span>0.8 s</td><td>Free</td></tr>
+            </tbody>
+          </table>
+          <p class="footnote">Averages over 11 short writing tasks at the Fast setting, through the app's own client, on 12 November 2026. Yours will vary.</p>
+        </article>
+
+        <article class="tile t-spend" data-rise data-glow>
+          <div class="tile-text">
+            <h3>Know what it costs</h3>
+            <p>Every Claude request is counted on your Mac: today, this week, this month, all time.</p>
+          </div>
+          <div class="spark" aria-hidden="true"><i style="--h: 38%"></i><i style="--h: 62%"></i><i style="--h: 30%"></i><i style="--h: 84%"></i><i style="--h: 52%"></i><i style="--h: 46%"></i><i style="--h: 96%"></i><i style="--h: 40%"></i><i style="--h: 70%"></i><i style="--h: 58%"></i><i style="--h: 24%"></i><i style="--h: 66%"></i></div>
+        </article>
+
+        <article class="tile t-pin" data-rise data-glow style="--d: 60ms">
+          <div class="tile-text">
+            <h3>A panel that stays</h3>
+            <p>Pin it and it becomes a small floating window you can drag anywhere.</p>
+          </div>
+          <svg class="icon big" aria-hidden="true"><use href="#i-pin"/></svg>
+        </article>
+
+        <article class="tile t-open" data-rise data-glow style="--d: 120ms">
+          <div class="tile-text">
+            <h3>Open source, MIT</h3>
+            <p>No account, no analytics, no server of ours in between. Read every line.</p>
+          </div>
+          <a class="text-link" href="https://github.com/romanbitca/oman-ai">View on GitHub <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="try" id="try">
+    <div class="wrap">
+      <p class="label" data-rise>Try it here</p>
+      <h2 data-rise>Press the buttons. <span class="dim">This copy of the panel runs in your browser.</span></h2>
+
+      <div class="scene" data-demo data-rise aria-label="A demo of the OmanAI panel that you can try">
+        <div class="scene-bar" aria-hidden="true">
+          <b>Chat</b><span class="menus">File &nbsp; Edit &nbsp; View &nbsp; Window</span>
+          <div class="status"><span class="mark"><svg viewBox="0 0 18 18"><use href="#i-wave"/></svg></span><span>Tue 9:41</span></div>
+        </div>
+        <div class="stage">
+          <div class="window">
+            <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><em>Dana Reyes</em></div>
+            <div class="thread">
+              <p class="msg"><small>Dana</small>Morning! I'm putting the board deck together today.</p>
+              <p class="msg"><small>Dana</small>Do you have the Q3 numbers?</p>
+            </div>
+            <p class="composer" data-composer><mark>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</mark></p>
+          </div>
+
+          <div class="panel" data-panel>
+            <div class="view" data-view="home">
+              <div class="glass head">
+                <div class="what"><small>Chat</small><p data-selected>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</p></div>
+                <span class="tools" aria-hidden="true"><svg class="icon"><use href="#i-pin"/></svg><svg class="icon"><use href="#i-gear"/></svg></span>
+              </div>
+              <div class="glass pill" aria-hidden="true"><svg class="icon"><use href="#i-spark"/></svg>Describe your change</div>
+              <div class="acts">
+                <button class="glass act-card" type="button" data-run="proofread"><svg class="icon" aria-hidden="true"><use href="#i-proof"/></svg>Proofread</button>
+                <button class="glass act-card" type="button" data-run="rewrite"><svg class="icon" aria-hidden="true"><use href="#i-rewrite"/></svg>Rewrite</button>
+                <button class="glass act-card" type="button" data-run="explain"><svg class="icon" aria-hidden="true"><use href="#i-bulb"/></svg>Explain</button>
+              </div>
+              <div class="glass controls">
+                <div class="chips" role="group" aria-label="Style">
+                  <button class="chip" type="button" data-style="written" aria-pressed="true">As written</button>
+                  <span class="divider" aria-hidden="true"></span>
+                  <button class="chip" type="button" data-style="work" aria-pressed="false">Work</button>
+                  <button class="chip" type="button" data-style="friends" aria-pressed="false">Friends</button>
+                </div>
+                <div class="chips" role="group" aria-label="Context">
+                  <button class="chip" type="button" data-context aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-window"/></svg>Screen</button>
+                  <button class="chip" type="button" data-context aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-lines"/></svg>Messages</button>
+                  <button class="chip" type="button" data-context aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-clip"/></svg>Clipboard</button>
+                </div>
+              </div>
+              <div class="glass pill strong" aria-hidden="true"><svg class="icon"><use href="#i-compose"/></svg>Compose<svg class="icon end"><use href="#i-chevron"/></svg></div>
+            </div>
+
+            <div class="view" data-view="working" hidden>
+              <div class="glass working"><p class="out" data-stream aria-hidden="true"></p></div>
+              <div class="row"><span class="grow">Writing…</span><button class="glass act" type="button" data-stop>Stop</button></div>
+            </div>
+
+            <div class="view" data-view="result" hidden>
+              <div class="glass row head-row">
+                <button class="link" type="button" data-back aria-label="Back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+                <button class="link" type="button" data-original aria-pressed="false">Show original</button>
+              </div>
+              <div class="glass"><p class="out" data-out aria-live="polite"></p></div>
+              <div class="row">
+                <button class="act primary" type="button" data-replace>Replace</button>
+                <button class="glass act" type="button" data-copy>Copy</button>
+                <button class="glass act" type="button" data-again>Try again</button>
+              </div>
+              <div class="glass pill" aria-hidden="true"><svg class="icon"><use href="#i-spark"/></svg>Make a change…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption center"><span>Scripted answers. Nothing you do here is sent anywhere.</span> <button type="button" class="text-button" data-reset>Start over</button></p>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <div class="wrap">
+      <p class="label" data-rise>How it works</p>
+      <h2 data-rise>You never leave <span class="dim">the app you are writing in.</span></h2>
+
+      <div class="scrolly" data-scrolly>
+        <div class="sticky">
+          <div class="mini" data-mini data-step="1" aria-hidden="true">
+            <div class="mini-bar"><span>Chat</span><i class="mini-wave"><svg viewBox="0 0 18 18"><use href="#i-wave"/></svg></i></div>
+            <div class="mini-doc">
+              <span class="mini-line w60"></span>
+              <span class="mini-line w80"></span>
+              <p class="mini-text"><span class="old">hey yes, ill send u the q3 numbers in a sec</span><span class="new">Hi Dana, yes. I'll send the Q3 numbers over shortly.</span></p>
+            </div>
+            <div class="mini-panel">
+              <div class="mp-row mp-head"><span></span><span></span></div>
+              <div class="mp-acts"><b>Proofread</b><b class="hot">Rewrite</b><b>Explain</b></div>
+              <div class="mp-chips"><b>As written</b><b class="on">Work</b><b>Friends</b></div>
+              <div class="mp-out">Hi Dana, yes. I'll send the Q3 numbers over shortly.</div>
+              <div class="mp-replace">Replace</div>
+            </div>
+            <span class="mini-pointer"></span>
+          </div>
+        </div>
+        <ol class="walk">
+          <li data-step="1"><span class="num">01</span><h3>Select what you wrote</h3><p>In Slack, Mail, Telegram, a browser tab, or almost anywhere else you type. A rough draft is enough.</p></li>
+          <li data-step="2"><span class="num">02</span><h3>Click the wave in the menu bar</h3><p>Or press a shortcut you chose. The panel opens under the icon and shows your text and what you can do with it.</p></li>
+          <li data-step="3"><span class="num">03</span><h3>Choose a style and an action</h3><p>As written keeps your own voice. A style rewrites it the way you write to a client, or to a friend. The result streams into the panel so you can read it first.</p></li>
+          <li data-step="4"><span class="num">04</span><h3>Replace</h3><p>One click puts the result where your selection was, and the panel closes. <kbd>⌘Z</kbd> in that app brings the original back.</p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="inside" id="inside">
+    <div class="wrap">
+      <p class="label" data-rise>A real Mac app</p>
+      <h2 data-rise>Native, <span class="dim">down to the settings.</span></h2>
+    </div>
+    <div class="gallery" data-gallery data-rise>
+      <div class="rail" tabindex="0" role="group" aria-label="Screenshots of Settings">
+        <figure class="shot">
+          <img src="media/settings-spending-dark.webp" width="1200" height="1244" loading="lazy" alt="The Spending page: a total for last month, a bar for each day and a list by model">
+          <figcaption><b>Spending</b> By period and by model.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="media/settings-editor-dark.webp" width="1200" height="1376" loading="lazy" alt="The style editor: a name, a note, a list of real messages and a box to try the style">
+          <figcaption><b>Styles</b> Paste real messages, then try it.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="media/settings-writing-dark.webp" width="1200" height="910" loading="lazy" alt="The Writing page: the model, how long Claude thinks, a language and standing rules">
+          <figcaption><b>Writing</b> The model, and rules it always follows.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="media/settings-shortcuts-dark.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page: a shortcut for each action anywhere on the Mac and for each button on a result">
+          <figcaption><b>Shortcuts</b> One for every action and style.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="media/settings-styles-dark.webp" width="1200" height="1084" loading="lazy" alt="The Styles page: three styles, a default style and a switch to remember the last style in each app">
+          <figcaption><b>Per app</b> It remembers the style you last used.</figcaption>
+        </figure>
+      </div>
+      <div class="gallery-nav">
+        <button class="icon-link" type="button" data-gallery-prev aria-label="Previous screenshot"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+        <div class="dots" data-gallery-dots aria-hidden="true"></div>
+        <button class="icon-link" type="button" data-gallery-next aria-label="Next screenshot"><svg class="icon" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="numbers" id="numbers">
+    <div class="wrap">
+      <dl class="stats">
+        <div data-rise><dt><span data-count="0.6" data-decimals="1">0.6</span><small>s</small></dt><dd>to the first word, with Claude Haiku</dd></div>
+        <div data-rise style="--d: 80ms"><dt><small>$</small><span data-count="0.0001" data-decimals="4">0.0001</span></dt><dd>for a typical message, at list prices</dd></div>
+        <div data-rise style="--d: 160ms"><dt><span data-count="0" data-decimals="0">0</span></dt><dd>accounts, analytics or servers of ours</dd></div>
+        <div data-rise style="--d: 240ms"><dt><span data-count="1" data-decimals="0">1</span></dt><dd>click to put the result back</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="privacy" id="privacy">
+    <div class="wrap">
+      <p class="label" data-rise>Privacy</p>
+      <h2 data-rise>What leaves your Mac, <span class="dim">and what never does.</span></h2>
+      <div class="columns">
+        <div data-rise>
           <h3>Stays on your Mac</h3>
           <ul>
             <li>Your styles and settings, in a local database</li>
@@ -529,58 +513,80 @@ kbd { font: 600 0.82em/1 var(--mono); padding: 3px 6px; border-radius: 6px; back
             <li>Everything, when you use Apple's on-device model</li>
           </ul>
         </div>
-        <div class="box">
-          <h3>Sent to Anthropic, when you use Claude</h3>
+        <div data-rise style="--d: 80ms">
+          <h3>Sent to Anthropic, with Claude</h3>
           <ul>
             <li>The text you selected or asked for</li>
             <li>The messages in the style you chose</li>
-            <li>Context you added, and the screen only if you turned it on</li>
+            <li>Context you switched on, and nothing else</li>
           </ul>
         </div>
-        <div class="box">
+        <div data-rise style="--d: 160ms">
           <h3>Never</h3>
           <ul>
             <li>No analytics and no tracking</li>
-            <li>No account with us, and no server of ours in between</li>
+            <li>No account with us, no server in between</li>
             <li>Nothing is pasted until you click</li>
           </ul>
         </div>
       </div>
-      <p class="after">macOS asks for two permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you include the screen, and the panel shows the picture before it is sent. Apart from your requests, OmanAI only contacts GitHub to check for updates. The code is open, so you can <a href="https://github.com/romanbitca/oman-ai">read how it does all of this</a>, and security reports go through the <a href="https://github.com/romanbitca/oman-ai/security/policy">security policy</a>.</p>
+      <p class="after" data-rise>macOS asks for two permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you include the screen, and the panel shows the picture before it is sent. Apart from your requests, OmanAI only contacts GitHub to check for updates. The code is open, so <a href="https://github.com/romanbitca/oman-ai">you can read exactly what it does</a>.</p>
     </div>
   </section>
 
-  <section id="get">
-    <div class="wrap install">
-      <div>
-        <h2>Install it in a minute</h2>
-        <ol>
-          <li><span>Download the latest OmanAI zip from GitHub.</span></li>
-          <li><span>Unzip it and move OmanAI to your Applications folder.</span></li>
-          <li><span>Open it, click its icon in the menu bar and follow the setup.</span></li>
-        </ol>
-        <div class="cta">
-          <a class="button primary" href="https://github.com/romanbitca/oman-ai/releases/latest"><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
-        </div>
-        <p class="fine">OmanAI is an early release, so expect rough edges. The ones we know about are in the <a href="https://github.com/romanbitca/oman-ai/blob/main/KNOWN_ISSUES.md">list of known issues</a>.</p>
-      </div>
-      <dl class="needs">
-        <div><dt>Mac</dt><dd>macOS 14 or later</dd></div>
-        <div><dt>For Claude</dt><dd>An Anthropic API key</dd></div>
-        <div><dt>For the on-device model</dt><dd>macOS 26 with Apple Intelligence</dd></div>
-        <div><dt>Updates</dt><dd>Automatic, signed, and you can turn them off</dd></div>
-        <div><dt>Price</dt><dd>Free, under the MIT license</dd></div>
-      </dl>
-    </div>
-  </section>
-
-  <section id="questions">
+  <section class="get" id="get">
     <div class="wrap">
-      <h2>Questions people ask</h2>
-      <div class="faq">
+      <div class="sheet" data-rise>
+        <div class="aurora small" aria-hidden="true"><i></i><i></i></div>
+        <div class="sheet-main">
+          <p class="label">Install</p>
+          <h2>In your menu bar <em>in a minute.</em></h2>
+          <ol class="install">
+            <li>Download the latest OmanAI zip.</li>
+            <li>Move OmanAI to your Applications folder.</li>
+            <li>Open it, click the wave and follow the setup.</li>
+          </ol>
+          <div class="cta">
+            <a class="btn" href="https://github.com/romanbitca/oman-ai/releases/latest" data-download><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
+            <a class="btn ghost" href="https://github.com/romanbitca/oman-ai"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg>View the source</a>
+          </div>
+        </div>
+        <dl class="needs">
+          <div><dt>Mac</dt><dd>macOS 14 or later</dd></div>
+          <div><dt>Latest version</dt><dd data-version-short>On GitHub Releases</dd></div>
+          <div><dt>For Claude</dt><dd>An Anthropic API key</dd></div>
+          <div><dt>On-device model</dt><dd>macOS 26 with Apple Intelligence</dd></div>
+          <div><dt>Updates</dt><dd>Automatic and signed</dd></div>
+          <div><dt>Price</dt><dd>Free, MIT license</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="support" id="support">
+    <div class="wrap">
+      <svg class="icon heart" aria-hidden="true" data-rise><use href="#i-heart"/></svg>
+      <h2 data-rise>Free, open, <span class="dim">and made in spare hours.</span></h2>
+      <p class="lede" data-rise>OmanAI has no price, no account and no ads. If it saves you time, you can help keep it going.</p>
+      <div class="cta" data-rise>
+        <a class="btn" href="#support" data-donate data-donate-main hidden><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg>Donate</a>
+        <a class="btn" href="https://github.com/romanbitca/oman-ai" data-star><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>Star it on GitHub</a>
+        <a class="btn ghost" href="https://github.com/romanbitca/oman-ai/issues/new/choose"><svg class="icon" aria-hidden="true"><use href="#i-bug"/></svg>Report a bug or an idea</a>
+      </div>
+      <p class="fine" data-rise data-donate-note>Donations open soon. Until then, a star on GitHub or a word to a friend helps more than you think.</p>
+    </div>
+  </section>
+
+  <section class="questions" id="questions">
+    <div class="wrap narrow">
+      <p class="label" data-rise>Questions</p>
+      <h2 data-rise>Questions <span class="dim">people ask.</span></h2>
+      <div class="faq" data-rise>
         <details><summary>Is it really free?</summary><p>The app is free and open source. If you use Claude, you pay Anthropic directly for the requests you make with your own API key. Apple's on-device model costs nothing.</p></details>
-        <details><summary>Does it work in every app?</summary><p>In most of them. OmanAI reads your selection through macOS Accessibility, or with a quick copy where an app doesn't expose it, as Slack and other Electron apps don't. Terminals, remote desktops and virtual machines are left alone on purpose, so there you can compose new text but not rewrite a selection.</p></details>
+        <details><summary>Which model should I pick?</summary><p>Start with Claude Haiku: it is as fast as the on-device model, it matches a style well, and a message costs about a hundredth of a cent. Choose Sonnet or Opus when the wording matters more. Apple's on-device model is free and private, and works best for plain proofreading in English.</p></details>
+        <details><summary>Does it work in every app?</summary><p>In most of them. OmanAI reads your selection through macOS Accessibility, or with a quick copy where an app doesn't expose it, as Slack and other Electron apps don't. Terminals, remote desktops and virtual machines are the exceptions, and the <a href="docs/#troubleshooting">documentation</a> says how each behaves.</p></details>
         <details><summary>Will it change my text without asking?</summary><p>No. The result appears in the panel first. Nothing is pasted until you press Replace or Insert, and if your selection changed in the meantime, OmanAI pastes nothing and tells you.</p></details>
+        <details><summary>Does it work in other languages?</summary><p>With Claude, yes. It keeps the language of your text unless you ask for another one, and you can set a language it always writes in. Apple's on-device model covers the languages Apple Intelligence supports.</p></details>
         <details><summary>What happens to my clipboard?</summary><p>Pasting borrows the clipboard for a moment and then puts back what was there. The pasted text is marked as passing through, so clipboard history apps can leave it out.</p></details>
         <details><summary>How do updates work?</summary><p>OmanAI checks this project's GitHub releases once a day and installs a new version when you quit. Every update is signed, and the app checks the signature before installing. You can turn automatic updates off in Settings.</p></details>
         <details><summary>Who makes it?</summary><p>OmanAI is an independent open-source project. It is not made by, or affiliated with, Anthropic or Apple.</p></details>
@@ -591,153 +597,23 @@ kbd { font: 600 0.82em/1 var(--mono); padding: 3px 6px; border-radius: 6px; back
 
 <footer class="foot">
   <div class="wrap">
-    <nav aria-label="Project links">
-      <a href="https://github.com/romanbitca/oman-ai">GitHub</a>
-      <a href="https://github.com/romanbitca/oman-ai/releases">Releases</a>
-      <a href="https://github.com/romanbitca/oman-ai/blob/main/KNOWN_ISSUES.md">Known issues</a>
-      <a href="https://github.com/romanbitca/oman-ai/security/policy">Security</a>
-      <a href="https://github.com/romanbitca/oman-ai/blob/main/LICENSE">MIT license</a>
-    </nav>
-    <p>OmanAI is an independent open-source project. Claude is a trademark of Anthropic, and macOS and Apple Intelligence are trademarks of Apple.</p>
+    <div class="foot-top">
+      <nav aria-label="Project links">
+        <a href="docs/">Documentation</a>
+        <a href="https://github.com/romanbitca/oman-ai">GitHub</a>
+        <a href="https://github.com/romanbitca/oman-ai/releases">Releases</a>
+        <a href="https://github.com/romanbitca/oman-ai/blob/main/KNOWN_ISSUES.md">Known issues</a>
+        <a href="https://github.com/romanbitca/oman-ai/security/policy">Security</a>
+        <a href="https://github.com/romanbitca/oman-ai/blob/main/LICENSE">MIT license</a>
+        <a href="#support" data-donate>Donate</a>
+      </nav>
+      <p>This page has no analytics and sets no cookies. It asks GitHub once for the number of the latest version.</p>
+      <p>OmanAI is an independent open-source project. Claude is a trademark of Anthropic, and macOS and Apple Intelligence are trademarks of Apple. Other names belong to their owners.</p>
+    </div>
+    <p class="wordmark" aria-hidden="true">OmanAI</p>
   </div>
 </footer>
 
-<script>
-(() => {
-  const scene = document.querySelector("[data-demo]");
-  if (!scene) return;
-
-  const original = "hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first";
-  const results = {
-    proofread: [
-      "Hey, yes, I'll send you the Q3 numbers in a sec. I just need to double-check the churn figure first.",
-    ],
-    rewrite: [
-      "Yes! I'll send you the Q3 numbers shortly. I just want to double-check the churn figure first.",
-      "Sure, the Q3 numbers are coming in a moment. I'm double-checking the churn figure first.",
-    ],
-    work: [
-      "Hi Dana, yes. I'll send the Q3 numbers over shortly, I just want to double-check the churn figure first.",
-      "Hi Dana, will do. I'm double-checking the churn figure and will send the Q3 numbers right after.",
-    ],
-    friends: [
-      "yep! sending the q3 numbers in a sec, just double checking the churn figure 👀",
-      "on it! q3 numbers coming in a sec, just checking the churn figure first 👀",
-    ],
-  };
-
-  const views = Object.fromEntries([...scene.querySelectorAll("[data-view]")].map((el) => [el.dataset.view, el]));
-  const panel = scene.querySelector("[data-panel]");
-  const composer = scene.querySelector("[data-composer]");
-  const stream = scene.querySelector("[data-stream]");
-  const out = scene.querySelector("[data-out]");
-  const originalButton = scene.querySelector("[data-original]");
-  const copyButton = scene.querySelector("[data-copy]");
-  const chips = [...scene.querySelectorAll(".chip[data-run]")];
-  const stillness = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-  let kind = null;
-  let turn = 0;
-  let text = "";
-  let timers = [];
-  let touched = false;
-
-  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
-  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
-
-  function show(name) {
-    for (const [key, el] of Object.entries(views)) el.hidden = key !== name;
-  }
-
-  function write(next) {
-    clearTimers();
-    text = next;
-    showOriginal(false);
-    if (stillness.matches) {
-      out.textContent = text;
-      show("result");
-      return;
-    }
-    stream.textContent = "";
-    show("working");
-    const words = text.split(" ");
-    words.forEach((word, index) => {
-      later(() => { stream.textContent += (index ? " " : "") + word; }, 260 + index * 52);
-    });
-    later(() => { out.textContent = text; show("result"); }, 260 + words.length * 52 + 240);
-  }
-
-  function run(next) {
-    kind = next;
-    turn = 0;
-    chips.forEach((chip) => chip.classList.toggle("on", chip.dataset.run === kind));
-    write(results[kind][0]);
-  }
-
-  function showOriginal(on) {
-    originalButton.setAttribute("aria-pressed", String(on));
-    originalButton.textContent = on ? "Show result" : "Show original";
-    out.textContent = on ? original : text;
-    out.style.color = on ? "var(--glass-muted)" : "";
-  }
-
-  function reset() {
-    clearTimers();
-    kind = null;
-    chips.forEach((chip) => chip.classList.remove("on"));
-    composer.classList.remove("done");
-    composer.innerHTML = "";
-    const mark = document.createElement("mark");
-    mark.textContent = original;
-    composer.append(mark);
-    copyButton.textContent = "Copy";
-    panel.hidden = false;
-    show("home");
-  }
-
-  scene.addEventListener("click", (event) => {
-    const target = event.target.closest("button");
-    if (!target || !scene.contains(target)) return;
-    touched = true;
-    if (target.dataset.run) run(target.dataset.run);
-    else if ("stop" in target.dataset || "back" in target.dataset) { clearTimers(); show("home"); }
-    else if ("again" in target.dataset) {
-      const options = results[kind];
-      turn = (turn + 1) % options.length;
-      write(options[turn]);
-    } else if ("original" in target.dataset) showOriginal(target.getAttribute("aria-pressed") !== "true");
-    else if ("copy" in target.dataset) {
-      const done = () => { copyButton.textContent = "Copied"; later(() => { copyButton.textContent = "Copy"; }, 1400); };
-      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, done); else done();
-    } else if ("replace" in target.dataset) {
-      composer.textContent = "";
-      const mark = document.createElement("mark");
-      mark.textContent = text;
-      composer.append(mark);
-      panel.hidden = true;
-      later(() => composer.classList.add("done"), stillness.matches ? 0 : 900);
-    }
-  });
-
-  document.querySelector("[data-reset]")?.addEventListener("click", () => { touched = true; reset(); });
-
-  // Play once, when the demo is on screen and nobody has touched it.
-  function autoplay() {
-    if (touched || stillness.matches) return;
-    const card = scene.querySelector('.chip[data-run="work"]');
-    card.classList.add("pressed");
-    later(() => { card.classList.remove("pressed"); if (!touched) run("work"); }, 420);
-  }
-  if ("IntersectionObserver" in window) {
-    const watcher = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        watcher.disconnect();
-        later(autoplay, 1500);
-      }
-    }, { threshold: 0.35 });
-    watcher.observe(scene);
-  }
-})();
-</script>
+<script src="app.js" defer></script>
 </body>
 </html>

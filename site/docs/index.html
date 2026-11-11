@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OmanAI documentation: every screen and every button</title>
+<meta name="description" content="How OmanAI works: the panel, every button in it, styles, context, shortcuts, Settings, models, privacy and troubleshooting.">
+<link rel="canonical" href="https://oman-ai.romanbitca.com/docs/">
+<meta property="og:title" content="OmanAI documentation">
+<meta property="og:description" content="Every screen and every button of OmanAI, explained.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://oman-ai.romanbitca.com/docs/">
+<meta property="og:image" content="https://oman-ai.romanbitca.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050607">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="g-icon" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#06cc92"/><stop offset="1" stop-color="#033f66"/>
+    </linearGradient>
+    <symbol id="i-flow" viewBox="0 0 64 64"><path d="M8 37l3.6-10 3.6 12 3.6-13 3.6 12 3.4-8.500C30.500 20.500 37 20.500 42 31c4.200 8.800 9.600 8.800 14.500-3" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.300-7-9.600A4.100 4.100 0 0 1 12 8a4.100 4.100 0 0 1 7 2.400C19 15.700 12 20 12 20z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4 1.300-4-2-5.500-2.500M14.500 21v-3.300a2.800 2.800 0 0 0-.8-2.200c2.700-.3 5.500-1.300 5.500-6a4.600 4.600 0 0 0-1.300-3.200 4.300 4.300 0 0 0-.1-3.200s-1-.3-3.300 1.300a11.400 11.400 0 0 0-6 0C6.200 2.800 5.200 3.100 5.200 3.100a4.300 4.300 0 0 0-.1 3.200A4.600 4.600 0 0 0 3.800 9.500c0 4.700 2.800 5.700 5.500 6a2.800 2.800 0 0 0-.8 2.200V21"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip" href="#main">Skip to the content</a>
+
+<header class="nav" data-nav>
+  <a class="brand" href="../" aria-label="OmanAI, home">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="15" fill="url(#g-icon)"/><circle cx="38" cy="31" r="13.5" fill="#fff" opacity="0.26"/><use href="#i-flow" color="#fff"/></svg>
+    <span>OmanAI</span>
+  </a>
+  <nav aria-label="Site">
+    <a href="../#use">Use cases</a>
+    <a href="../#features">Features</a>
+    <a href="../#how">How it works</a>
+    <a href="../#privacy">Privacy</a>
+    <a href="./" aria-current="page">Docs</a>
+  </nav>
+  <div class="nav-tools">
+    <a class="icon-link" href="https://github.com/romanbitca/oman-ai" aria-label="OmanAI on GitHub"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></a>
+    <a class="icon-link heart" href="../#support" aria-label="Donate"><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></a>
+    <a class="btn small" href="https://github.com/romanbitca/oman-ai/releases/latest">Download</a>
+  </div>
+</header>
+
+<div class="docs-hero">
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <p class="label">Documentation</p>
+    <h1>Every screen, <em>every button.</em></h1>
+    <p class="lede">What each part of OmanAI does, in the order you meet it: the panel first, then styles, Settings, models and what to do when something doesn't work.</p>
+  </div>
+</div>
+
+<div class="docs-shell wrap">
+  <aside class="toc" aria-label="On this page">
+    <p>On this page</p>
+    <nav data-toc>
+      <a href="#start">Getting started</a>
+      <a href="#panel">The panel</a>
+      <a href="#actions">Proofread, Rewrite, Explain</a>
+      <a href="#style-chips">Choosing a style</a>
+      <a href="#context">Context</a>
+      <a href="#result">The result</a>
+      <a href="#compose">Compose</a>
+      <a href="#pin">Pinning the panel</a>
+      <a href="#styles">Teaching a style</a>
+      <a href="#settings">Settings</a>
+      <a href="#shortcuts">Shortcuts</a>
+      <a href="#models">Models</a>
+      <a href="#data">Privacy and data</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+      <a href="#updates">Updating and removing</a>
+    </nav>
+  </aside>
+
+  <main class="prose" id="main">
+
+    <section id="start">
+      <h2>Getting started</h2>
+      <ol>
+        <li>Download the latest <code>OmanAI-x.y.z.zip</code> from <a href="https://github.com/romanbitca/oman-ai/releases/latest">GitHub Releases</a>, unzip it and move OmanAI to your Applications folder.</li>
+        <li>Open it. OmanAI has no Dock icon and no window: it adds a small wave to your menu bar.</li>
+        <li>Click the wave. The first time, the panel walks you through setup.</li>
+      </ol>
+      <h3>Setup</h3>
+      <dl class="controls">
+        <div><dt>Anthropic API key</dt><dd>Paste a key from the <a href="https://console.anthropic.com/">Anthropic Console</a> and press Save. OmanAI checks the key with Anthropic before storing it in your Mac's Keychain. If you would rather not use a key, choose Apple's on-device model instead.</dd></div>
+        <div><dt>Accessibility</dt><dd>Press Allow and turn OmanAI on in System Settings. This is what lets it read the text you selected and paste the result back.</dd></div>
+        <div><dt>Screen Recording</dt><dd>Only asked for the first time you turn on the Screen switch. You can use everything else without it.</dd></div>
+      </dl>
+      <p class="callout"><strong>Needs macOS 14 or later.</strong> Apple's on-device model needs macOS 26 or later with Apple Intelligence turned on.</p>
+    </section>
+
+    <section id="panel">
+      <h2>The panel</h2>
+      <p>Select some text in any app and click the wave, or press the shortcut you gave to <strong>Open OmanAI</strong>. The panel opens under the menu bar. With text selected it shows the screen below. With nothing selected it opens on <a href="#compose">Compose</a>.</p>
+      <figure class="narrow">
+        <img src="../media/panel-home.webp" width="1080" height="800" loading="lazy" alt="The panel with a selection: the selected text, a field to describe a change, Proofread, Rewrite and Explain, style chips, context switches and Compose">
+        <figcaption>The panel with text selected.</figcaption>
+      </figure>
+      <dl class="controls">
+        <div><dt>Your text</dt><dd>The top tile shows the app you are in and the first lines of what you selected, so you can see what OmanAI will work on.</dd></div>
+        <div><dt>Pin <small>top right</small></dt><dd>Keeps the panel open as a small floating window. See <a href="#pin">Pinning the panel</a>.</dd></div>
+        <div><dt>Gear <small>top right</small></dt><dd>Opens <a href="#settings">Settings</a>.</dd></div>
+        <div><dt>Describe your change</dt><dd>Type what you want, such as "shorter" or "warmer, and add a thank you", and press Return. It rewrites the text with that instruction, in the chosen style.</dd></div>
+        <div><dt>Proofread</dt><dd>Fixes spelling, grammar and punctuation and keeps your wording.</dd></div>
+        <div><dt>Rewrite</dt><dd>Rewrites the text in the chosen style.</dd></div>
+        <div><dt>Explain</dt><dd>Tells you how a reader will understand the text.</dd></div>
+        <div><dt>Style chips</dt><dd>As written and your own styles. One is always chosen. See <a href="#style-chips">Choosing a style</a>.</dd></div>
+        <div><dt>Screen, Messages, Clipboard</dt><dd>Three switches that add context. See <a href="#context">Context</a>.</dd></div>
+        <div><dt>Compose</dt><dd>Opens the screen for writing something new.</dd></div>
+      </dl>
+      <p>Click anywhere outside the panel, or press <kbd>Esc</kbd>, to close it. Nothing appears in or near the field you are typing in, at any point.</p>
+    </section>
+
+    <section id="actions">
+      <h2>Proofread, Rewrite, Explain</h2>
+      <dl class="controls">
+        <div><dt>Proofread</dt><dd>Corrects mistakes and nothing else. Your words, tone, line breaks and formatting stay. With a style chosen, it treats that style's habits with capital letters and punctuation as correct, so a message you write in lower case stays in lower case. It never uses context, and the rules you set in Settings don't apply to it.</dd></div>
+        <div><dt>Rewrite</dt><dd>Says the same thing better. With <strong>As written</strong> it keeps your own voice: your level of formality and your habits with capitals, punctuation and emoji. With a style it writes the way the messages in that style are written. It keeps names, numbers, dates and links exactly, and uses any context you switched on.</dd></div>
+        <div><dt>Explain</dt><dd>Reads your text as the person it is written for, and tells you what they will understand, how it will sound and what could be misread. It answers in the language of your text. An explanation is only for you: it has no Replace button and can't be pasted by mistake.</dd></div>
+      </dl>
+      <p>While OmanAI writes, the answer streams into the panel inside a glowing edge. <strong>Stop</strong> cancels it and takes you back.</p>
+      <figure class="narrow">
+        <img src="../media/panel-working.webp" width="1080" height="560" loading="lazy" alt="The panel while an answer is being written, with a Stop button">
+      </figure>
+    </section>
+
+    <section id="style-chips">
+      <h2>Choosing a style</h2>
+      <p>The first row of chips decides whose voice the result is in. Choosing a chip starts nothing. It only sets what Proofread, Rewrite and Compose will use.</p>
+      <dl class="controls">
+        <div><dt>As written</dt><dd>No style. OmanAI keeps the voice of the text itself. This chip always stays first, to the left of a thin line.</dd></div>
+        <div><dt>Your styles</dt><dd>One chip for each style you made. With many styles the row scrolls sideways, and it opens scrolled to the one that is chosen.</dd></div>
+        <div><dt>Create a style</dt><dd>Shown while you have no styles. It opens Settings, where you <a href="#styles">teach your first one</a>.</dd></div>
+      </dl>
+      <p>OmanAI remembers the style you last used in each app, so Slack can keep one style and Mail another. A style you used is chosen again the next time you open the panel in that app. You can turn this off, or set a default style, in <a href="#settings-styles">Settings</a>.</p>
+    </section>
+
+    <section id="context">
+      <h2>Context</h2>
+      <p>A reply is better when the model knows what it is answering. The second row of chips are three switches. They can be on together, each is off again the next time the panel opens, and everything that is on is shown in the panel before it is sent.</p>
+      <dl class="controls">
+        <div><dt>Screen</dt><dd>Adds a picture of the window you are writing in. The picture appears in the panel so you can check it. Needs the Screen Recording permission, and is not available with Apple's on-device model, which takes text only.</dd></div>
+        <div><dt>Messages</dt><dd>Opens a box where you paste text for context, such as the thread you are answering. It is sent only while the switch is on.</dd></div>
+        <div><dt>Clipboard</dt><dd>Adds what you last copied, and shows all of it. The clipboard is read at the moment you turn the switch on, not before.</dd></div>
+      </dl>
+      <p class="callout">Context is used by Rewrite, Explain and Compose. <strong>Proofread never sends context.</strong> Text in the context is material for the model to read. If it contains instructions, they are not followed.</p>
+    </section>
+
+    <section id="result">
+      <h2>The result</h2>
+      <figure class="narrow">
+        <img src="../media/panel-result.webp" width="1080" height="640" loading="lazy" alt="The result screen: Back, Show original, the new text, Replace, Copy, Try again and a field to make a change">
+      </figure>
+      <dl class="controls">
+        <div><dt>Back <small>‹</small></dt><dd>Returns to the screen you came from. Your selection is still there.</dd></div>
+        <div><dt>Show original <small>⌘O</small></dt><dd>Switches between the result and what you had selected, so you can compare.</dd></div>
+        <div><dt>Replace <small>⌘↩</small></dt><dd>Puts the result where your selection was and closes the panel. <kbd>⌘Z</kbd> in that app brings the original back. After Compose this button is <strong>Insert</strong>, and it puts the text at your cursor.</dd></div>
+        <div><dt>Copy <small>⇧⌘C</small></dt><dd>Copies the result and leaves the panel open.</dd></div>
+        <div><dt>Try again <small>⌘R</small></dt><dd>Asks for another wording of the same request.</dd></div>
+        <div><dt>Make a change…</dt><dd>Type an adjustment, such as "a bit shorter", and press Return. OmanAI changes the result it just gave you.</dd></div>
+      </dl>
+      <p>The shortcuts above work while a result is showing, and you can change them in Settings.</p>
+      <p class="callout"><strong>Nothing is pasted without a click.</strong> If your selection changed while OmanAI was writing, Replace pastes nothing and tells you. In a terminal it asks for a second press, because pasted text can run as a command.</p>
+      <h3>After Explain</h3>
+      <figure class="narrow">
+        <img src="../media/panel-explain.webp" width="1080" height="800" loading="lazy" alt="An explanation in the panel, with Copy and Try again">
+        <figcaption>An explanation has Copy and Try again, and no Replace.</figcaption>
+      </figure>
+    </section>
+
+    <section id="compose">
+      <h2>Compose</h2>
+      <p>Compose writes something new from a short request. It opens when you click the wave with nothing selected, when you press Compose in the panel, or from its own shortcut.</p>
+      <figure class="narrow">
+        <img src="../media/panel-compose.webp" width="1080" height="780" loading="lazy" alt="The Compose screen: a request being typed, style chips, context switches and Write">
+      </figure>
+      <dl class="controls">
+        <div><dt>What do you want to write?</dt><dd>Describe the message in a line or two, for example "tell Dan I can't make the 3pm sync and ask him for the notes".</dd></div>
+        <div><dt>Style and context</dt><dd>The same chips as on the first screen. Add the conversation with Messages or Screen and the reply will fit it.</dd></div>
+        <div><dt>Write</dt><dd>Starts writing. The result screen then offers <strong>Insert</strong>, which puts the text at your cursor.</dd></div>
+        <div><dt>Selected text</dt><dd>If you opened Compose with text selected, that text is used as a reference, and the panel says so.</dd></div>
+      </dl>
+    </section>
+
+    <section id="pin">
+      <h2>Pinning the panel</h2>
+      <p>Press the pin and the panel stops closing when you click elsewhere. It becomes a small floating window that stays above your other windows.</p>
+      <ul>
+        <li>Drag it by any tile, or by the curved grip at its corner, and it stays where you drop it.</li>
+        <li>Clicking the wave while it is pinned loads your current selection into it.</li>
+        <li>After Replace or Insert it stays open and says Replaced or Inserted.</li>
+        <li>Press the pin again to let it go.</li>
+      </ul>
+      <p>To start every panel pinned, turn on <strong>Keep open when I click elsewhere</strong> in Settings.</p>
+    </section>
+
+    <section id="styles">
+      <h2>Teaching a style</h2>
+      <p>A style is a handful of messages you really wrote. OmanAI takes the voice from them: sentence length and rhythm, greetings and sign-offs, punctuation and capitals, emoji, and how formal you are. It never takes their content or facts.</p>
+      <figure class="window narrow">
+        <img src="../media/settings-editor-dark.webp" width="1200" height="1376" loading="lazy" alt="The style editor: Name, Note, a box for a new message, the list of messages, Try it, Delete Style and Done">
+      </figure>
+      <ol>
+        <li>Open Settings, go to <strong>Styles</strong> and press <strong>Add a Style…</strong></li>
+        <li>Give it a name you will recognise on a chip, such as Work or Friends.</li>
+        <li>Paste a real message you wrote into the box and press <strong>Add Message</strong>. Repeat. Five or more work best.</li>
+        <li>Type a sentence under <strong>Try it</strong> and press Try to hear the style.</li>
+      </ol>
+      <dl class="controls">
+        <div><dt>Name</dt><dd>What the chip in the panel says.</dd></div>
+        <div><dt>Note</dt><dd>An extra instruction for this style only, such as "no emoji with clients" or "sign with my first name".</dd></div>
+        <div><dt>Your messages</dt><dd>The newest is at the top. The minus button removes one. The line under the box counts messages and words.</dd></div>
+        <div><dt>Try it</dt><dd>Rewrites a sentence in this style with the model chosen in Settings. With Claude this is a normal request and counts toward Spending.</dd></div>
+        <div><dt>Delete Style…</dt><dd>Asks first. The style's messages and its shortcut go with it, and it can't be undone.</dd></div>
+        <div><dt>Done</dt><dd>Closes the editor. Every change was already saved as you made it.</dd></div>
+      </dl>
+      <p class="callout"><strong>Use messages of one kind in one style.</strong> Slack messages in one, emails in another. Mixed samples give a mixed voice.</p>
+    </section>
+
+    <section id="settings">
+      <h2>Settings</h2>
+      <p>Open Settings with the gear in the panel. It has six pages.</p>
+
+      <h3 id="settings-general">General</h3>
+      <figure class="window narrow">
+        <img src="../media/settings-general-dark.webp" width="1200" height="1062" loading="lazy" alt="The General page of Settings">
+      </figure>
+      <dl class="controls">
+        <div><dt>Open at login</dt><dd>Starts OmanAI when you log in, so the wave is always in your menu bar.</dd></div>
+        <div><dt>Theme</dt><dd>Match system, Light or Dark, for Settings and the panel. With Match system the panel is dark glass, like Control Center.</dd></div>
+        <div><dt>Keep open when I click elsewhere</dt><dd>Starts every panel pinned.</dd></div>
+        <div><dt>Include the screen by default</dt><dd>Turns the Screen switch on each time the panel opens.</dd></div>
+        <div><dt>Install updates automatically</dt><dd>Checks GitHub once a day and installs a new version when OmanAI quits.</dd></div>
+        <div><dt>Check Now</dt><dd>Looks for a new version right away.</dd></div>
+        <div><dt>View on GitHub</dt><dd>Opens the source code. The line beside it shows the version you have.</dd></div>
+        <div><dt>Quit</dt><dd>Quits OmanAI. The wave leaves the menu bar until you open the app again.</dd></div>
+      </dl>
+
+      <h3 id="settings-writing">Writing</h3>
+      <figure class="window narrow">
+        <img src="../media/settings-writing-dark.webp" width="1200" height="910" loading="lazy" alt="The Writing page of Settings">
+      </figure>
+      <dl class="controls">
+        <div><dt>Model</dt><dd>Claude Haiku, Sonnet or Opus, or Apple's on-device model. See <a href="#models">Models</a>. A model that can't be used on this Mac says why.</dd></div>
+        <div><dt>How long Claude thinks</dt><dd>Fast, Balanced or Best. Fast suits everyday messages. Best thinks hardest, is slower and costs a little more.</dd></div>
+        <div><dt>Always write in</dt><dd>A language for every result. Leave it empty to keep the language of your text.</dd></div>
+        <div><dt>Always follow these rules</dt><dd>Standing instructions, such as "use British spelling and never use exclamation marks". They apply to Rewrite and Compose. Proofread only fixes mistakes.</dd></div>
+      </dl>
+
+      <h3 id="settings-styles">Styles</h3>
+      <figure class="window narrow">
+        <img src="../media/settings-styles-dark.webp" width="1200" height="1084" loading="lazy" alt="The Styles page of Settings">
+      </figure>
+      <dl class="controls">
+        <div><dt>Edit…</dt><dd>Opens a style in the <a href="#styles">editor</a>.</dd></div>
+        <div><dt>Add a Style…</dt><dd>Makes a new style and opens it.</dd></div>
+        <div><dt>Default style</dt><dd>The chip that is chosen when an app has no style of its own yet. It can be As written.</dd></div>
+        <div><dt>Remember the last style in each app</dt><dd>On by default. Turn it off and every panel starts on the default style.</dd></div>
+      </dl>
+
+      <h3 id="settings-shortcuts">Shortcuts</h3>
+      <p>See <a href="#shortcuts">Shortcuts</a> below.</p>
+
+      <h3 id="settings-key">Key &amp; Permissions</h3>
+      <figure class="window narrow">
+        <img src="../media/settings-access-dark.webp" width="1200" height="824" loading="lazy" alt="The Key and Permissions page of Settings">
+      </figure>
+      <dl class="controls">
+        <div><dt>API key</dt><dd>Paste a key and press Save. It is checked with Anthropic first and then stored in the Keychain. It is never shown again.</dd></div>
+        <div><dt>Remove</dt><dd>Deletes the saved key from the Keychain.</dd></div>
+        <div><dt>Accessibility</dt><dd>Shows Allowed, or an Allow… button that takes you to the switch in System Settings.</dd></div>
+        <div><dt>Screen Recording</dt><dd>The same, for the Screen switch.</dd></div>
+      </dl>
+
+      <h3 id="settings-spending">Spending</h3>
+      <figure class="window narrow">
+        <img src="../media/settings-spending-dark.webp" width="1200" height="1244" loading="lazy" alt="The Spending page of Settings">
+      </figure>
+      <dl class="controls">
+        <div><dt>Period</dt><dd>Today, This week, This month, Last month or All time. It sets everything below it.</dd></div>
+        <div><dt>Total</dt><dd>What Claude cost in that period, with the number of requests, the tokens sent and received, and the average cost of a request.</dd></div>
+        <div><dt>Chart</dt><dd>A bar for each hour of today, each day of a week or month, or each month of all time.</dd></div>
+        <div><dt>By model</dt><dd>The same total split by model, most expensive first.</dd></div>
+      </dl>
+      <p>The numbers are an estimate: the tokens Anthropic reports for each request, at list prices built into the app. Only requests made by OmanAI on this Mac are counted, and Apple's on-device model is free. Your Anthropic invoice is what you actually pay.</p>
+    </section>
+
+    <section id="shortcuts">
+      <h2>Shortcuts</h2>
+      <figure class="window narrow">
+        <img src="../media/settings-shortcuts-dark.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page of Settings">
+      </figure>
+      <p>Every action can have a shortcut that works anywhere on your Mac. None is set when you install OmanAI, so it never takes a combination another app is using.</p>
+      <div class="table-scroll">
+        <table class="table">
+          <thead><tr><th scope="col">Action</th><th scope="col">What it does</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Open OmanAI</th><td>Opens the panel, as a click on the wave does.</td></tr>
+            <tr><th scope="row">Proofread selection</th><td>Proofreads the selected text at once and shows the result.</td></tr>
+            <tr><th scope="row">Rewrite selection</th><td>Rewrites the selected text at once, in the style chosen for that app.</td></tr>
+            <tr><th scope="row">Explain selection</th><td>Explains the selected text at once.</td></tr>
+            <tr><th scope="row">Compose</th><td>Opens the panel on Compose.</td></tr>
+            <tr><th scope="row">Rewrite as …</th><td>One for each of your styles: rewrites the selection in that style at once.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Four more work while a result is showing: <kbd>⌘↩</kbd> Replace or Insert, <kbd>⇧⌘C</kbd> Copy, <kbd>⌘R</kbd> Try again and <kbd>⌘O</kbd> Show original.</p>
+      <dl class="controls">
+        <div><dt>Record Shortcut</dt><dd>Click it and press the keys. <kbd>Esc</kbd> cancels. A shortcut needs a modifier such as ⌘, ⌥ or ⌃, unless it is a function key.</dd></div>
+        <div><dt>The × button</dt><dd>Removes a shortcut.</dd></div>
+        <div><dt>A warning under a row</dt><dd>Another app already uses that combination, so macOS did not give it to OmanAI. Choose a different one.</dd></div>
+      </dl>
+      <p><kbd>⌘C</kbd> and <kbd>⌘V</kbd> can't be shortcuts, because OmanAI uses them to copy and paste. If you give an action a combination another action had, it moves.</p>
+    </section>
+
+    <section id="models">
+      <h2>Models</h2>
+      <p>You choose the model on the Writing page of Settings. These are averages over 11 short writing tasks at the Fast setting, run through the app itself on 12 November 2026. Your numbers will vary with the length of the text and your connection.</p>
+      <div class="table-scroll">
+        <table class="table">
+          <thead><tr><th scope="col">Model</th><th scope="col">First word</th><th scope="col">Whole answer</th><th scope="col">A message costs</th><th scope="col">Best for</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Claude Haiku</th><td>0.6 s</td><td>1.0 s</td><td>about $0.0001</td><td>Everyday messages. Start here.</td></tr>
+            <tr><th scope="row">Claude Sonnet</th><td>0.7 s</td><td>1.4 s</td><td>about $0.0015</td><td>Wording that matters more.</td></tr>
+            <tr><th scope="row">Claude Opus</th><td>1.1 s</td><td>1.8 s</td><td>about $0.004</td><td>The few messages you really care about.</td></tr>
+            <tr><th scope="row">Apple, on device</th><td>0.8 s</td><td>1 to 2.5 s</td><td>Free</td><td>Plain proofreading, offline and private.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Claude</h3>
+      <p>Claude needs your own Anthropic API key, and Anthropic bills you for what you use. In our tests all three Claude models matched a style, followed instructions such as "polite but still firm", and handled languages other than English.</p>
+      <h3>Apple's on-device model</h3>
+      <p>It runs on your Mac, needs no key and costs nothing. In the same tests it proofread plain English well, but it often ignored a style when rewriting, and it does not handle languages Apple Intelligence doesn't support. It takes text only, so the Screen switch is off, and only the first few thousand characters of a style's messages fit. The first request after a pause takes several seconds while the model loads.</p>
+    </section>
+
+    <section id="data">
+      <h2>Privacy and data</h2>
+      <dl class="controls">
+        <div><dt>On your Mac</dt><dd>Styles, settings and the spending log are in <code>~/Library/Application Support/oman/writing.sqlite</code>. The spending log keeps each request's date, model and token counts, never its text. Your API key is in the Keychain.</dd></div>
+        <div><dt>Sent to Anthropic</dt><dd>With a Claude model, each request sends the text you selected or asked for, the messages of the chosen style, and the context you switched on. It goes straight from your Mac to Anthropic with your key. There is no server of ours in between.</dd></div>
+        <div><dt>Never sent</dt><dd>With Apple's on-device model, nothing leaves your Mac. OmanAI has no analytics and no account. Apart from your requests, it only contacts GitHub to check for updates.</dd></div>
+      </dl>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>Troubleshooting</h2>
+      <dl class="controls">
+        <div><dt>The panel opens on Compose although I selected text</dt><dd>OmanAI could not read the selection. Check that Accessibility is allowed in Settings, under Key &amp; Permissions. In terminals, remote desktops and virtual machines OmanAI does not press ⌘C for you, because there it can do more than copy, so a selection is read only where the app exposes it.</dd></div>
+        <div><dt>A whole line shows up as my selection</dt><dd>Some editors, VS Code among them, copy the current line when nothing is selected. Select the text first.</dd></div>
+        <div><dt>Replace asks me to press again</dt><dd>In a terminal this is on purpose, because pasted text can run as a command. Elsewhere it happens when the field you were typing in looks different from when the panel opened. Press again, or use Copy.</dd></div>
+        <div><dt>Replace says my selection changed</dt><dd>The selected text was different when the result was ready, so nothing was pasted. Use Copy, or select the text again and try once more.</dd></div>
+        <div><dt>The Screen picture shows the wrong thing</dt><dd>A large popup in front of your window, such as an emoji picker, can be what gets captured. The panel shows the whole picture before it is sent, so check it.</dd></div>
+        <div><dt>A shortcut does nothing</dt><dd>Another app may own that combination. The Shortcuts page shows a warning under the row when macOS refused it.</dd></div>
+        <div><dt>The on-device model is not available</dt><dd>It needs macOS 26 or later on a Mac that supports Apple Intelligence, with Apple Intelligence turned on in System Settings. Right after turning it on, the model can take a while to download.</dd></div>
+        <div><dt>Accessibility is on but OmanAI says it isn't</dt><dd>macOS ties the permission to the exact copy of the app. Use the copy in your Applications folder, and if you replaced the app by hand, turn the switch off and on again in System Settings.</dd></div>
+      </dl>
+      <p>More details, and the edges we know about, are in the <a href="https://github.com/romanbitca/oman-ai/blob/main/KNOWN_ISSUES.md">list of known issues</a>. If something else is wrong, <a href="https://github.com/romanbitca/oman-ai/issues/new/choose">open an issue</a>.</p>
+    </section>
+
+    <section id="updates">
+      <h2>Updating and removing</h2>
+      <p>OmanAI checks GitHub once a day and installs a new version when you quit it. If it stays open for a week, it offers to install. Every update is signed, and the app checks the signature before unpacking it. To update right now, press <strong>Check Now</strong> on the General page.</p>
+      <p>To remove OmanAI:</p>
+      <ol>
+        <li>In Settings, under Key &amp; Permissions, press Remove to delete your API key from the Keychain.</li>
+        <li>Quit OmanAI from the General page, and move it from Applications to the Trash.</li>
+        <li>To delete your styles and settings too, remove the folder <code>~/Library/Application Support/oman</code>.</li>
+      </ol>
+    </section>
+  </main>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <nav aria-label="Project links">
+        <a href="../">Home</a>
+        <a href="https://github.com/romanbitca/oman-ai">GitHub</a>
+        <a href="https://github.com/romanbitca/oman-ai/releases">Releases</a>
+        <a href="https://github.com/romanbitca/oman-ai/blob/main/KNOWN_ISSUES.md">Known issues</a>
+        <a href="https://github.com/romanbitca/oman-ai/security/policy">Security</a>
+        <a href="https://github.com/romanbitca/oman-ai/blob/main/LICENSE">MIT license</a>
+      </nav>
+      <p>OmanAI is an independent open-source project. Claude is a trademark of Anthropic, and macOS and Apple Intelligence are trademarks of Apple.</p>
+    </div>
+    <p class="wordmark" aria-hidden="true">OmanAI</p>
+  </div>
+</footer>
+
+<script src="../docs.js" defer></script>
+</body>
+</html>
