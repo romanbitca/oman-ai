@@ -896,6 +896,25 @@ struct ClaudeClientTests {
         #expect(recorder.entries.first?.tokens == TokenUsage(input: 50, output: 16000))
     }
 
+    @Test func usageInAShapeTheClientDoesNotExpectStillLetsTheAnswerFinish() async {
+        let recorder = UsageRecorderSpy()
+        let events = [
+            #"{"type":"message_start","message":{"model":"claude-haiku-5-5","usage":"not an object"}}"#,
+            successEvents[0],
+            #"{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":"many"}}"#,
+            #"{"type":"message_stop"}"#,
+        ]
+        let result = await collect(
+            WritingRequest(task: .rewrite(text: "hi", instruction: nil)),
+            reply: StubReply(body: sse(events)),
+            usage: recorder
+        )
+
+        #expect(result.error == nil)
+        #expect(result.text == "Done")
+        #expect(recorder.entries.isEmpty)
+    }
+
     @Test func anHTTPErrorRecordsNothing() async {
         let recorder = UsageRecorderSpy()
         _ = await collect(

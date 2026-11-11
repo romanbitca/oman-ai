@@ -26,11 +26,36 @@ enum StreamEventParser {
         let delta: RawDelta?
         let usage: RawUsage?
         let error: APIErrorPayload?
+
+        enum CodingKeys: String, CodingKey {
+            case type, message, delta, usage, error
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            type = try container.decode(String.self, forKey: .type)
+            delta = try container.decodeIfPresent(RawDelta.self, forKey: .delta)
+            error = try container.decodeIfPresent(APIErrorPayload.self, forKey: .error)
+            // Token counts only feed the spending page, so a shape this client doesn't expect
+            // must not cost the event its stop reason.
+            message = try? container.decodeIfPresent(RawMessage.self, forKey: .message)
+            usage = try? container.decodeIfPresent(RawUsage.self, forKey: .usage)
+        }
     }
 
     private struct RawMessage: Decodable {
         let model: String?
         let usage: RawUsage?
+
+        enum CodingKeys: String, CodingKey {
+            case model, usage
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            model = try? container.decodeIfPresent(String.self, forKey: .model)
+            usage = try? container.decodeIfPresent(RawUsage.self, forKey: .usage)
+        }
     }
 
     private struct RawDelta: Decodable {
