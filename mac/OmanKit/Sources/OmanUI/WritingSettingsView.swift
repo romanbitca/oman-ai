@@ -2,81 +2,70 @@ import OmanCore
 import SwiftUI
 
 struct WritingSettingsView: View {
-    @Bindable var model: SettingsViewModel
+    let model: SettingsViewModel
 
     var body: some View {
-        SettingsTile(title: "Model") {
-            HStack(spacing: 8) {
-                ForEach(WritingModel.allCases) { option in
-                    modelCard(option)
+        SettingsForm {
+            Section {
+                // Choosing a model that can't be used leaves the choice where it was and says why below.
+                Picker(selection: Binding(get: { model.selectedModel }, set: { model.setModel($0) })) {
+                    ForEach(WritingModel.allCases) { option in
+                        Text(title(for: option)).tag(option)
+                    }
+                } label: {
+                    Text("Model")
+                    Text(model.selectedModel.tagline)
                 }
-            }
-            if let error = model.modelError {
-                NoticeText(text: error)
-            }
-        }
-
-        if model.selectedModel.isLocal {
-            SettingsTile {
-                NoticeText(
-                    text: "Apple's model runs on this Mac for free. It can't see the screen, only a few of your style messages fit, and it may not match your voice as closely as Claude."
-                )
-            }
-        } else {
-            SettingsTile(title: "Quality") {
-                SettingsRow(title: "How long Claude thinks", detail: model.preferences.quality.detail) {
-                    LiquidSegmented(
-                        options: WritingQuality.allCases,
-                        selection: model.preferences.quality,
-                        title: \.displayName,
-                        onSelect: { value in model.updatePreferences { $0.quality = value } }
+                if let error = model.modelError {
+                    SettingsError(text: error)
+                }
+                if !model.selectedModel.isLocal {
+                    Picker(selection: model.preference(\.quality)) {
+                        ForEach(WritingQuality.allCases) { quality in
+                            Text(quality.displayName).tag(quality)
+                        }
+                    } label: {
+                        Text("How long Claude thinks")
+                        Text(model.preferences.quality.detail)
+                    }
+                    .pickerStyle(.segmented)
+                }
+            } footer: {
+                if model.selectedModel.isLocal {
+                    Text(
+                        "Apple's model runs on this Mac for free. It can't see the screen, only a few of your style messages fit, and it may not match your voice as closely as Claude."
                     )
                 }
             }
-        }
 
-        SettingsTile(title: "Language") {
-            SettingsRow(title: "Always write in", detail: "Leave empty to keep the language of your text.") {
-                SettingsTextField(
-                    prompt: "For example: English",
-                    text: Binding(
-                        get: { model.preferences.outputLanguage },
-                        set: { value in model.updatePreferences { $0.outputLanguage = value } }
-                    )
-                )
-                .frame(width: 220)
+            Section {
+                TextField(text: model.preference(\.outputLanguage), prompt: Text("The language of your text")) {
+                    Text("Always write in")
+                }
             }
-        }
 
-        SettingsTile(title: "Always follow these rules") {
-            SettingsTextBox(
-                prompt: "For example: use British spelling and never use exclamation marks.",
-                text: Binding(
-                    get: { model.preferences.customInstructions },
-                    set: { value in model.updatePreferences { $0.customInstructions = value } }
-                )
-            )
-            NoticeText(text: "Applies to Rewrite and Compose. Proofread only fixes mistakes.")
+            Section {
+                TextEditor(text: model.preference(\.customInstructions))
+                    .font(.body)
+                    .scrollContentBackground(.hidden)
+                    .frame(height: 76)
+                    .overlay(alignment: .topLeading) {
+                        if model.preferences.customInstructions.isEmpty {
+                            Text("For example: use British spelling and never use exclamation marks.")
+                                .foregroundStyle(.tertiary)
+                                .padding(.leading, 5)
+                                .allowsHitTesting(false)
+                        }
+                    }
+            } header: {
+                Text("Always follow these rules")
+            } footer: {
+                Text("Applies to Rewrite and Compose. Proofread only fixes mistakes.")
+            }
         }
     }
 
-    private func modelCard(_ option: WritingModel) -> some View {
-        let isSelected = option == model.selectedModel
-        return Button {
-            model.setModel(option)
-        } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(option.displayName).font(.system(size: 13, weight: .semibold))
-                Text(model.unavailableReason(for: option) == nil ? option.tagline : "Not available")
-                    .font(.system(size: 11))
-                    .foregroundStyle(isSelected ? Color.white.opacity(0.85) : Color.secondary)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .background(isSelected ? Liquid.accent : Color.primary.opacity(0.07), in: SettingsMetrics.inset)
-            .contentShape(SettingsMetrics.inset)
-        }
-        .buttonStyle(LiquidPressStyle())
+    private func title(for option: WritingModel) -> String {
+        model.unavailableReason(for: option) == nil ? option.displayName : "\(option.displayName) (not available)"
     }
 }

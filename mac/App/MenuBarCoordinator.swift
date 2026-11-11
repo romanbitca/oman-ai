@@ -226,26 +226,15 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
     func openSettings() {
         dismissPanel()
+        let model = settingsModel ?? SettingsViewModel(services: services)
+        settingsModel = model
+        // Before the window is made, so that it opens at the height of what its first page holds.
+        model.reload()
         if settingsWindow == nil {
-            let model = SettingsViewModel(services: services)
-            settingsModel = model
-            let window = NSWindow(
-                contentRect: NSRect(origin: .zero, size: SettingsRootView.windowSize),
-                styleMask: [.titled, .closable, .fullSizeContentView],
-                backing: .buffered,
-                defer: false
-            )
-            window.title = "OmanAI Settings"
-            window.titleVisibility = .hidden
-            window.titlebarAppearsTransparent = true
-            window.isMovableByWindowBackground = true
-            window.isReleasedWhenClosed = false
-            window.animationBehavior = .none
-            window.contentView = NSHostingView(rootView: SettingsRootView(model: model))
+            let window = SettingsWindow.make(model: model)
             window.center()
             settingsWindow = window
         }
-        settingsModel?.reload()
         NSApp.activate()
         settingsWindow?.makeKeyAndOrderFront(nil)
     }

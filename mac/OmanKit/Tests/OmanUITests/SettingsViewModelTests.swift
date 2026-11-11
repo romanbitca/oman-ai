@@ -102,13 +102,13 @@ import Testing
         #expect(model.newSampleText.isEmpty)
         var stored = try #require(harness.styles.styles.first)
         #expect(stored.samples.map(\.text) == ["first message here"])
-        #expect(model.sampleSummary == "1 sample, 3 words")
+        #expect(model.sampleSummary == "1 message, 3 words")
 
         model.newSampleText = "second"
         model.addSample()
         stored = try #require(harness.styles.styles.first)
         #expect(stored.samples.count == 2)
-        #expect(model.sampleSummary == "2 samples, 4 words")
+        #expect(model.sampleSummary == "2 messages, 4 words")
 
         model.removeSample(id: stored.samples[0].id)
         stored = try #require(harness.styles.styles.first)

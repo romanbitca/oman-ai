@@ -50,9 +50,7 @@ extension View {
 extension EnvironmentValues {
     @Entry var liquidSpace: Namespace.ID?
     @Entry var panelIsFloating = false
-    /// Turned off for Settings, which has no animation at all.
-    @Entry var liquidMotion = true
-    /// Clear glass, as in Control Center. The panel uses it over its backdrop; Settings keeps frosted glass.
+    /// Clear glass, as in Control Center. The panel uses it over its backdrop.
     @Entry var liquidClearGlass = false
     /// Controls inside a glass tile are flat, because Apple's glass isn't meant to sit on glass.
     @Entry var isInsideGlassTile = false
@@ -81,13 +79,12 @@ struct LiquidGlassChoice: Equatable {
     let isClear: Bool
     let isInteractive: Bool
 
-    init(prefersClear: Bool, isTinted: Bool, isForReading: Bool = false, wantsInteraction: Bool, hasMotion: Bool) {
+    init(prefersClear: Bool, isTinted: Bool, isForReading: Bool = false, wantsInteraction: Bool) {
         // A tint is a solid colour, which clear glass would wash out. Text someone reads or types stays on frosted
         // glass: clear glass shows the app behind only slightly blurred, which is fine behind a button's label
         // but not behind a paragraph.
         isClear = prefersClear && !isTinted && !isForReading
-        // Interactive glass lights up and flexes, and Settings has no motion at all.
-        isInteractive = wantsInteraction && hasMotion
+        isInteractive = wantsInteraction
     }
 }
 
@@ -157,21 +154,6 @@ struct PanelCornerHandle: View {
     }
 }
 
-/// Draws neighbouring glass shapes together. Settings uses it, where nothing moves. The panel's tiles left
-/// theirs: a container makes every frame of a screen change expensive.
-struct LiquidContainer<Content: View>: View {
-    var spacing: CGFloat
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        if #available(macOS 26.0, *) {
-            GlassEffectContainer(spacing: spacing) { content }
-        } else {
-            content
-        }
-    }
-}
-
 private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     let shape: S
     let tint: Color?
@@ -179,7 +161,6 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     let interactive: Bool
     let reading: Bool
     @Environment(\.liquidSpace) private var space
-    @Environment(\.liquidMotion) private var hasMotion
     @Environment(\.liquidClearGlass) private var prefersClear
 
     private var choice: LiquidGlassChoice {
@@ -187,8 +168,7 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
             prefersClear: prefersClear,
             isTinted: tint != nil,
             isForReading: reading,
-            wantsInteraction: interactive,
-            hasMotion: hasMotion
+            wantsInteraction: interactive
         )
     }
 
@@ -252,63 +232,40 @@ extension View {
     }
 }
 
-private struct LiquidPressBody<Label: View>: View {
-    let isPressed: Bool
-    let label: Label
-    @Environment(\.liquidMotion) private var hasMotion
-
-    var body: some View {
-        label
-            .opacity(isPressed ? 0.7 : 1)
-            .animation(hasMotion ? Liquid.press : nil, value: isPressed)
-    }
-}
-
 struct LiquidPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        LiquidPressBody(isPressed: configuration.isPressed, label: configuration.label)
+        configuration.label
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .animation(Liquid.press, value: configuration.isPressed)
     }
 }
 
-private struct GlassPressBody<Label: View>: View {
-    let isPressed: Bool
-    let label: Label
-    @Environment(\.liquidMotion) private var hasMotion
-
-    var body: some View {
-        // Where the glass is interactive it shows the press itself, so the label stays as it is.
-        label.opacity(isPressed && !hasMotion ? 0.7 : 1)
-    }
-}
-
-/// For buttons drawn on interactive glass.
+/// For buttons drawn on interactive glass, which shows the press itself, so the label stays as it is.
 struct GlassPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        GlassPressBody(isPressed: configuration.isPressed, label: configuration.label)
+        configuration.label
     }
 }
 
-/// A glass capsule button. In the panel it uses Apple's interactive glass; Settings keeps it still.
+/// A glass capsule button, on Apple's interactive glass.
 struct LiquidButton: View {
     let title: String
     var symbol: String?
     var prominent = false
     let action: () -> Void
     @Environment(\.isEnabled) private var isEnabled
-    @Environment(\.liquidMotion) private var hasMotion
 
     var body: some View {
         Button(action: action) {
             label
                 .font(.system(size: 13, weight: .medium))
-                // In the panel only the label dims, as on macOS: faded glass looked gray over a dark background.
-                .opacity(isEnabled || !hasMotion ? 1 : 0.55)
+                // Only the label dims, as on macOS: faded glass looked gray over a dark background.
+                .opacity(isEnabled ? 1 : 0.55)
                 .padding(.horizontal, 16)
                 .frame(height: 36)
                 .foregroundStyle(prominent ? Color.white : Color.primary)
                 .contentShape(Capsule())
                 .liquidGlass(in: Capsule(), tint: prominent ? Liquid.accent : nil, interactive: true)
-                .opacity(isEnabled || hasMotion ? 1 : 0.45)
         }
         .buttonStyle(GlassPressStyle())
     }

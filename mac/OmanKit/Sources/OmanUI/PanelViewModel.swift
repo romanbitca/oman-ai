@@ -320,7 +320,7 @@ public final class PanelViewModel {
     }
 
     /// Chooses the template the next Proofread, Rewrite or Compose uses, and starts nothing. No template is
-    /// Original: the person's own voice, as it shows in what they wrote.
+    /// As written: the person's own voice, as it shows in what they wrote.
     func selectStyle(_ style: WritingStyle?) {
         selectedStyleID = style?.id
     }
@@ -338,8 +338,8 @@ public final class PanelViewModel {
         startWithContext(task: .compose(request: prompt, selectedText: capture.text), style: selectedStyle)
     }
 
-    /// The template an app was last written in is chosen again the next time. After Original nothing is kept,
-    /// so the default template from Settings, or Original without one, is chosen.
+    /// The template an app was last written in is chosen again the next time. After As written nothing is kept,
+    /// so the default template from Settings, or As written without one, is chosen.
     private func rememberStyleChoice() {
         guard preferences.remembersStylePerApp, let bundleID = capture.app?.bundleID else { return }
         try? services.styles.setLastStyleID(selectedStyleID, forBundleID: bundleID)

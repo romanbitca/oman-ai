@@ -3,31 +3,31 @@ import OmanCore
 import SwiftUI
 
 struct ShortcutsSettingsView: View {
-    @Bindable var model: SettingsViewModel
+    let model: SettingsViewModel
     @State private var monitor: Any?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: SettingsMetrics.gap) {
-            SettingsTile(title: "Anywhere on your Mac") {
-                ForEach(Array(model.globalShortcutActions.enumerated()), id: \.element) { index, action in
-                    if index > 0 { Divider() }
+        SettingsForm {
+            Section {
+                ForEach(model.globalShortcutActions, id: \.self) { action in
                     row(action)
                 }
-                NoticeText(text: "Select text in any app, then press the shortcut. The result opens in the panel.")
+            } header: {
+                Text("Anywhere on your Mac")
+            } footer: {
+                Text("Select text in any app, then press the shortcut. The result opens in the panel.")
             }
 
-            SettingsTile(title: "While a result is showing") {
-                ForEach(Array(ShortcutAction.panelActions.enumerated()), id: \.element) { index, action in
-                    if index > 0 { Divider() }
+            Section("While a result is showing") {
+                ForEach(ShortcutAction.panelActions, id: \.self) { action in
                     row(action)
                 }
-            }
-
-            if let notice = model.shortcutNotice {
-                NoticeText(text: notice).padding(.horizontal, 6)
-            }
-            if let error = model.preferencesError {
-                NoticeText(text: error).padding(.horizontal, 6)
+                if let notice = model.shortcutNotice {
+                    Text(notice).font(.callout).foregroundStyle(.secondary)
+                }
+                if let error = model.preferencesError {
+                    SettingsError(text: error)
+                }
             }
         }
         .onChange(of: model.recordingAction) { syncMonitor() }
@@ -38,41 +38,43 @@ struct ShortcutsSettingsView: View {
     }
 
     private func row(_ action: ShortcutAction) -> some View {
-        let failed = model.failedShortcuts.contains(action)
-        return SettingsRow(
-            title: model.title(for: action),
-            detail: failed ? "Another app is already using this shortcut." : nil
-        ) {
+        LabeledContent {
             recorder(action)
+        } label: {
+            Text(model.title(for: action))
+            if model.failedShortcuts.contains(action) {
+                Text("Another app is already using this shortcut.")
+            }
         }
     }
 
     private func recorder(_ action: ShortcutAction) -> some View {
         let isRecording = model.recordingAction == action
         let combo = model.preferences.combo(for: action)
-        return HStack(spacing: 2) {
+        return HStack(spacing: 6) {
             if combo != nil, !isRecording {
-                PanelIconButton(symbol: "xmark", label: "Remove shortcut") {
+                Button {
                     model.clearShortcut(for: action)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.tertiary)
+                .help("Remove shortcut")
+                .accessibilityLabel("Remove shortcut")
+            }
+            if isRecording {
+                Button { model.cancelRecording() } label: {
+                    Text("Press keys…").frame(minWidth: 104)
+                }
+                .buttonStyle(.borderedProminent)
+            } else {
+                Button { model.startRecording(action) } label: {
+                    Text(combo?.displayString ?? "Record Shortcut")
+                        .foregroundStyle(combo == nil ? .secondary : .primary)
+                        .frame(minWidth: 104)
                 }
             }
-            Button {
-                if isRecording {
-                    model.cancelRecording()
-                } else {
-                    model.startRecording(action)
-                }
-            } label: {
-                Text(isRecording ? "Press keys…" : (combo?.displayString ?? "Add shortcut"))
-                    .font(.system(size: 12, weight: combo == nil ? .regular : .semibold))
-                    .frame(minWidth: 96)
-                    .padding(.horizontal, 12)
-                    .frame(height: 30)
-                    .foregroundStyle(isRecording ? Color.white : (combo == nil ? Color.secondary : Color.primary))
-                    .background(isRecording ? Liquid.accent : Color.primary.opacity(0.07), in: Capsule())
-                    .contentShape(Capsule())
-            }
-            .buttonStyle(LiquidPressStyle())
         }
     }
 

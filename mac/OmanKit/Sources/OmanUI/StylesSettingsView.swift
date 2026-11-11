@@ -1,170 +1,212 @@
+import AppKit
 import OmanCore
 import SwiftUI
 
 struct StylesSettingsView: View {
-    @Bindable var model: SettingsViewModel
+    let model: SettingsViewModel
+    @State private var editedID: UUID?
+
+    private var editedStyle: WritingStyle? {
+        model.styles.first { $0.id == editedID }
+    }
 
     var body: some View {
-        SettingsTile(title: "Your styles") {
-            FlowLayout(spacing: 6) {
+        SettingsForm {
+            Section {
                 ForEach(model.styles) { style in
-                    styleChip(style)
+                    LabeledContent {
+                        Button("Edit…") { edit(style.id) }
+                    } label: {
+                        Text(style.displayName)
+                        Text(summary(of: style))
+                    }
                 }
-                Button {
+                Button("Add a Style…") {
                     model.createStyle()
-                } label: {
-                    Label("New style", systemImage: "plus")
-                        .font(.system(size: 12, weight: .medium))
-                        .padding(.horizontal, 13)
-                        .frame(height: 32)
-                        .background(Color.primary.opacity(0.07), in: Capsule())
-                        .contentShape(Capsule())
+                    editedID = model.selectedStyleID
                 }
-                .buttonStyle(LiquidPressStyle())
+                if let error = model.styleError {
+                    SettingsError(text: error)
+                }
+            } header: {
+                Text("Your styles")
+            } footer: {
+                Text("A style is a handful of messages you wrote. OmanAI writes in their voice when you choose it.")
             }
-        }
 
-        if !model.styles.isEmpty {
-            SettingsTile(title: "Choosing a style") {
-                SettingsRow(title: "Default style", detail: "Selected when an app has no style of its own yet.") {
-                    Picker(
-                        "Default style",
-                        selection: Binding(
-                            get: { model.preferences.defaultStyleID },
-                            set: { value in model.updatePreferences { $0.defaultStyleID = value } }
-                        )
-                    ) {
-                        Text("None").tag(UUID?.none)
+            if !model.styles.isEmpty {
+                Section("Choosing a style") {
+                    Picker(selection: model.preference(\.defaultStyleID)) {
+                        Text("As written").tag(UUID?.none)
                         ForEach(model.styles) { style in
                             Text(style.displayName).tag(UUID?.some(style.id))
                         }
+                    } label: {
+                        Text("Default style")
+                        Text("Chosen when an app has no style of its own yet.")
                     }
-                    .labelsHidden()
-                    .frame(width: 180)
+                    Toggle(isOn: model.preference(\.remembersStylePerApp)) {
+                        Text("Remember the last style in each app")
+                        Text("Slack can keep one style and Mail another.")
+                    }
                 }
-                Divider()
-                SettingsToggleRow(
-                    title: "Remember the last style in each app",
-                    detail: "Slack can keep one style and Mail another.",
-                    isOn: Binding(
-                        get: { model.preferences.remembersStylePerApp },
-                        set: { value in model.updatePreferences { $0.remembersStylePerApp = value } }
-                    )
-                )
             }
         }
-
-        if let style = model.selectedStyle {
-            StyleEditorView(model: model, style: style).id(style.id)
-        }
-
-        if let error = model.styleError {
-            NoticeText(text: error).padding(.horizontal, 6)
+        .sheet(isPresented: Binding(get: { editedStyle != nil }, set: { if !$0 { editedID = nil } })) {
+            if let style = editedStyle {
+                StyleEditorView(model: model, style: style) { editedID = nil }
+            }
         }
     }
 
-    private func styleChip(_ style: WritingStyle) -> some View {
-        let isSelected = style.id == model.selectedStyleID
-        return Button {
-            model.selectStyle(style.id)
-        } label: {
-            Text(style.displayName)
-                .font(.system(size: 12, weight: .medium))
-                .lineLimit(1)
-                .padding(.horizontal, 14)
-                .frame(height: 32)
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .background(isSelected ? Liquid.accent : Color.primary.opacity(0.07), in: Capsule())
-                .contentShape(Capsule())
+    private func edit(_ id: UUID) {
+        model.selectStyle(id)
+        editedID = id
+    }
+
+    private func summary(of style: WritingStyle) -> String {
+        switch style.samples.count {
+        case 0: "No messages yet"
+        case 1: "1 message"
+        default: "\(style.samples.count) messages"
         }
-        .buttonStyle(LiquidPressStyle())
     }
 }
 
+/// One style, edited in a sheet over Settings. Every change is saved as it is made.
 private struct StyleEditorView: View {
     @Bindable var model: SettingsViewModel
     let style: WritingStyle
+    let onClose: () -> Void
 
     var body: some View {
-        SettingsTile {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 7) {
-                    TextField("Style name", text: Binding(get: { style.name }, set: { model.updateName($0) }))
-                        .textFieldStyle(.plain)
-                        .focusEffectDisabled()
-                        .font(.system(size: 20, weight: .semibold))
+        VStack(spacing: 0) {
+            Form {
+                Section {
+                    TextField(text: Binding(get: { style.name }, set: { model.updateName($0) }), prompt: Text("Style name")) {
+                        Text("Name")
+                    }
                     TextField(
-                        "Add a note, for example: no emoji with clients",
-                        text: Binding(get: { style.note }, set: { model.updateNote($0) })
-                    )
-                    .textFieldStyle(.plain)
-                    .focusEffectDisabled()
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                PanelIconButton(symbol: "trash", label: "Delete style") {
-                    model.deleteSelectedStyle()
-                }
-            }
-        }
-
-        SettingsTile {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Your messages").font(.system(size: 13, weight: .semibold))
-                Spacer()
-                Text("\(model.sampleSummary). Five or more work best.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-
-            ForEach(style.samples) { sample in
-                HStack(alignment: .top, spacing: 8) {
-                    Text(sample.text)
-                        .font(.system(size: 13))
-                        .lineLimit(4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    PanelIconButton(symbol: "xmark", label: "Remove message") {
-                        model.removeSample(id: sample.id)
+                        text: Binding(get: { style.note }, set: { model.updateNote($0) }),
+                        prompt: Text("For example: no emoji with clients")
+                    ) {
+                        Text("Note")
                     }
                 }
-                .padding(.leading, 13)
-                .padding(.trailing, 6)
-                .padding(.vertical, 8)
-                .background(Color.primary.opacity(0.07), in: SettingsMetrics.inset)
+                messages
             }
+            .formStyle(.grouped)
 
-            SettingsTextBox(prompt: "Paste a real message you wrote", text: $model.newSampleText)
+            Divider()
+
+            // Below the list instead of at its end, so a style with many messages can still be tried without
+            // scrolling past all of them.
+            Form {
+                tryIt
+            }
+            .formStyle(.grouped)
+            .scrollDisabled(true)
+            .fixedSize(horizontal: false, vertical: true)
 
             HStack {
+                Button("Delete Style…", role: .destructive, action: askToDelete)
                 Spacer()
-                LiquidButton(title: "Add message", symbol: "plus", prominent: true) { model.addSample() }
-                    .disabled(model.newSampleText.trimmed.isEmpty)
+                // Escape closes the sheet. Return is left to the fields, where it adds a line or tries the style.
+                Button("Done", action: onClose)
+                    .keyboardShortcut(.cancelAction)
+                    .buttonStyle(.borderedProminent)
             }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
         }
+        .frame(width: 520, height: 600)
+        .withoutSystemWritingTools()
+    }
 
-        SettingsTile(title: "Try it") {
-            HStack(spacing: 8) {
-                SettingsTextField(prompt: "Type a sentence to rewrite in this style", text: $model.tryItText) {
-                    model.tryIt()
+    /// A style and its messages can't be brought back, so macOS's own alert asks first. Cancel is the button
+    /// that Return presses.
+    private func askToDelete() {
+        let alert = NSAlert()
+        alert.messageText = "Delete “\(style.displayName)”?"
+        alert.informativeText = "Its messages and its shortcut go with it. This can't be undone."
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
+        guard alert.runModal() == .alertSecondButtonReturn else { return }
+        onClose()
+        model.deleteSelectedStyle()
+    }
+
+    private var messages: some View {
+        Section {
+            // The box comes first and the newest message lands right under it, so adding several in a row
+            // never needs scrolling.
+            TextEditor(text: $model.newSampleText)
+                .font(.body)
+                .scrollContentBackground(.hidden)
+                .frame(height: 58)
+                .overlay(alignment: .topLeading) {
+                    if model.newSampleText.isEmpty {
+                        Text("Paste a real message you wrote")
+                            .foregroundStyle(.tertiary)
+                            .padding(.leading, 5)
+                            .allowsHitTesting(false)
+                    }
                 }
-                LiquidButton(title: "Try") { model.tryIt() }
+            LabeledContent {
+                Button("Add Message") { model.addSample() }
+                    .disabled(model.newSampleText.trimmed.isEmpty)
+            } label: {
+                Text("\(model.sampleSummary). Five or more work best.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(style.samples.reversed()) { sample in
+                HStack(alignment: .top, spacing: 8) {
+                    Text(sample.text)
+                        .lineLimit(4)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button {
+                        model.removeSample(id: sample.id)
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+                    .help("Remove message")
+                    .accessibilityLabel("Remove message")
+                }
+            }
+        } header: {
+            Text("Your messages")
+        }
+    }
+
+    private var tryIt: some View {
+        Section("Try it") {
+            HStack(spacing: 8) {
+                TextField("Sentence", text: $model.tryItText, prompt: Text("Type a sentence to rewrite in this style"))
+                    .labelsHidden()
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { model.tryIt() }
+                Button("Try") { model.tryIt() }
                     .disabled(model.tryItText.trimmed.isEmpty || model.isTrying)
             }
             if model.isTrying, model.tryItResult.isEmpty {
-                Text("Writing…").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text("Writing…").foregroundStyle(.secondary)
             }
             if !model.tryItResult.isEmpty {
-                Text(model.tryItResult)
-                    .font(.system(size: 14))
-                    .lineSpacing(2)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(13)
-                    .background(Color.primary.opacity(0.07), in: SettingsMetrics.inset)
+                // A long result scrolls in place, so the sheet doesn't change shape while it is written.
+                ScrollView(.vertical) {
+                    Text(model.tryItResult)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 88)
+                .fixedSize(horizontal: false, vertical: true)
             }
             if let error = model.tryItError {
-                NoticeText(text: error)
+                SettingsError(text: error)
             }
         }
     }

@@ -28,10 +28,8 @@ struct ContextSectionView: View {
             }
 
             if let screenshot = model.screenshot {
-                ScreenshotThumbnail(screenshot: screenshot) {
-                    model.setIncludeScreen(false)
-                }
-                .transition(.opacity)
+                ScreenshotThumbnail(screenshot: screenshot)
+                    .transition(.opacity)
             }
 
             if model.includesMessages {
@@ -110,25 +108,21 @@ private struct ClipboardPreview: View {
     }
 }
 
+/// The picture that will be sent, to look at before sending. The Screen chip turns it off again.
 private struct ScreenshotThumbnail: View {
     let screenshot: ScreenshotAttachment
-    let onRemove: () -> Void
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            if let image = NSImage(data: screenshot.jpegData) {
-                // The whole picture, uncropped: this is exactly what will be sent.
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .keepingOwnColors()
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .frame(maxWidth: .infinity, maxHeight: 180)
-            }
-            PanelIconButton(symbol: "xmark.circle.fill", label: "Remove screenshot", action: onRemove)
-                .padding(3)
+        if let image = NSImage(data: screenshot.jpegData) {
+            // The whole picture, uncropped: this is exactly what will be sent.
+            Image(nsImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .keepingOwnColors()
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .frame(maxWidth: .infinity, maxHeight: 180)
+                .padding(7)
+                .panelSurface(in: PanelShape.tile)
         }
-        .padding(7)
-        .panelSurface(in: PanelShape.tile)
     }
 }

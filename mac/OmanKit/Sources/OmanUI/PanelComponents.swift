@@ -93,7 +93,6 @@ struct PanelIconButton: View {
     let label: String
     let action: () -> Void
     @State private var isHovering = false
-    @Environment(\.liquidMotion) private var hasMotion
 
     var body: some View {
         Button(action: action) {
@@ -108,7 +107,7 @@ struct PanelIconButton: View {
         .help(label)
         .accessibilityLabel(label)
         .onHover { hovering in
-            withAnimation(hasMotion ? .easeOut(duration: 0.14) : nil) { isHovering = hovering }
+            withAnimation(.easeOut(duration: 0.14)) { isHovering = hovering }
         }
     }
 }
@@ -195,26 +194,58 @@ struct NoticeText: View {
 struct StyleChipsView: View {
     let styles: [WritingStyle]
     let selectedID: UUID?
-    /// Called with nil for Original.
+    /// Called with nil for As written.
     let onSelect: (WritingStyle?) -> Void
     let onCreate: () -> Void
 
+    /// Where the row's right end fades out, so a chip cut off there reads as "more this way".
+    private static var fade: CGFloat { 18 }
+
     var body: some View {
-        FlowLayout(spacing: 6) {
-            // One is always chosen. Original is no template: the person's own voice.
-            chip(title: "Original", symbol: nil, isSelected: selectedID == nil) {
+        HStack(spacing: 8) {
+            // One is always chosen. As written is no template: the person's own voice. It stays put while the
+            // templates scroll, so it is always there to go back to.
+            chip(title: "As written", symbol: nil, isSelected: selectedID == nil) {
                 onSelect(nil)
             }
-            ForEach(styles) { style in
-                chip(title: style.displayName, symbol: nil, isSelected: style.id == selectedID) {
-                    onSelect(style)
-                }
-            }
-            if styles.isEmpty {
-                chip(title: "Create a style", symbol: "plus", isSelected: false, action: onCreate)
-            }
+            Rectangle()
+                .fill(Color.primary.opacity(0.22))
+                .frame(width: 1, height: 18)
+            templates
         }
         .animation(Liquid.press, value: selectedID)
+    }
+
+    /// The templates stay on one line and scroll sideways when there are more than fit.
+    private var templates: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                HStack(spacing: 6) {
+                    ForEach(styles) { style in
+                        chip(title: style.displayName, symbol: nil, isSelected: style.id == selectedID) {
+                            onSelect(style)
+                        }
+                        .id(style.id)
+                    }
+                    if styles.isEmpty {
+                        chip(title: "Create a style", symbol: "plus", isSelected: false, action: onCreate)
+                    }
+                }
+                .padding(.trailing, Self.fade)
+            }
+            .scrollIndicators(.never)
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+            .mask {
+                HStack(spacing: 0) {
+                    Color.black
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: Self.fade)
+                }
+            }
+            // The template chosen for this app may be off to the right when the panel opens.
+            .onAppear { proxy.scrollTo(selectedID, anchor: .center) }
+            .onChange(of: selectedID) { _, id in proxy.scrollTo(id, anchor: .center) }
+        }
     }
 
     private func chip(title: String, symbol: String?, isSelected: Bool, action: @escaping () -> Void) -> some View {
@@ -232,6 +263,7 @@ struct StyleChipsView: View {
             .toggleSurface(isOn: isSelected)
         }
         .buttonStyle(GlassPressStyle())
+        .fixedSize()
     }
 }
 
@@ -290,47 +322,5 @@ extension View {
     /// Glass when off and solid white when on, as a toggle is in Control Center.
     func toggleSurface(isOn: Bool) -> some View {
         modifier(ToggleSurface(isOn: isOn))
-    }
-}
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .greatestFiniteMagnitude
-        return arrange(maxWidth: maxWidth, sizes: subviews.map { $0.sizeThatFits(.unspecified) }).size
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
-        let layout = arrange(maxWidth: bounds.width, sizes: sizes)
-        for (index, subview) in subviews.enumerated() {
-            let origin = layout.origins[index]
-            subview.place(
-                at: CGPoint(x: bounds.minX + origin.x, y: bounds.minY + origin.y),
-                proposal: ProposedViewSize(width: min(sizes[index].width, bounds.width), height: sizes[index].height)
-            )
-        }
-    }
-
-    private func arrange(maxWidth: CGFloat, sizes: [CGSize]) -> (origins: [CGPoint], size: CGSize) {
-        var origins: [CGPoint] = []
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        var usedWidth: CGFloat = 0
-        for size in sizes {
-            let width = min(size.width, maxWidth)
-            if x > 0, x + width > maxWidth {
-                x = 0
-                y += lineHeight + spacing
-                lineHeight = 0
-            }
-            origins.append(CGPoint(x: x, y: y))
-            usedWidth = max(usedWidth, x + width)
-            lineHeight = max(lineHeight, size.height)
-            x += width + spacing
-        }
-        return (origins, CGSize(width: usedWidth, height: y + lineHeight))
     }
 }

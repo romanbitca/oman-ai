@@ -79,7 +79,8 @@ public final class SettingsViewModel {
     func reloadSpending(now: Date = Date(), calendar: Calendar = .current) {
         guard let store = services.usage else { return }
         do {
-            let entries = try store.usageEntries(since: SpendingSummary.earliestDate(now: now, calendar: calendar))
+            // Everything ever recorded, because the page has an All time view.
+            let entries = try store.usageEntries(since: .distantPast)
             spending = SpendingSummary.make(from: entries, now: now, calendar: calendar)
             spendingError = nil
         } catch {
@@ -175,7 +176,7 @@ public final class SettingsViewModel {
     var sampleSummary: String {
         let samples = selectedStyle?.samples ?? []
         let words = samples.reduce(0) { $0 + $1.text.split(whereSeparator: \.isWhitespace).count }
-        return "\(samples.count) \(samples.count == 1 ? "sample" : "samples"), \(words) \(words == 1 ? "word" : "words")"
+        return "\(samples.count) \(samples.count == 1 ? "message" : "messages"), \(words) \(words == 1 ? "word" : "words")"
     }
 
     func selectStyle(_ id: UUID?) {

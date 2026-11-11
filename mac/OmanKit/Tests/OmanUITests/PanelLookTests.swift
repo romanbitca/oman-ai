@@ -4,28 +4,22 @@ import Testing
 
 @Suite struct LiquidGlassChoiceTests {
     @Test func panelButtonsGetClearInteractiveGlass() {
-        let choice = LiquidGlassChoice(prefersClear: true, isTinted: false, wantsInteraction: true, hasMotion: true)
+        let choice = LiquidGlassChoice(prefersClear: true, isTinted: false, wantsInteraction: true)
         #expect(choice.isClear)
         #expect(choice.isInteractive)
     }
 
     @Test func tintedGlassStaysFrostedSoItsColourHolds() {
-        #expect(!LiquidGlassChoice(prefersClear: true, isTinted: true, wantsInteraction: true, hasMotion: true).isClear)
-    }
-
-    @Test func settingsHasNoMotionSoItsGlassIsNeverInteractive() {
-        let choice = LiquidGlassChoice(prefersClear: false, isTinted: false, wantsInteraction: true, hasMotion: false)
-        #expect(!choice.isClear)
-        #expect(!choice.isInteractive)
+        #expect(!LiquidGlassChoice(prefersClear: true, isTinted: true, wantsInteraction: true).isClear)
     }
 
     @Test func textToReadOrTypeStaysOnFrostedGlass() {
-        let choice = LiquidGlassChoice(prefersClear: true, isTinted: false, isForReading: true, wantsInteraction: false, hasMotion: true)
+        let choice = LiquidGlassChoice(prefersClear: true, isTinted: false, isForReading: true, wantsInteraction: false)
         #expect(!choice.isClear)
     }
 
     @Test func tilesAreNotInteractive() {
-        #expect(!LiquidGlassChoice(prefersClear: true, isTinted: false, wantsInteraction: false, hasMotion: true).isInteractive)
+        #expect(!LiquidGlassChoice(prefersClear: true, isTinted: false, wantsInteraction: false).isInteractive)
     }
 }
 

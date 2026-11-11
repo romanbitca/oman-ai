@@ -1,158 +1,82 @@
+import OmanCore
 import SwiftUI
 
 enum SettingsMetrics {
-    static let gap: CGFloat = 8
-    static let outer: CGFloat = 6
-    static let inset = RoundedRectangle(cornerRadius: 13, style: .continuous)
+    /// Every page is this wide, as in Safari's or Mail's settings. Only the window's height follows the page.
+    static let width: CGFloat = 600
+    static let minPageHeight: CGFloat = 200
+    /// A page taller than this scrolls, so the window stays on the screen.
+    static let maxPageHeight: CGFloat = 620
+    static let resizeDuration: TimeInterval = 0.2
 }
 
-struct SettingsTile<Content: View>: View {
-    var title: String?
+/// How tall a page may get, and where it says how tall it is.
+struct SettingsPageSizing: Sendable {
+    var maxHeight = SettingsMetrics.maxPageHeight
+    var report: @MainActor (CGFloat) -> Void = { _ in }
+}
+
+extension EnvironmentValues {
+    @Entry var settingsPageSizing = SettingsPageSizing()
+}
+
+/// One page of Settings, in macOS's own grouped form.
+struct SettingsForm<Content: View>: View {
     @ViewBuilder var content: Content
+    @Environment(\.settingsPageSizing) private var sizing
+    @State private var scrollsAlways = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            if let title {
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
+        // The page hangs from the top of whatever height the window has at that moment and is laid out at its
+        // own height, so it stays still while the window grows or shrinks around it.
+        Color.clear.overlay(alignment: .top) {
+            ViewThatFits(in: .vertical) {
+                if !scrollsAlways {
+                    form.fixedSize(horizontal: false, vertical: true)
+                }
+                form
             }
-            content
-        }
-        .padding(17)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background { WindowDragArea() }
-        .liquidGlass(in: PanelShape.tile)
-    }
-}
-
-struct SettingsRow<Accessory: View>: View {
-    let title: String
-    var detail: String?
-    @ViewBuilder var accessory: Accessory
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 13, weight: .medium))
-                if let detail {
-                    Text(detail)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                // A grouped form is as tall as what it holds. Should a version of macOS say it is next to
+                // nothing, the page would be cut off, so it scrolls at full height from then on instead.
+                if height < SettingsMetrics.minPageHeight / 2 {
+                    scrollsAlways = true
+                } else {
+                    sizing.report(height)
                 }
             }
-            Spacer(minLength: 8)
-            accessory
+            .frame(width: SettingsMetrics.width, height: sizing.maxHeight, alignment: .top)
         }
+        .withoutSystemWritingTools()
+    }
+
+    private var form: some View {
+        Form { content }.formStyle(.grouped)
     }
 }
 
-struct SettingsToggleRow: View {
-    let title: String
-    var detail: String?
-    let isOn: Binding<Bool>
+/// Something that went wrong, in the row under the control it belongs to.
+struct SettingsError: View {
+    let text: String
 
     var body: some View {
-        SettingsRow(title: title, detail: detail) {
-            Toggle(title, isOn: isOn)
-                .toggleStyle(StillSwitchStyle())
-                .accessibilityLabel(title)
+        Label {
+            Text(text).foregroundStyle(.secondary)
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .symbolRenderingMode(.multicolor)
         }
+        .font(.callout)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
-/// Drawn by hand because the system switch animates its knob.
-private struct StillSwitchStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Button {
-            configuration.isOn.toggle()
-        } label: {
-            Capsule()
-                .fill(configuration.isOn ? Liquid.accent : Color.primary.opacity(0.18))
-                .frame(width: 38, height: 22)
-                .overlay(alignment: configuration.isOn ? .trailing : .leading) {
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 18, height: 18)
-                        .shadow(color: Color.black.opacity(0.18), radius: 1, y: 0.5)
-                        .padding(2)
-                }
-                .contentShape(Capsule())
-        }
-        .buttonStyle(LiquidPressStyle())
-        .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(configuration.isOn ? "On" : "Off")
-    }
-}
-
-struct LiquidSegmented<Option: Hashable>: View {
-    let options: [Option]
-    let selection: Option
-    let title: (Option) -> String
-    let onSelect: (Option) -> Void
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(options, id: \.self) { option in
-                let isSelected = option == selection
-                Button {
-                    onSelect(option)
-                } label: {
-                    Text(title(option))
-                        .font(.system(size: 12, weight: .medium))
-                        .padding(.horizontal, 15)
-                        .frame(height: 30)
-                        .foregroundStyle(isSelected ? Color.white : Color.primary)
-                        .background(isSelected ? Liquid.accent : Color.clear, in: Capsule())
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(LiquidPressStyle())
-            }
-        }
-        .padding(3)
-        .background(Color.primary.opacity(0.07), in: Capsule())
-    }
-}
-
-struct SettingsTextField: View {
-    let prompt: String
-    @Binding var text: String
-    var onSubmit: () -> Void = {}
-
-    var body: some View {
-        TextField(prompt, text: $text)
-            .textFieldStyle(.plain)
-            .focusEffectDisabled()
-            .font(.system(size: 13))
-            .padding(.horizontal, 14)
-            .frame(height: 36)
-            .background(Color.primary.opacity(0.07), in: Capsule())
-            .onSubmit(onSubmit)
-    }
-}
-
-struct SettingsTextBox: View {
-    let prompt: String
-    @Binding var text: String
-    var height: CGFloat = 96
-
-    var body: some View {
-        TextEditor(text: $text)
-            .font(.system(size: 13))
-            .scrollContentBackground(.hidden)
-            .focusEffectDisabled()
-            .frame(height: height)
-            .overlay(alignment: .topLeading) {
-                if text.isEmpty {
-                    Text(prompt)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.tertiary)
-                        .padding(.leading, 5)
-                        .allowsHitTesting(false)
-                }
-            }
-            .padding(10)
-            .background(Color.primary.opacity(0.07), in: SettingsMetrics.inset)
+extension SettingsViewModel {
+    /// A control's link to one preference, which is saved on every change.
+    func preference<Value>(_ keyPath: WritableKeyPath<AppPreferences, Value> & Sendable) -> Binding<Value> {
+        Binding(
+            get: { self.preferences[keyPath: keyPath] },
+            set: { value in self.updatePreferences { $0[keyPath: keyPath] = value } }
+        )
     }
 }

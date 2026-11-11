@@ -88,9 +88,13 @@ The panel hangs where Control Center does. Templates and context are plain choic
 
 Acceptance:
 - The first tile starts 12 points below the menu bar, as Control Center's first module does
-- A template chip only chooses. Original is first and means no template. Proofread, Rewrite and Compose use the chosen one
+- A template chip only chooses. As written is first and means no template. Proofread, Rewrite and Compose use the chosen one
+- The templates stay on one line behind a thin divider and scroll sideways when there are many
 - Screen, Messages and Clipboard each turn on and off, in any combination, and only what is on is sent
-- Settings and the menu bar icon follow the proposal the maintainer chose
+- Settings is a window with a tab for each page in its toolbar, built from macOS's own controls, and as tall as the page it shows
+- A style is edited in a sheet, and deleting it asks first
+- Spending can be read for today, this week, this month, last month and all time, with the requests, the tokens and a list by model
+- The menu bar icon is the single wave the maintainer chose
 
 ---
 

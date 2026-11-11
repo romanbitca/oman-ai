@@ -3,66 +3,97 @@ import SwiftUI
 
 struct SpendingSettingsView: View {
     let model: SettingsViewModel
+    @State private var period = SpendingSummary.Period.thisMonth
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: SettingsMetrics.gap) {
-            SettingsTile {
-                HStack(alignment: .top, spacing: 36) {
-                    total(title: "Today", dollars: model.spending.today)
-                    total(title: "This week", dollars: model.spending.thisWeek)
-                    Spacer(minLength: 0)
-                }
-                if !model.spending.hasEntries {
-                    NoticeText(text: "Nothing yet. OmanAI counts each Claude request from this version on.")
-                }
-                if let error = model.spendingError {
-                    NoticeText(text: error)
-                }
-            }
+    private var summary: SpendingSummary.PeriodSummary { model.spending[period] }
 
-            SettingsTile(title: "Per day") {
-                SpendingChart(bars: model.spending.days, unit: .day)
-            }
-
-            SettingsTile(title: "Per week") {
-                SpendingChart(bars: model.spending.weeks, unit: .weekOfYear)
-            }
-
-            NoticeText(
-                text: "Estimated from the tokens Anthropic reports for each request, at list prices. "
-                    + "Only OmanAI on this Mac is counted, and Apple's on-device model is free."
-            )
-            .padding(.horizontal, 6)
-        }
-        .onAppear { model.reloadSpending() }
+    private var detail: String {
+        guard summary.requests > 0 else { return "No requests" }
+        return [
+            SpendingFormat.requests(summary.requests),
+            SpendingFormat.tokens(summary.tokens),
+            "\(SpendingFormat.average(summary.averageCost)) each",
+        ].joined(separator: " · ")
     }
 
-    private func total(title: String, dollars: Double) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
-            Text(SpendingFormat.amount(dollars))
-                .font(.system(size: 26, weight: .semibold))
-                .monospacedDigit()
+    private var note: String {
+        let estimate = "Estimated from the tokens Anthropic reports for each request, at list prices. "
+            + "Only OmanAI on this Mac is counted, and Apple's on-device model is free."
+        return model.spending.hasEntries
+            ? estimate
+            : "Nothing yet. OmanAI counts each Claude request from this version on. " + estimate
+    }
+
+    var body: some View {
+        SettingsForm {
+            Section {
+                Picker("Period", selection: $period) {
+                    ForEach(SpendingSummary.Period.allCases) { period in
+                        Text(period.title).tag(period)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(SpendingFormat.amount(summary.cost))
+                        .font(.system(size: 28, weight: .semibold))
+                        .monospacedDigit()
+                    Text(detail).foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+
+                SpendingChart(bars: summary.bars, period: period)
+
+                if let error = model.spendingError {
+                    SettingsError(text: error)
+                }
+            } footer: {
+                Text(note)
+            }
+
+            if !summary.models.isEmpty {
+                Section("By model") {
+                    ForEach(summary.models) { share in
+                        LabeledContent(share.name) {
+                            HStack(spacing: 14) {
+                                Text(SpendingFormat.requests(share.requests)).foregroundStyle(.tertiary)
+                                Text(SpendingFormat.amount(share.cost))
+                                    .monospacedDigit()
+                                    .frame(minWidth: 64, alignment: .trailing)
+                            }
+                        }
+                    }
+                }
+            }
         }
+        .onAppear { model.reloadSpending() }
     }
 }
 
 private struct SpendingChart: View {
     let bars: [SpendingSummary.Bar]
-    let unit: Calendar.Component
+    let period: SpendingSummary.Period
+
+    private var labelFormat: Date.FormatStyle {
+        switch period {
+        case .today: .dateTime.hour()
+        case .thisWeek: .dateTime.weekday(.abbreviated)
+        case .thisMonth, .lastMonth: .dateTime.day().month(.abbreviated)
+        case .allTime: bars.count > 12 ? .dateTime.month(.abbreviated).year(.twoDigits) : .dateTime.month(.abbreviated)
+        }
+    }
 
     var body: some View {
         Chart(bars) { bar in
             BarMark(
-                x: .value("Date", bar.start, unit: unit),
+                x: .value("Date", bar.start, unit: period.barUnit),
                 y: .value("Spent", bar.cost)
             )
-            .foregroundStyle(Liquid.accent)
+            .foregroundStyle(Color.accentColor)
             .cornerRadius(3)
         }
-        // A day or week with nothing spent still needs an axis to sit on.
+        // An hour, day or month with nothing spent still needs an axis to sit on.
         .chartYScale(domain: 0...max(bars.map(\.cost).max() ?? 0, 0.01))
         .chartYAxis {
             AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
@@ -75,12 +106,13 @@ private struct SpendingChart: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: bars.map(\.start)) { _ in
-                AxisValueLabel(format: .dateTime.month(.abbreviated).day(), centered: true)
+            // Each label is centred under its own bar. Centred between marks, as Charts offers, it would sit
+            // between one labelled bar and the next, days away from its own.
+            AxisMarks(values: SpendingSummary.labelledBars(bars, for: period).map(\.middle)) { _ in
+                AxisValueLabel(format: labelFormat, anchor: .top)
             }
         }
-        .frame(height: 150)
-        // Settings has no animation at all.
-        .transaction { $0.animation = nil }
+        .frame(height: 140)
+        .padding(.vertical, 4)
     }
 }

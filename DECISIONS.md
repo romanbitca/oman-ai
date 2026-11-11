@@ -224,11 +224,48 @@ Supersedes how the backdrop is drawn in "Backdrop and glass set by measuring Con
 Asked for by the maintainer after 0.3.3. Supersedes "The Messages chip stays lit while context text exists" in the security review fixes above.
 
 - The panel's window hangs from the menu bar's lower edge, with the gap to the first tile inside it. The first tile starts 12 points below the bar, where Control Center's first module starts. It used to hang from the icon's own box, which ends 6 points above the bar's edge, so the first tile began 1.5 points under the bar
-- A style chip only chooses the template. It no longer rewrites at once. Exactly one is chosen, and the first chip, Original, is no template: the person's own voice, as it shows in what they wrote
+- A style chip only chooses the template. It no longer rewrites at once. Exactly one is chosen, and the first chip, As written, is no template: the person's own voice, as it shows in what they wrote. The maintainer picked the name from a short list
 - Proofread, Rewrite and Compose use the chosen template. Explain never does, because it only reads
-- Proofread with a template still only corrects, but takes the template's habits with capital letters and punctuation as correct, in both directions. It still sends no context, and the standing preferences still don't apply to it. With Original it works as before
-- Rewrite with Original is told to keep the writer's own voice: their formality and their habits with capital letters, punctuation and emoji
+- Proofread with a template still only corrects, but takes the template's habits with capital letters and punctuation as correct, in both directions. It still sends no context, and the standing preferences still don't apply to it. With As written it works as before
+- Rewrite with As written is told to keep the writer's own voice: their formality and their habits with capital letters, punctuation and emoji
 - A style's global shortcut is an action of its own and still rewrites at once
-- The template an app was last written in is remembered when it is used, not when it is chosen. After Original nothing is kept for that app, so its next panel starts on the default template from Settings, or on Original without one
+- The template an app was last written in is remembered when it is used, not when it is chosen. After As written nothing is kept for that app, so its next panel starts on the default template from Settings, or on As written without one
 - Screen, Messages and Clipboard are switches, and any of them can be on together. Messages on shows the box and sends what is in it; off hides the box and sends none of it, though the text is kept. Clipboard on reads the clipboard at that moment, shows all of it and sends it; off drops it. So only what is switched on is sent, and everything switched on is on show
+
+## 2026-11-11 — As written, one line of templates, and a new menu bar icon
+
+Chosen by the maintainer from proposals, after trying the preview.
+
+- The first chip is named As written. It stays at the start of the row, with a thin line between it and the templates
+- The templates stay on one line. When there are more than fit, the line scrolls sideways under a fade at its right end, and it opens scrolled to the chosen template. Wrapping made the panel taller with every template
+- The Screen chip is the only control for the screen: it turns on and off like Messages and Clipboard. The picture that will be sent is still shown while it is on, because everything switched on is on show, but it no longer has a remove button of its own
+- The menu bar icon is one wave drawn as a single stroke, the seventh of eight ideas shown. It replaces the app icon's shape traced down to menu bar size
+
+## 2026-11-11 — Settings in macOS's own design
+
+Chosen by the maintainer from two prototypes, a sidebar as in System Settings or tabs in the toolbar as in Safari and Mail: tabs in the toolbar, with macOS's own controls and their own motion. Supersedes "Settings has no animation at all" and the glass tiles Settings was drawn with.
+
+- Settings is a window with a tab for each page in its toolbar: General, Writing, Styles, Shortcuts, Key & Permissions, Spending. About is gone. Updates are a section of General, and the version, the link to GitHub and Quit end that page
+- Every page is a grouped form with the system's toggles, pop-up menus, segmented controls, text fields and buttons, in the system accent colour. None of the hand-drawn controls remain, nor the switch that kept them still
+- The window is 600 points wide and as tall as the page it shows. It changes height from its top edge in 0.2 seconds when the page changes. A page taller than 620 points, or than the display leaves room for, scrolls instead
+- A style is edited in a sheet. The box for a new message comes first and the newest message lands right under it, so adding several needs no scrolling. Try it is fixed at the bottom of the sheet, so a long list never pushes it out of sight
+- Deleting a style asks first, in macOS's own alert with Cancel as the button Return presses, because a style and its messages can't be brought back. Before, one click on a bin deleted it
+- The default style can be As written
+- A shortcut that isn't set reads Record Shortcut. How a shortcut is recorded is unchanged, and recording stops when the page or the window is left
+- The model is a pop-up menu. Choosing one that can't be used leaves the choice where it was and says why
+
+## 2026-11-11 — Spending by period
+
+Asked for by the maintainer: more than today and this week, such as this month, last month and all time.
+
+- The Spending page has one period control: Today, This week, This month, Last month, All time. It sets the total, the chart and the list by model together
+- The total comes with the number of requests, the tokens sent and received, and the average cost of a request
+- The chart has a bar for each hour of today, each day of a week or month, and each month of all time, including those with nothing spent and those still to come. All time starts at the first request and shows at least six months
+- By model lists every model ever used, most expensive over all time first, and keeps that list in every period, so the page stays the same height from one period to the next
+- All of it is worked out from the stored requests when Settings opens or the page shows. Nothing new is stored
+
+## 2026-11-11 — Apple's model is told to copy casing, not to use capital letters
+
+- Proofread with a template on Apple's on-device model is told to "copy this person's casing and punctuation habits" and to "fix the typos in this text and change nothing else". The wording written that morning, "use capital letters and punctuation the way this person does", made the model answer in capitals throughout. It had not been released
+- Seven wordings were run on the model itself, twice each on up to four texts, before choosing. The chosen one keeps a lower-case style lower-case and capitalises for a style that does
 

@@ -126,7 +126,7 @@ import Testing
 
     // MARK: Requests
 
-    @Test func proofreadWithOriginalSendsNoTemplateAndNoContext() async throws {
+    @Test func proofreadAsWrittenSendsNoTemplateAndNoContext() async throws {
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
@@ -234,7 +234,7 @@ import Testing
         #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == saved.id)
     }
 
-    @Test func originalSendsNoTemplateAndForgetsTheAppsLastOne() async throws {
+    @Test func asWrittenSendsNoTemplateAndForgetsTheAppsLastOne() async throws {
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
@@ -329,7 +329,7 @@ import Testing
         model.begin(with: noSelection)
         model.selectStyle(saved)
         #expect(model.selectedStyleID == saved.id)
-        // Choosing it again keeps it: one is always chosen, and Original is the way back.
+        // Choosing it again keeps it: one is always chosen, and As written is the way back.
         model.selectStyle(saved)
         #expect(model.selectedStyleID == saved.id)
         #expect(harness.writing.requests.isEmpty)

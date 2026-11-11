@@ -4,9 +4,42 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
-## 2026-11-11 — Original isn't remembered for an app when a default template is set
+## 2026-11-11 — Apple's on-device model: what it does well and badly
 
-The last template used in an app is stored as a style's ID, and Original has none. Using Original clears what was stored for that app, so its next panel starts on the default template from Settings. Without a default that is Original again, which is what most people will see. Remembering Original beside a default needs a new column or table, because the stored ID must belong to a style.
+Run through the app's own client on a Mac with macOS 27. It is available and runs locally. The first request after a pause takes 5 to 9 seconds; after that the first word comes in 0.6 to 1 second and the whole answer in 1 to 2.5.
+
+Plain proofreading in English is good. Beyond that it is weak: asked to rewrite a formal note in a casual style it returned the note almost unchanged, "make it polite but still firm" only swapped words, a reply was signed with the other person's name, "Fine. Do whatever you think is best, I guess." was read as casual permission, and Romanian came back wrong once and as a guardrail error once.
+
+Haiku answered the same eleven tasks without any of those faults. That was a Haiku agent given the app's exact prompts, not the app calling the API, so it says nothing about speed, cost or the three quality levels. A run through the API with each Claude model at each quality is still to do and needs a key.
+
+---
+
+## 2026-11-11 — Settings has only been tried on macOS 27
+
+The window follows the height of each page, which a grouped form reports when it is told to take its own size. That is seen working on macOS 27 only. Should macOS 14 or 15 report next to nothing, the page scrolls at full height instead (`SettingsForm`), and that path is untried too.
+
+The alert that asks before a style is deleted has not been tried by hand. SwiftUI's own confirmation did not appear after a click made inside the test process, so the sheet uses `NSAlert`, which was not opened in a test: it would have needed a click on the maintainer's screen.
+
+---
+
+## 2026-11-11 — Spending reads every stored request
+
+All time needs every request ever recorded, so the page reads them all each time Settings opens. That is fine for tens of thousands of rows. If it ever gets slow, the sums can be made by SQLite instead.
+
+---
+
+## 2026-11-11 — Trying Settings without showing a window
+
+- A window with a title bar placed outside every display is pulled back onto one when it is shown. Replacing `constrainFrameRect(_:to:)` for the test process keeps it where it is put
+- `screencapture -l` writes nothing for a window that is on no display. The window's frame view can draw itself with `cacheDisplay(in:to:)` instead. Drawn that way the toolbar gets a border round every tab, which the real window doesn't have
+- Never close a SwiftUI sheet from outside. `endSheet` left SwiftUI's own state set, the sheet came straight back, and a loop that waited for it to go ran for about twenty minutes on the maintainer's screen, until they pressed Done
+- `Charts` centres an axis label between marks. With a label for only some bars, that is days away from the bar it names, so each label is anchored at the middle of its own bar
+
+---
+
+## 2026-11-11 — As written isn't remembered for an app when a default template is set
+
+The last template used in an app is stored as a style's ID, and As written has none. Using As written clears what was stored for that app, so its next panel starts on the default template from Settings. Without a default that is As written again, which is what most people will see. Remembering As written beside a default needs a new column or table, because the stored ID must belong to a style.
 
 ---
 

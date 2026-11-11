@@ -4,11 +4,23 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Settings rebuilt in macOS's own design, spending by period, the on-device model tried
+
+- The maintainer chose tabs in the toolbar with native controls, the single-wave icon and the name As written. They also asked for a divider and one scrolling line of templates, a Screen chip without a button of its own, a more advanced Spending page, and a test of the models, the on-device one above all
+- Panel: As written, a thin divider, then the templates on one line that scrolls under a fade and opens at the chosen one. The picture under the Screen chip lost its remove button. In the preview that button had shown alone, because the preview's made-up picture couldn't be decoded
+- Menu bar icon: one wave as a single stroke
+- Settings: rebuilt as a toolbar-tab window of grouped forms. Removed the hand-drawn Settings controls, the glass container, the motion switch and the wrapping layout, which nothing uses now
+- Spending: one period control for today, this week, this month, last month and all time, with the total, requests, tokens, the average, a chart by hour, day or month, and a list by model
+- Apple's model runs on this Mac. Trying it found that this morning's prompt made it proofread in capitals; fixed before any release. Compared it with Haiku on eleven tasks
+- Left a sheet opening and closing on the maintainer's screen for about twenty minutes: the preview script closed a SwiftUI sheet from outside in a loop, and SwiftUI kept reopening it. They ended it by pressing Done. One more run then showed on screen although it was placed off it. After that the test window was kept off every display and drew itself to a file
+- Verified: 336 tests pass and the app builds. Every Settings page was captured on screen in light and dark before the Spending page changed, and the style sheet in both themes. The new Spending page was drawn off-screen for Today, Last month and All time
+- Not verified: the delete alert by hand; Settings on macOS 14 and 15; the Claude models at each quality through the API, which needs a key; the installed app. Not released
+
 ## 2026-11-11 — Panel position, templates and context as choices, proposals for Settings and the icon
 
 - The maintainer liked 0.3.3 and asked for four things: the panel a little lower, templates and context chips that only choose, a better Settings screen in macOS's own style, and a better menu bar icon, with ideas shown before the last two are built
 - The panel sat 1.5 points under the menu bar: it hung from the icon's own box, which ends 6 points above the bar's edge. Control Center's first module starts 12 points below the bar. The window now hangs from the bar's edge with that gap inside it, and a capture reads the first tile at the same height as Control Center's module
-- Template chips choose and start nothing, with Original first. Proofread now follows the chosen template's habits, Rewrite with Original keeps the writer's voice, and the last template is remembered when used. Screen, Messages and Clipboard are switches; the clipboard's text is shown when it is on
+- Template chips choose and start nothing, with the person's own voice first (named As written later the same day). Proofread now follows the chosen template's habits, Rewrite without a template keeps the writer's voice, and the last template is remembered when used. Screen, Messages and Clipboard are switches; the clipboard's text is shown when it is on
 - Left Control Center open on the maintainer's screen for a few minutes: two captures of it failed to save, which left its toggle one press out of step. Closed it, and added a check that says whether it is open
 - Built two Settings prototypes with macOS's own controls, a sidebar as in System Settings and tabs in the toolbar as in Safari, captured beside the present design, and drew eight menu bar icon ideas. Nothing of these is in the app yet
 - Verified: 329 tests pass and the app builds. Captured the new chips on screen with one template chosen, and with Messages and Clipboard on together
