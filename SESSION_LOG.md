@@ -10,6 +10,7 @@ Date-stamped log of what each work session accomplished.
 - Added a click-through backdrop window that dims and slightly blurs the side of the screen behind the panel and fades out beyond it, hidden while the panel is pinned. The panel is dark with white text when the theme is Match system, its tiles are clear glass over the backdrop, its buttons use interactive glass, and chosen chips are white instead of purple. Settings is unchanged
 - The rules for which glass a shape gets and where the backdrop goes are plain code with tests. 310 tests pass and the app builds without warnings
 - Not verified: how any of it looks, because glass and behind-window blur don't render offscreen; that clicks still land on clear glass, which has the 2% fill as a precaution; and how strong the dim and blur feel. The maintainer reviews it on screen
+- Published 0.3.1, with this and the Writing Tools fix, from a tag on `main`. The pull request's own check was still running when `main` moved, so the release's test step stood in for it, and all three release jobs passed. Checked from outside: Gatekeeper accepts it as notarized Developer ID, it is version 0.3.1 (3001), the zip's and the feed's signatures verify with the update key inside the installed 0.3.0, and the public feed serves 0.3.1
 
 ## 2026-11-11 — Back covered by Apple's Writing Tools
 

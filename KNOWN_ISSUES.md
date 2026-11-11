@@ -109,7 +109,7 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - A SwiftUI shape drawn above a `WindowDragArea` takes the click and does nothing with it, so mark it `.allowsHitTesting(false)`.
 - Fully clear pixels in the panel pass clicks to the app behind. Liquid Glass in a custom `Shape` counts as clear, unlike glass in a capsule or rounded rectangle, and so did a dark bar drawn on it. A 2% white fill in the same shape, behind the drag area, makes it clickable. Unit tests can't see this: check with real mouse events.
 - `log` is a zsh builtin, so reading the system log needs `/usr/bin/log`.
-- `gh variable get` answers 403 with the signed-in token, so check a release's update key against the one in the installed app instead.
+- `gh` on this Mac has more than one account, and the active one may be a work account that can only read this repository. Then pushes and `gh variable get` fail with 403. Run them with the maintainer's account for that command only, `GH_TOKEN="$(gh auth token --user romanbitca)"`, rather than switching the active account.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
 - The panel's backdrop is a behind-window blur, which offscreen rendering can't show either. Its strength is set by the constants at the top of `mac/App/PanelBackdrop.swift`.
