@@ -8,7 +8,6 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     private let services: AppServices
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let panel = FloatingPanel()
-    private let backdrop = PanelBackdrop()
     private var panelModel: PanelViewModel?
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
@@ -152,7 +151,6 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
 
     func hidePanel() {
         stopWatchingOutsideClicks()
-        backdrop.hide()
         panel.orderOut(nil)
     }
 
@@ -166,9 +164,6 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         panel.orderFrontRegardless()
         panel.makeKey()
         startWatchingOutsideClicks()
-        if !isPinned {
-            showBackdrop()
-        }
     }
 
     func setPanelPinned(_ pinned: Bool) {
@@ -177,19 +172,9 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         if isNewlyPinned, panel.isVisible {
             keepGripOnScreen()
         }
-        // A pinned panel is a window to work beside, so the dimmed backdrop goes away while it is pinned.
-        if pinned {
-            backdrop.hide()
-        } else if panel.isVisible {
-            showBackdrop()
-        }
     }
 
-    private func showBackdrop() {
-        backdrop.show(below: panel, sideMargin: PanelRootView.windowSideMargin)
-    }
-
-    /// As in Control Center, the panel is dark glass with white text, unless a theme was chosen in Settings.
+    /// Like Control Center, the panel is dark glass with white text, unless a theme was chosen in Settings.
     private func applyPanelAppearance() {
         let theme = (try? services.settings.preferences().appearance) ?? .system
         panel.appearance = theme == .system ? NSAppearance(named: .darkAqua) : nil

@@ -4,6 +4,12 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Backdrop removed
+
+- The maintainer installed 0.3.1 and sent screenshots with the panel open and closed: the backdrop grayed out half the screen without blurring it, and clear glass showed the app's text through the tiles. It looked very bad
+- Removed the backdrop window and clear glass. Tiles are frosted glass again; the dark panel with white text, interactive glass buttons and white "on" chips stay
+- Verified: 305 tests pass and the app builds. Not verified: how it looks on screen
+
 ## 2026-11-11 — Control Center look for the panel
 
 - The maintainer compared the panel with Control Center and asked for the native look, including Apple's glass buttons that flex when pressed

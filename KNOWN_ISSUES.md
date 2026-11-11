@@ -112,7 +112,7 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - `gh` on this Mac has more than one account, and the active one may be a work account that can only read this repository. Then pushes and `gh variable get` fail with 403. Run them with the maintainer's account for that command only, `GH_TOKEN="$(gh auth token --user romanbitca)"`, rather than switching the active account.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
-- The panel's backdrop is a behind-window blur, which offscreen rendering can't show either. Its strength is set by the constants at the top of `mac/App/PanelBackdrop.swift`.
+- A dimmed, blurred backdrop window behind the panel (`NSVisualEffectView`, behind-window, with a gradient mask) came out as a flat gray veil over other apps, with no visible blur, and clear glass let their text show through the tiles. Both were removed after one release; don't try them again without seeing them on screen first.
 - The computer-use tools can't see OmanAI because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "OmanAI"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---

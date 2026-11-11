@@ -33,18 +33,13 @@ extension EnvironmentValues {
     @Entry var panelIsFloating = false
     /// Turned off for Settings, which has no animation at all.
     @Entry var liquidMotion = true
-    /// Clear glass, as in Control Center, while the panel sits on its dimmed backdrop.
-    @Entry var liquidClearGlass = false
 }
 
-/// Which glass a shape gets. Kept apart from the view so the rules can be tested.
+/// Which glass a shape gets. Kept apart from the view so the rule can be tested.
 struct LiquidGlassChoice: Equatable {
-    let isClear: Bool
     let isInteractive: Bool
 
-    init(prefersClear: Bool, isTinted: Bool, wantsInteraction: Bool, hasMotion: Bool) {
-        // A tint is a solid colour, which clear glass would wash out.
-        isClear = prefersClear && !isTinted
+    init(wantsInteraction: Bool, hasMotion: Bool) {
         // Interactive glass lights up and flexes, and Settings has no motion at all.
         isInteractive = wantsInteraction && hasMotion
     }
@@ -136,26 +131,15 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
     let id: String?
     let interactive: Bool
     @Environment(\.liquidSpace) private var space
-    @Environment(\.liquidClearGlass) private var prefersClear
     @Environment(\.liquidMotion) private var hasMotion
 
     private var choice: LiquidGlassChoice {
-        LiquidGlassChoice(
-            prefersClear: prefersClear,
-            isTinted: tint != nil,
-            wantsInteraction: interactive,
-            hasMotion: hasMotion
-        )
+        LiquidGlassChoice(wantsInteraction: interactive, hasMotion: hasMotion)
     }
 
     func body(content: Content) -> some View {
         if #available(macOS 26.0, *) {
-            glassed(
-                content.background {
-                    // Clear glass may add no alpha to the window, and then a click would go to the app behind.
-                    if choice.isClear { shape.fill(Color.white.opacity(0.02)) }
-                }
-            )
+            glassed(content)
         } else {
             content
                 .background(.regularMaterial, in: shape)
@@ -176,10 +160,7 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
 
     @available(macOS 26.0, *)
     private var glass: Glass {
-        var glass = choice.isClear ? Glass.clear : Glass.regular
-        if let tint {
-            glass = glass.tint(tint)
-        }
+        let glass = tint.map { Glass.regular.tint($0) } ?? Glass.regular
         return choice.isInteractive ? glass.interactive() : glass
     }
 }

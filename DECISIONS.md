@@ -164,3 +164,10 @@ Supersedes, for the panel, "Custom buttons replace the system glass button style
 - Buttons in the panel use Apple's interactive glass, which lights up under the pointer and flexes when pressed, at the maintainer's request ("as much close to native as possible"). Their labels no longer dim when pressed
 - A chosen style and a context chip that is on are white with black text, as an "on" toggle is in Control Center, instead of purple
 - Clear glass gets a 2% white fill in its own shape, because glass that adds no alpha to the window lets a click through to the app behind
+
+## 2026-11-11 — No backdrop, frosted glass again
+
+Supersedes the backdrop and clear-glass points of "The panel looks like Control Center" above.
+
+- The maintainer installed 0.3.1 and found it looked very bad. Over a white app the backdrop came out as a gray veil across half the screen with no visible blur, and clear glass let the app's text show through the tiles. Both are gone
+- Tiles are regular, frosted glass again. Kept from 0.3.1: the dark panel with white text when the theme is Match system, Apple's interactive glass on buttons, and white "on" chips
