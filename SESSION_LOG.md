@@ -14,7 +14,10 @@ Date-stamped log of what each work session accomplished.
 - Apple's model runs on this Mac. Trying it found that this morning's prompt made it proofread in capitals; fixed before any release. Compared it with Haiku on eleven tasks
 - Left a sheet opening and closing on the maintainer's screen for about twenty minutes: the preview script closed a SwiftUI sheet from outside in a loop, and SwiftUI kept reopening it. They ended it by pressing Done. One more run then showed on screen although it was placed off it. After that the test window was kept off every display and drew itself to a file
 - Verified: 336 tests pass and the app builds. Every Settings page was captured on screen in light and dark before the Spending page changed, and the style sheet in both themes. The new Spending page was drawn off-screen for Today, Last month and All time
-- Not verified: the delete alert by hand; Settings on macOS 14 and 15; the Claude models at each quality through the API, which needs a key; the installed app. Not released
+- Not verified: the delete alert by hand; Settings on macOS 14 and 15; the Claude models at each quality through the API; the installed app
+- A Settings window low on the display now moves up when a taller page would reach below it. 339 tests pass
+- The maintainer asked to publish. Published 0.3.4 from a tag on `main`. All three release jobs passed, and the release checks out from the outside: notarized, signed by the same team, version 0.3.4 with build 3004, a signed feed whose signature and length match the download
+- The run of Haiku, Sonnet and Opus through the API was started twice and never began: reading the key from the Keychain needs the maintainer's password, and they were away. The command is ready for them to run
 
 ## 2026-11-11 — Panel position, templates and context as choices, proposals for Settings and the icon
 
