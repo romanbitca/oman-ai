@@ -219,3 +219,16 @@ Supersedes how the backdrop is drawn in "Backdrop and glass set by measuring Con
 - The panel arrives with a fast fade and a drop of 8 points from the menu bar. Growing into place, as Control Center does, was tried and halved the frame rate while it played, because glass is drawn again for every size and only moved for a slide
 - Closing stays immediate. Fading out would keep the keyboard in the panel for longer, and putting text back into the app depends on that hand-over
 
+## 2026-11-11 — Templates and context are choices, and the panel hangs lower
+
+Asked for by the maintainer after 0.3.3. Supersedes "The Messages chip stays lit while context text exists" in the security review fixes above.
+
+- The panel's window hangs from the menu bar's lower edge, with the gap to the first tile inside it. The first tile starts 12 points below the bar, where Control Center's first module starts. It used to hang from the icon's own box, which ends 6 points above the bar's edge, so the first tile began 1.5 points under the bar
+- A style chip only chooses the template. It no longer rewrites at once. Exactly one is chosen, and the first chip, Original, is no template: the person's own voice, as it shows in what they wrote
+- Proofread, Rewrite and Compose use the chosen template. Explain never does, because it only reads
+- Proofread with a template still only corrects, but takes the template's habits with capital letters and punctuation as correct, in both directions. It still sends no context, and the standing preferences still don't apply to it. With Original it works as before
+- Rewrite with Original is told to keep the writer's own voice: their formality and their habits with capital letters, punctuation and emoji
+- A style's global shortcut is an action of its own and still rewrites at once
+- The template an app was last written in is remembered when it is used, not when it is chosen. After Original nothing is kept for that app, so its next panel starts on the default template from Settings, or on Original without one
+- Screen, Messages and Clipboard are switches, and any of them can be on together. Messages on shows the box and sends what is in it; off hides the box and sends none of it, though the text is kept. Clipboard on reads the clipboard at that moment, shows all of it and sends it; off drops it. So only what is switched on is sent, and everything switched on is on show
+

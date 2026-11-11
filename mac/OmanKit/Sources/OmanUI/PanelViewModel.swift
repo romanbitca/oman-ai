@@ -49,7 +49,9 @@ public final class PanelViewModel {
     private(set) var selectedStyleID: UUID?
 
     var contextText = ""
-    var isContextExpanded = false
+    private(set) var includesMessages = false
+    /// The clipboard's text, read at the moment its chip was turned on.
+    private(set) var clipboardContext: String?
     private(set) var includeScreen = false
     private(set) var screenshot: ScreenshotAttachment?
     private(set) var screenHint: String?
@@ -76,7 +78,8 @@ public final class PanelViewModel {
         composePrompt = ""
         adjustment = ""
         contextText = ""
-        isContextExpanded = false
+        includesMessages = false
+        clipboardContext = nil
         includeScreen = false
         screenshot = nil
         screenHint = nil
@@ -295,14 +298,18 @@ public final class PanelViewModel {
 
     // MARK: Writing
 
+    /// Corrects mistakes and nothing else, so it takes no context. The chosen template tells it which habits
+    /// with capital letters and punctuation are the person's own and not mistakes.
     func proofread() {
         guard let text = capture.text else { return }
-        start(task: .proofread(text: text), style: nil, context: WritingContext())
+        rememberStyleChoice()
+        start(task: .proofread(text: text), style: selectedStyle, context: WritingContext())
     }
 
     func rewrite() {
         guard let text = capture.text else { return }
         let typed = instruction.trimmed
+        rememberStyleChoice()
         startWithContext(task: .rewrite(text: text, instruction: typed.isEmpty ? nil : typed), style: selectedStyle)
     }
 
@@ -312,22 +319,30 @@ public final class PanelViewModel {
         startWithContext(task: .explain(text: text), style: nil)
     }
 
-    func chooseStyleAndRewrite(_ style: WritingStyle) {
-        selectedStyleID = style.id
-        if preferences.remembersStylePerApp, let bundleID = capture.app?.bundleID {
-            try? services.styles.setLastStyleID(style.id, forBundleID: bundleID)
-        }
-        rewrite()
+    /// Chooses the template the next Proofread, Rewrite or Compose uses, and starts nothing. No template is
+    /// Original: the person's own voice, as it shows in what they wrote.
+    func selectStyle(_ style: WritingStyle?) {
+        selectedStyleID = style?.id
     }
 
-    func toggleComposeStyle(_ style: WritingStyle) {
-        selectedStyleID = selectedStyleID == style.id ? nil : style.id
+    /// A style's global shortcut is an action of its own: it rewrites in that style at once.
+    func chooseStyleAndRewrite(_ style: WritingStyle) {
+        selectStyle(style)
+        rewrite()
     }
 
     func compose() {
         let prompt = composePrompt.trimmed
         guard !prompt.isEmpty else { return }
+        rememberStyleChoice()
         startWithContext(task: .compose(request: prompt, selectedText: capture.text), style: selectedStyle)
+    }
+
+    /// The template an app was last written in is chosen again the next time. After Original nothing is kept,
+    /// so the default template from Settings, or Original without one, is chosen.
+    private func rememberStyleChoice() {
+        guard preferences.remembersStylePerApp, let bundleID = capture.app?.bundleID else { return }
+        try? services.styles.setLastStyleID(selectedStyleID, forBundleID: bundleID)
     }
 
     func tryAgain() {
@@ -361,8 +376,10 @@ public final class PanelViewModel {
         screen = screenBeforeRun
     }
 
+    /// Only what is switched on is sent, and everything switched on is on show in the panel.
     private var currentContext: WritingContext {
-        WritingContext(pastedText: contextText, screenshot: screenshot)
+        let parts = [includesMessages ? contextText.trimmed : "", clipboardContext?.trimmed ?? ""]
+        return WritingContext(pastedText: parts.filter { !$0.isEmpty }.joined(separator: "\n\n"), screenshot: screenshot)
     }
 
     /// Rewrite and Compose send the context. When the screen was asked for and its capture is still running,
@@ -596,14 +613,25 @@ public final class PanelViewModel {
         }
     }
 
-    /// The Messages chip stays lit while context will be sent, even with its editor closed.
-    var isContextChipOn: Bool { isContextExpanded || !contextText.trimmed.isEmpty }
+    /// Shows the box for pasted messages and sends what is in it. Off, the box is hidden and nothing in it is
+    /// sent, though it is kept in case the chip is turned on again.
+    func setIncludesMessages(_ enabled: Bool) {
+        includesMessages = enabled
+    }
 
-    /// The clipboard is only read here, when the person asks for it.
-    func useClipboard() {
-        hasClipboardCandidate = false
-        guard let text = services.system.clipboardText() else { return }
-        contextText = contextText.isEmpty ? text : contextText + "\n\n" + text
-        isContextExpanded = true
+    var includesClipboard: Bool { clipboardContext != nil }
+
+    /// The clipboard is only read here, when the person turns its chip on.
+    func setIncludesClipboard(_ enabled: Bool) {
+        guard enabled else {
+            clipboardContext = nil
+            return
+        }
+        guard let text = services.system.clipboardText(), !text.trimmed.isEmpty else {
+            // It was emptied since the panel opened, so there is nothing to offer any more.
+            hasClipboardCandidate = false
+            return
+        }
+        clipboardContext = text
     }
 }

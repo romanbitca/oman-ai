@@ -23,7 +23,7 @@ struct PanelHomeView: View {
                     StyleChipsView(
                         styles: model.styles,
                         selectedID: model.selectedStyleID,
-                        onSelect: { model.chooseStyleAndRewrite($0) },
+                        onSelect: { model.selectStyle($0) },
                         onCreate: { model.openSettings() }
                     )
 

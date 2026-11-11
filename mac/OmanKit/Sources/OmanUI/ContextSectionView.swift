@@ -13,12 +13,12 @@ struct ContextSectionView: View {
                         model.setIncludeScreen(!model.includeScreen)
                     }
                 }
-                ContextChip(title: "Messages", symbol: "text.alignleft", isOn: model.isContextChipOn) {
-                    model.isContextExpanded.toggle()
+                ContextChip(title: "Messages", symbol: "text.alignleft", isOn: model.includesMessages) {
+                    model.setIncludesMessages(!model.includesMessages)
                 }
                 if model.hasClipboardCandidate {
-                    ContextChip(title: "Clipboard", symbol: "doc.on.clipboard", isOn: false) {
-                        model.useClipboard()
+                    ContextChip(title: "Clipboard", symbol: "doc.on.clipboard", isOn: model.includesClipboard) {
+                        model.setIncludesClipboard(!model.includesClipboard)
                     }
                 }
             }
@@ -34,7 +34,7 @@ struct ContextSectionView: View {
                 .transition(.opacity)
             }
 
-            if model.isContextExpanded {
+            if model.includesMessages {
                 TextEditor(text: $model.contextText)
                     .font(.system(size: 13))
                     .scrollContentBackground(.hidden)
@@ -54,8 +54,14 @@ struct ContextSectionView: View {
                     }
                     .transition(.opacity)
             }
+
+            if let clipboard = model.clipboardContext {
+                ClipboardPreview(text: clipboard)
+                    .transition(.opacity)
+            }
         }
-        .animation(Liquid.morph, value: model.isContextExpanded)
+        .animation(Liquid.morph, value: model.includesMessages)
+        .animation(Liquid.morph, value: model.clipboardContext)
         .animation(Liquid.morph, value: model.screenshot)
     }
 }
@@ -80,6 +86,27 @@ private struct ContextChip: View {
         }
         .buttonStyle(GlassPressStyle())
         .animation(Liquid.press, value: isOn)
+    }
+}
+
+/// All of the clipboard's text that will be sent, to read before sending.
+private struct ClipboardPreview: View {
+    let text: String
+
+    var body: some View {
+        ScrollView(.vertical) {
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 15)
+                .padding(.vertical, 9)
+        }
+        .scrollIndicators(.never)
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxHeight: 84)
+        .fixedSize(horizontal: false, vertical: true)
+        .panelSurface(in: PanelShape.tile, reading: true)
     }
 }
 

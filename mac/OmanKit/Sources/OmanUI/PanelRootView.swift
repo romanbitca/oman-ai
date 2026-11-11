@@ -12,10 +12,21 @@ public struct PanelRootView: View {
     /// The window keeps this size so the glass can reshape without the window server resizing it.
     public static let windowSize = CGSize(
         width: PanelMetrics.width + PanelMetrics.sideMargin * 2,
-        height: PanelMetrics.maxHeight + PanelMetrics.bottomMargin
+        height: PanelMetrics.menuBarGap + PanelMetrics.maxHeight + PanelMetrics.bottomMargin
     )
 
     public static let windowSideMargin = PanelMetrics.sideMargin
+
+    /// Where the tiles are on screen while the panel hangs from the menu bar: `contentHeight` tall, below the
+    /// gap at the top of the panel's window and between its side margins.
+    public static func tilesFrame(inWindow frame: CGRect, contentHeight: CGFloat) -> CGRect {
+        CGRect(
+            x: frame.minX + PanelMetrics.sideMargin,
+            y: frame.maxY - PanelMetrics.menuBarGap - contentHeight,
+            width: frame.width - PanelMetrics.sideMargin * 2,
+            height: contentHeight
+        )
+    }
 
     private let model: PanelViewModel
     private let hasBackdrop: Bool
@@ -54,7 +65,9 @@ public struct PanelRootView: View {
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { model.contentHeightChanged($0) }
                 .frame(width: PanelMetrics.width)
                 .frame(maxHeight: PanelMetrics.maxHeight, alignment: .top)
-                .padding(.top, model.isPinned ? PanelMetrics.sideMargin : 0)
+                // The window hangs from the menu bar's lower edge, so the gap below the bar is inside it. That
+                // also leaves the panel room to drop into place without being cut off at the window's top.
+                .padding(.top, model.isPinned ? PanelMetrics.sideMargin : PanelMetrics.menuBarGap)
                 .padding(.horizontal, PanelMetrics.sideMargin)
         }
         .saturation(Liquid.colorBoost(usesClearGlass: usesClearGlass))

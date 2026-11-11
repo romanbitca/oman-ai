@@ -31,7 +31,7 @@ struct PanelComposeView: View {
                     StyleChipsView(
                         styles: model.styles,
                         selectedID: model.selectedStyleID,
-                        onSelect: { model.toggleComposeStyle($0) },
+                        onSelect: { model.selectStyle($0) },
                         onCreate: { model.openSettings() }
                     )
 

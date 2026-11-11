@@ -85,7 +85,7 @@ struct WritingPreferencesTests {
         #expect(text.contains("Also: no emoji"))
     }
 
-    @Test func onDeviceProofreadIgnoresStyleAndPreferences() {
+    @Test func onDeviceProofreadTakesATemplatesHabitsButNoPreferences() {
         let style = WritingStyle(name: "Slack", samples: [StyleSample(text: "yep on it")])
         let request = WritingRequest(
             task: .proofread(text: "hi"),
@@ -95,9 +95,17 @@ struct WritingPreferencesTests {
             customInstructions: "Be brief."
         )
         let text = AppleOnDeviceClient.instructions(for: request)
-        #expect(!text.contains("yep on it"))
+        #expect(text.contains("- yep on it"))
+        #expect(text.contains("capital letters and punctuation"))
         #expect(!text.contains("English"))
         #expect(!text.contains("Be brief."))
+        #expect(AppleOnDeviceClient.prompt(for: request).contains("the way the examples do"))
+    }
+
+    @Test func onDeviceProofreadWithoutATemplateOnlyCorrects() {
+        let request = WritingRequest(task: .proofread(text: "hi"), model: .appleOnDevice)
+        #expect(AppleOnDeviceClient.prompt(for: request) == "Fix only the spelling, grammar and punctuation in this text:\n\nhi")
+        #expect(!AppleOnDeviceClient.instructions(for: request).contains("Examples"))
     }
 
     @Test func onDevicePromptUsesPlainSentencesNotTags() {

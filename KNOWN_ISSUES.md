@@ -4,6 +4,12 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — Original isn't remembered for an app when a default template is set
+
+The last template used in an app is stored as a style's ID, and Original has none. Using Original clears what was stored for that app, so its next panel starts on the default template from Settings. Without a default that is Original again, which is what most people will see. Remembering Original beside a default needs a new column or table, because the stored ID must belong to a style.
+
+---
+
 ## 2026-11-11 — The backdrop depends on Core Animation classes outside the public headers
 
 The slight blur behind the panel is a `CABackdropLayer` with a `CAFilter` of type `variableBlur`, neither of which Apple documents. `BackdropBlur` looks them up at run time. If a future macOS removes them, `PanelBackdrop.isAvailable` turns false and the panel shows frosted glass with no backdrop, as 0.3.2 did. If only `variableBlur` goes, it falls back to one even blur shown through a fading mask, which also has no line but blurs less just outside the tiles. If they stay but behave differently, the backdrop could look wrong: measure it again with the checkerboard method under Tooling gotchas.

@@ -94,7 +94,9 @@ import Testing
         model.instruction = "shorter"
         model.composePrompt = "draft"
         model.contextText = "context"
-        model.isContextExpanded = true
+        model.setIncludesMessages(true)
+        harness.system.clipboard = "copied"
+        model.setIncludesClipboard(true)
         model.togglePin()
         #expect(model.isPinned)
         model.proofread()
@@ -105,7 +107,8 @@ import Testing
         #expect(model.instruction.isEmpty)
         #expect(model.composePrompt.isEmpty)
         #expect(model.contextText.isEmpty)
-        #expect(model.isContextExpanded == false)
+        #expect(model.includesMessages == false)
+        #expect(model.includesClipboard == false)
         #expect(model.draft.isEmpty)
         #expect(model.isPinned == false)
         #expect(harness.presenter.pinnedValues.last == false)
@@ -123,13 +126,14 @@ import Testing
 
     // MARK: Requests
 
-    @Test func proofreadSendsNoStyleOrContext() async throws {
+    @Test func proofreadWithOriginalSendsNoTemplateAndNoContext() async throws {
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
-        try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
         let model = harness.makePanel()
         model.begin(with: selection)
+        #expect(model.selectedStyleID == nil)
+        model.setIncludesMessages(true)
         model.contextText = "client said hi"
         model.proofread()
         await finish(model)
@@ -151,6 +155,7 @@ import Testing
         let model = harness.makePanel()
         model.begin(with: selection)
         model.instruction = "  shorter  "
+        model.setIncludesMessages(true)
         model.contextText = "client said hi"
         model.rewrite()
         await finish(model)
@@ -174,17 +179,102 @@ import Testing
         #expect(request.task == .rewrite(text: "hey can u send it", instruction: nil))
     }
 
-    @Test func chipClickRunsRewriteAndRecordsLastStyle() async throws {
+    @Test func aTemplateChipOnlyChoosesAndStartsNothing() throws {
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
         let model = harness.makePanel()
         model.begin(with: selection)
-        model.chooseStyleAndRewrite(saved)
+        #expect(model.selectedStyleID == nil)
+
+        model.selectStyle(saved)
+        #expect(model.selectedStyleID == saved.id)
+        #expect(harness.writing.requests.isEmpty)
+        #expect(model.screen == .home)
+        // Nothing is remembered for the app until the template is used.
+        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == nil)
+
+        model.selectStyle(nil)
+        #expect(model.selectedStyleID == nil)
+        #expect(harness.writing.requests.isEmpty)
+    }
+
+    @Test func rewriteUsesTheChosenTemplateAndRemembersItForTheApp() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.selectStyle(saved)
+        model.rewrite()
+        await finish(model)
+
+        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == saved.id)
+        let request = try #require(harness.writing.requests.last)
+        #expect(request.style == saved)
+        #expect(request.task == .rewrite(text: "hey can u send it", instruction: nil))
+    }
+
+    @Test func proofreadUsesTheChosenTemplateAndStillSendsNoContext() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.selectStyle(saved)
+        model.setIncludesMessages(true)
+        model.contextText = "client said hi"
+        model.proofread()
+        await finish(model)
+
+        let request = try #require(harness.writing.requests.last)
+        #expect(request.task == .proofread(text: "hey can u send it"))
+        #expect(request.style == saved)
+        #expect(request.context == WritingContext())
+        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == saved.id)
+    }
+
+    @Test func originalSendsNoTemplateAndForgetsTheAppsLastOne() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        #expect(model.selectedStyleID == saved.id)
+
+        model.selectStyle(nil)
+        model.rewrite()
+        await finish(model)
+
+        #expect(try #require(harness.writing.requests.last).style == nil)
+        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == nil)
+    }
+
+    @Test func explainNeverSendsATemplate() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.selectStyle(saved)
+        model.explain()
+        await finish(model)
+
+        #expect(try #require(harness.writing.requests.last).style == nil)
+        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == nil)
+    }
+
+    @Test func aStylesShortcutStillRewritesAtOnce() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.run(.style(saved.id))
         await finish(model)
 
         #expect(model.selectedStyleID == saved.id)
-        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == saved.id)
         let request = try #require(harness.writing.requests.last)
         #expect(request.style == saved)
         #expect(request.task == .rewrite(text: "hey can u send it", instruction: nil))
@@ -231,18 +321,24 @@ import Testing
         #expect(model.screen == .compose)
     }
 
-    @Test func composeChipsOnlyToggleSelection() {
+    @Test func composeChipsOnlyChooseATemplate() async throws {
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
         let model = harness.makePanel()
         model.begin(with: noSelection)
-        model.toggleComposeStyle(saved)
+        model.selectStyle(saved)
         #expect(model.selectedStyleID == saved.id)
-        model.toggleComposeStyle(saved)
-        #expect(model.selectedStyleID == nil)
+        // Choosing it again keeps it: one is always chosen, and Original is the way back.
+        model.selectStyle(saved)
+        #expect(model.selectedStyleID == saved.id)
         #expect(harness.writing.requests.isEmpty)
         #expect(model.screen == .compose)
+
+        model.composePrompt = "say thanks"
+        model.compose()
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).style == saved)
     }
 
     @Test func tryAgainAndAdjustSendRefinements() async throws {
@@ -637,17 +733,43 @@ import Testing
 
     // MARK: Context
 
-    @Test func useClipboardAppendsAndExpands() {
+    @Test func theClipboardChipTurnsOnAndOff() async throws {
         let harness = Harness()
         harness.system.clipboard = "from clipboard"
         let model = harness.makePanel()
         model.begin(with: selection)
         #expect(model.hasClipboardCandidate)
-        model.contextText = "typed"
-        model.useClipboard()
-        #expect(model.contextText == "typed\n\nfrom clipboard")
-        #expect(model.isContextExpanded)
-        #expect(model.hasClipboardCandidate == false)
+        #expect(model.includesClipboard == false)
+
+        model.setIncludesClipboard(true)
+        #expect(model.includesClipboard)
+        #expect(model.clipboardContext == "from clipboard")
+        // The chip stays, so it can be turned off again.
+        #expect(model.hasClipboardCandidate)
+
+        model.rewrite()
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).context.pastedText == "from clipboard")
+
+        model.goBack()
+        model.setIncludesClipboard(false)
+        #expect(model.includesClipboard == false)
+        model.rewrite()
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).context.pastedText.isEmpty)
+    }
+
+    @Test func messagesAndClipboardCanBothBeOn() async throws {
+        let harness = Harness()
+        harness.system.clipboard = "from clipboard"
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.setIncludesMessages(true)
+        model.contextText = " typed "
+        model.setIncludesClipboard(true)
+        model.rewrite()
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).context.pastedText == "typed\n\nfrom clipboard")
     }
 
     @Test func noClipboardMeansNoCandidate() {
@@ -665,7 +787,10 @@ import Testing
         #expect(model.hasClipboardCandidate)
         #expect(harness.system.clipboardReads == 0)
 
-        model.useClipboard()
+        model.setIncludesClipboard(true)
+        #expect(harness.system.clipboardReads == 1)
+        // Turning it off reads nothing.
+        model.setIncludesClipboard(false)
         #expect(harness.system.clipboardReads == 1)
     }
 
@@ -675,30 +800,30 @@ import Testing
         let model = harness.makePanel()
         model.begin(with: selection)
         harness.system.clipboard = nil
-        model.useClipboard()
-        #expect(model.contextText.isEmpty)
-        #expect(model.isContextExpanded == false)
+        model.setIncludesClipboard(true)
+        #expect(model.includesClipboard == false)
         #expect(model.hasClipboardCandidate == false)
     }
 
-    @Test func theMessagesChipStaysLitWhileHiddenContextWillBeSent() async throws {
+    @Test func messagesAreOnlySentWhileTheirChipIsOn() async throws {
         let harness = Harness()
         let model = harness.makePanel()
         model.begin(with: selection)
-        #expect(model.isContextChipOn == false)
+        #expect(model.includesMessages == false)
 
-        model.isContextExpanded = true
+        model.setIncludesMessages(true)
         model.contextText = "client said hi"
-        model.isContextExpanded = false
-        #expect(model.isContextChipOn)
-
         model.rewrite()
         await finish(model)
         #expect(try #require(harness.writing.requests.last).context.pastedText == "client said hi")
 
+        // Off, the box is hidden, so what is in it must not be sent. It is kept for turning the chip on again.
         model.goBack()
-        model.contextText = "  \n "
-        #expect(model.isContextChipOn == false)
+        model.setIncludesMessages(false)
+        model.rewrite()
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).context.pastedText.isEmpty)
+        #expect(model.contextText == "client said hi")
     }
 
     @Test func includeScreenWhenGrantedAttachesScreenshot() async throws {

@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Panel position, templates and context as choices, proposals for Settings and the icon
+
+- The maintainer liked 0.3.3 and asked for four things: the panel a little lower, templates and context chips that only choose, a better Settings screen in macOS's own style, and a better menu bar icon, with ideas shown before the last two are built
+- The panel sat 1.5 points under the menu bar: it hung from the icon's own box, which ends 6 points above the bar's edge. Control Center's first module starts 12 points below the bar. The window now hangs from the bar's edge with that gap inside it, and a capture reads the first tile at the same height as Control Center's module
+- Template chips choose and start nothing, with Original first. Proofread now follows the chosen template's habits, Rewrite with Original keeps the writer's voice, and the last template is remembered when used. Screen, Messages and Clipboard are switches; the clipboard's text is shown when it is on
+- Left Control Center open on the maintainer's screen for a few minutes: two captures of it failed to save, which left its toggle one press out of step. Closed it, and added a check that says whether it is open
+- Built two Settings prototypes with macOS's own controls, a sidebar as in System Settings and tabs in the toolbar as in Safari, captured beside the present design, and drew eight menu bar icon ideas. Nothing of these is in the app yet
+- Verified: 329 tests pass and the app builds. Captured the new chips on screen with one template chosen, and with Messages and Clipboard on together
+- Not verified: how Proofread with a template reads against the live API; the installed app. Not released
+
 ## 2026-11-11 — Lag found and fixed, a fading backdrop, faster screen changes
 
 - The maintainer tried the preview: it looked better, but a click made it lag, the blur began at a visible straight line, and the animation after a click should be very fast and smooth

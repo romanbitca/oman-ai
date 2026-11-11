@@ -201,11 +201,10 @@ struct ClaudeClientTests {
         #expect(try rawSystemJSON(first.raw) == rawSystemJSON(second.raw))
     }
 
-    @Test func proofreadDropsStyleContextAndScreenshot() async throws {
+    @Test func proofreadWithoutATemplateOnlyCorrectsAndDropsContextAndScreenshot() async throws {
         let (json, _) = try await capturedBody(
             of: WritingRequest(
                 task: .proofread(text: "teh text"),
-                style: style,
                 context: WritingContext(pastedText: "background", screenshot: screenshot)
             )
         )
@@ -219,6 +218,31 @@ struct ClaudeClientTests {
                 Tag code: CODE
 
                 <task-CODE>Correct spelling, grammar and punctuation only. Keep the wording, tone, line breaks and formatting as they are. If nothing needs correcting, return the text unchanged.</task-CODE>
+
+                <source_text-CODE>teh text</source_text-CODE>
+                """
+        )
+    }
+
+    @Test func proofreadWithATemplateFollowsItsHabitsAndStillDropsContextAndScreenshot() async throws {
+        let (json, _) = try await capturedBody(
+            of: WritingRequest(
+                task: .proofread(text: "teh text"),
+                style: style,
+                context: WritingContext(pastedText: "background", screenshot: screenshot)
+            )
+        )
+
+        // The rules, then the template with its samples.
+        #expect(try systemBlocks(json).count == 2)
+        let blocks = try userBlocks(json)
+        #expect(blocks.count == 1)
+        #expect(blocks[0]["type"] as? String == "text")
+        #expect(
+            try userText(json) == """
+                Tag code: CODE
+
+                <task-CODE>Correct spelling and grammar. For capital letters and punctuation, follow the habits of the writing style above instead of formal rules: add what its samples use and leave out what they leave out. Keep the wording, tone, line breaks and formatting as they are, and do not reword anything to sound like the samples. If nothing needs correcting, return the text unchanged.</task-CODE>
 
                 <source_text-CODE>teh text</source_text-CODE>
                 """
@@ -303,7 +327,7 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Rewrite the source text so it reads clearly and naturally. Keep its meaning, its tone and roughly its length.</task-CODE>
+                <task-CODE>Rewrite the source text so it reads clearly and naturally, in the writer's own voice as the text shows it: keep their level of formality and their habits with capital letters, punctuation and emoji. Keep its meaning and roughly its length.</task-CODE>
 
                 <source_text-CODE>hi</source_text-CODE>
                 """
@@ -379,7 +403,7 @@ struct ClaudeClientTests {
         )
     }
 
-    @Test func refinementOnProofreadStillIgnoresStyle() async throws {
+    @Test func refinementOnProofreadKeepsItsTemplate() async throws {
         let (json, _) = try await capturedBody(
             of: WritingRequest(
                 task: .proofread(text: "text"),
@@ -387,8 +411,13 @@ struct ClaudeClientTests {
                 refinement: Refinement(currentDraft: "draft", adjustment: "again")
             )
         )
+        #expect(try systemBlocks(json).count == 2)
+        #expect(try userText(json).contains("Keep to the writing style above."))
+    }
+
+    @Test func explainNeverTakesATemplate() async throws {
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .explain(text: "text"), style: style))
         #expect(try systemBlocks(json).count == 1)
-        #expect(!(try userText(json).contains("writing style")))
     }
 
     @Test func nonAsciiTextIsSentAsUTF8() async throws {

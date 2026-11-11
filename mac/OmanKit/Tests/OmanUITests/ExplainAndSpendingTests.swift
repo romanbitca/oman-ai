@@ -18,6 +18,7 @@ import Testing
         try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
         let model = harness.makePanel()
         model.begin(with: selection)
+        model.setIncludesMessages(true)
         model.contextText = "Lunch on Friday?"
         model.explain()
         await finish(model)

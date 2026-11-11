@@ -20,7 +20,7 @@ private func firstEditableField(in view: NSView) -> NSTextField? {
     @Test func thePanelTurnsAppleWritingToolsOffForItsText() async throws {
         let model = Harness().makePanel()
         model.begin(with: SelectionCapture(app: Harness.slack, text: "hey can u send it"))
-        model.isContextExpanded = true
+        model.setIncludesMessages(true)
         let host = NSHostingView(rootView: PanelRootView(model: model))
         host.frame = CGRect(origin: .zero, size: PanelRootView.windowSize)
         let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)

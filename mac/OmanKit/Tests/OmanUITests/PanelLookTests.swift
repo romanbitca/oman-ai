@@ -41,6 +41,22 @@ import Testing
     }
 }
 
+@Suite struct PanelPlacementTests {
+    @Test func theTilesStartBelowTheGapAtTheTopOfTheWindow() {
+        let window = CGRect(origin: CGPoint(x: 978, y: 420), size: PanelRootView.windowSize)
+        let tiles = PanelRootView.tilesFrame(inWindow: window, contentHeight: 343)
+        // The window hangs from the menu bar's lower edge, and the first tile starts 11 points below that.
+        #expect(tiles.maxY == window.maxY - 11)
+        #expect(tiles.height == 343)
+        #expect(tiles.minX == window.minX + PanelMetrics.sideMargin)
+        #expect(tiles.width == PanelMetrics.width)
+    }
+
+    @Test func theWindowHoldsTheGapTheTallestPanelAndItsBottomMargin() {
+        #expect(PanelRootView.windowSize.height == PanelMetrics.menuBarGap + PanelMetrics.maxHeight + PanelMetrics.bottomMargin)
+    }
+}
+
 @Suite struct PanelBackdropLayoutTests {
     private let screen = CGRect(x: 0, y: 0, width: 1728, height: 1084)
     private let tiles = CGRect(x: 1012, y: 779, width: 360, height: 300)

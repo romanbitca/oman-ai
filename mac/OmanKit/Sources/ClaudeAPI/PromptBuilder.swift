@@ -79,13 +79,15 @@ enum PromptBuilder {
         return false
     }
 
-    /// Proofread and Explain keep to the person's own words, so a voice or standing preferences don't apply.
-    private static func writesInTheirVoice(_ request: WritingRequest) -> Bool {
+    /// Proofread and Explain keep to the person's own words, so standing preferences don't apply to them.
+    private static func writesNewWording(_ request: WritingRequest) -> Bool {
         !isProofread(request) && !isExplain(request)
     }
 
+    /// Explain only reads, so a template means nothing to it. Proofread takes one for its habits with capital
+    /// letters and punctuation, which would otherwise be corrected as mistakes.
     private static func activeStyle(in request: WritingRequest) -> WritingStyle? {
-        writesInTheirVoice(request) ? request.style : nil
+        isExplain(request) ? nil : request.style
     }
 
     private static func activeScreenshot(in request: WritingRequest) -> ScreenshotAttachment? {
@@ -137,7 +139,7 @@ enum PromptBuilder {
             parts.append(tagged("request", composeRequest, code: code))
         }
 
-        if writesInTheirVoice(request), let preferences = preferencesText(for: request) {
+        if writesNewWording(request), let preferences = preferencesText(for: request) {
             parts.append(tagged("preferences", preferences, code: code))
         }
 
@@ -188,13 +190,19 @@ enum PromptBuilder {
 
         switch request.task {
         case .proofread:
-            return """
-                Correct spelling, grammar and punctuation only. Keep the wording, tone, line breaks and formatting as they are. If nothing needs correcting, return the text unchanged.
-                """
+            return hasStyle
+                ? """
+                    Correct spelling and grammar. For capital letters and punctuation, follow the habits of the writing style above instead of formal rules: add what its samples use and leave out what they leave out. Keep the wording, tone, line breaks and formatting as they are, and do not reword anything to sound like the samples. If nothing needs correcting, return the text unchanged.
+                    """
+                : """
+                    Correct spelling, grammar and punctuation only. Keep the wording, tone, line breaks and formatting as they are. If nothing needs correcting, return the text unchanged.
+                    """
         case .rewrite:
             return hasStyle
                 ? "Rewrite the source text in the writing style above. Keep its meaning and roughly its length."
-                : "Rewrite the source text so it reads clearly and naturally. Keep its meaning, its tone and roughly its length."
+                : """
+                    Rewrite the source text so it reads clearly and naturally, in the writer's own voice as the text shows it: keep their level of formality and their habits with capital letters, punctuation and emoji. Keep its meaning and roughly its length.
+                    """
         case .compose:
             return hasStyle
                 ? "Write new text that fulfils the request, in the writing style above."

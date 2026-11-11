@@ -82,6 +82,16 @@ Acceptance:
 - Proofread, Rewrite and Explain fit on one row
 - Spending shows today, this week, the last 14 days and the last 8 weeks, and a Claude request appears there straight after it finishes
 
+## W9: Choices in the panel, Settings and the icon [IN PROGRESS]
+
+The panel hangs where Control Center does. Templates and context are plain choices that start nothing. Settings and the menu bar icon are redesigned from proposals the maintainer picks.
+
+Acceptance:
+- The first tile starts 12 points below the menu bar, as Control Center's first module does
+- A template chip only chooses. Original is first and means no template. Proofread, Rewrite and Compose use the chosen one
+- Screen, Messages and Clipboard each turn on and off, in any combination, and only what is on is sent
+- Settings and the menu bar icon follow the proposal the maintainer chose
+
 ---
 
 # Meeting recorder (parked 2026-11-10)

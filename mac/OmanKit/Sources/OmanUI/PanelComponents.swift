@@ -11,6 +11,9 @@ enum PanelMetrics {
     /// Room beside the tiles for the corner grip: one tile gap, the grip and its shadow.
     static let sideMargin = gap + gripThickness + shadowRoom
     static let bottomMargin: CGFloat = 24
+    /// From the menu bar's lower edge to the first tile. Control Center's first module starts 12 points below
+    /// the bar, measured on screen: 11 below the top of the area apps may use, which is where the window hangs.
+    static let menuBarGap: CGFloat = 11
     static let maxHeight: CGFloat = 640
     static let tileRadius: CGFloat = 26
 }
@@ -192,19 +195,23 @@ struct NoticeText: View {
 struct StyleChipsView: View {
     let styles: [WritingStyle]
     let selectedID: UUID?
-    let onSelect: (WritingStyle) -> Void
+    /// Called with nil for Original.
+    let onSelect: (WritingStyle?) -> Void
     let onCreate: () -> Void
 
     var body: some View {
         FlowLayout(spacing: 6) {
+            // One is always chosen. Original is no template: the person's own voice.
+            chip(title: "Original", symbol: nil, isSelected: selectedID == nil) {
+                onSelect(nil)
+            }
+            ForEach(styles) { style in
+                chip(title: style.displayName, symbol: nil, isSelected: style.id == selectedID) {
+                    onSelect(style)
+                }
+            }
             if styles.isEmpty {
                 chip(title: "Create a style", symbol: "plus", isSelected: false, action: onCreate)
-            } else {
-                ForEach(styles) { style in
-                    chip(title: style.displayName, symbol: nil, isSelected: style.id == selectedID) {
-                        onSelect(style)
-                    }
-                }
             }
         }
         .animation(Liquid.press, value: selectedID)

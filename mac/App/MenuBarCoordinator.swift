@@ -122,7 +122,14 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         // The window's side margins are transparent and may hang off the screen, unless the grip is showing in one.
         let inset: CGFloat = isPinned ? 0 : 8 - PanelRootView.windowSideMargin
         let x = min(max(buttonRect.midX - width / 2, visible.minX + inset), visible.maxX - width - inset)
-        panel.setFrameTopLeftPoint(NSPoint(x: x, y: buttonRect.minY - 5))
+        panel.setFrameTopLeftPoint(NSPoint(x: x, y: menuBarBottom(belowTopOf: visible)))
+    }
+
+    /// The lower edge of the menu bar. The panel used to hang from the icon's own box, which ends 6 points above
+    /// that edge, so its first tile began under the bar. With a menu bar that hides itself the area for apps
+    /// reaches the top of the screen, and the bar's window is what says where the bar ends.
+    private func menuBarBottom(belowTopOf visible: NSRect) -> CGFloat {
+        min(visible.maxY, statusItem.button?.window?.frame.minY ?? visible.maxY)
     }
 
     private func statusButtonScreenRect() -> NSRect? {
@@ -199,15 +206,9 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
             backdrop.hide()
             return
         }
-        let margin = PanelRootView.windowSideMargin
-        let tiles = NSRect(
-            x: panel.frame.minX + margin,
-            y: panel.frame.maxY - contentHeight,
-            width: panel.frame.width - margin * 2,
-            height: contentHeight
-        )
+        let tiles = PanelRootView.tilesFrame(inWindow: panel.frame, contentHeight: contentHeight)
         var bounds = screen.frame
-        bounds.size.height = screen.visibleFrame.maxY - bounds.minY
+        bounds.size.height = menuBarBottom(belowTopOf: screen.visibleFrame) - bounds.minY
         backdrop.show(PanelBackdropLayout(tiles: tiles, bounds: bounds), below: panel)
     }
 
