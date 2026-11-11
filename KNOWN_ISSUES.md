@@ -10,6 +10,14 @@ The slight blur behind the panel comes from `CGSSetWindowBackgroundBlurRadius`, 
 
 ---
 
+## 2026-11-11 — The panel's steady look relies on an AppKit method outside the public headers
+
+macOS draws glass darker and flat in a window that isn't key, and a tinted button turns gray. A pinned panel is rarely key, so `FloatingPanel` answers `hasKeyAppearance` with yes and its glass stays as it is when focused. AppKit declares that method only privately. If a future macOS stops asking it, the panel goes back to dimming when it loses focus and nothing else breaks. To check, show the panel, make another window key and compare captures: the glass should not change.
+
+Not checked: what else in the panel reads the same answer, such as the colour of selected text in a pinned panel that isn't focused.
+
+---
+
 ## 2026-11-11 — Back sometimes did nothing, and the panel can feel slow
 
 Up to 0.3.0, Apple's Writing Tools ran inside OmanAI's panel. After text in the panel was clicked or selected, macOS set up its floating Writing Tools button and a host window over the panel, which could sit on Back and take the click. The system log shows this as `CampoLightweightUI` events in OmanAI's process. Writing Tools is now off for OmanAI's own text, but Back has not been re-checked on screen. If it misses again, `/usr/bin/log show --last 1h --predicate 'subsystem == "com.romanbitca.oman"'` shows whether the press arrived.
@@ -118,6 +126,10 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - Glass can be checked on screen, with the maintainer's OK: host the panel in a borderless panel under the menu bar, make it the key window, let it draw for about a second, and capture that area with `screencapture -R`. Glass in a window that isn't key is drawn flat and gray, which made several captures misleading. Control Center opens through Accessibility by pressing the "Control Center" item that `MenuBarAgent` owns in the menu bar (System Events can't see it); wait about three seconds before capturing it.
 - To compare with Control Center by numbers, put a window with a black and white checkerboard of 32-point squares behind both, at level `.floating`. Per square, read the white level, the black level, and the width of the edge to the next square: the 10% to 90% width divided by 2.563 is the blur's sigma. The backdrop's numbers were found this way.
 - The window server's blur (`CGSSetWindowBackgroundBlurRadius`) only shows where the window's own pixels have an alpha of at least 2/255. It is all or nothing there, and three units of radius blur by about one point. Blurs in stacked windows add as the root of the sum of their squares.
+- To compare a tile's colour with Control Center, put a plain colour behind both and read the colour through a tile and in the gap beside it. The gap gives what the tile sees. Control Center's tile turns 0/0/0 into 13/13/13, 45/45/45 into 43/43/43, 90/90/90 into 73/73/73, 81/27/18 into 89/24/11, 85/54/18 into 84/46/0, 18/36/81 into 15/37/91 and 18/63/27 into 0/60/15 (percent, macOS 27).
+- Inside a `GlassEffectContainer` the container draws the glass for every view in it. A filter such as `.saturation` on one of those views changes its content and not its glass, so it has to go on the container. A blend mode on a layer drawn over the glass does work on a single view.
+- A filter on the content of a glass view cuts that content off from the glass. With `.saturation` on a tile's content, a text field's placeholder turned from light to dark gray.
+- Glass in a window that isn't key can't be kept active from SwiftUI: setting `appearsActive` or `controlActiveState` in the environment changes nothing. It follows the window's `hasKeyAppearance`.
 - `NSVisualEffectView.maskImage` ignores an image with only an alpha channel. Give it black pixels with the fade in their alpha.
 - `gh` on this Mac has more than one account, and the active one may be a work account that can only read this repository. Then pushes and `gh variable get` fail with 403. Run them with the maintainer's account for that command only, `GH_TOKEN="$(gh auth token --user romanbitca)"`, rather than switching the active account.
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.

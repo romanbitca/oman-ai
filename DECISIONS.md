@@ -194,3 +194,14 @@ Supersedes the backdrop and glass points of "Matched against Control Center on s
 - Text to read or type stays on frosted glass: the result, the compose box, pasted context, setup and errors. Control Center shows no paragraphs, and long white text over a slightly blurred app is hard to read
 - Pinned, with the Light theme, or with Reduce Transparency on, every tile is frosted. Pinned or with Reduce Transparency on there is no backdrop either
 - Tiles are 12 points apart with a 26-point corner radius, up from 8 and 22, closer to Control Center's 13 to 14 points and its rounder modules
+
+## 2026-11-11 — Tile colour and focus set by measuring Control Center
+
+Supersedes the tile point of "Backdrop and glass set by measuring Control Center" above. The maintainer liked that version in general, but found the tiles too dark and not glassy enough next to Control Center, and saw the panel turn darker when it lost focus.
+
+- Control Center's tiles were measured again, on plain colour fields. Grays follow the same law as before: through a tile, white is 73% and black 13%. Colours come out more vivid than what is behind the tile, about 1.25 times as far from gray. A red that reads 81/27/18 (red, green and blue in percent) behind a tile reads 89/24/11 through it. The gray layer over our glass did the opposite and cut colour by a third, to 72/31/23
+- The layer over clear glass is now 30% of 13% gray drawn with a luminosity blend, so it sets a tile's brightness and leaves colour alone, and the panel adds a saturation boost of 1.25. Through a tile the panel reads 13, 44 and 73 on black, mid-gray and white, against Control Center's 13, 43 and 73. On red, orange, blue and green it reads 87/23/10, 80/46/0, 11/37/95 and 0/60/15, against 89/24/11, 84/46/0, 15/37/91 and 0/60/15
+- The boost goes on the whole panel, not on each tile. The tiles share one glass container, which draws the glass for all of them, so a boost on one tile never reaches its glass. Frosted tiles get it too. Pictures that must keep their own colours, the app's icon and the screenshot preview, undo it for themselves
+- Without clear glass there is no boost. Pinned, with the Light theme, or with Reduce Transparency on, the panel looks as before
+- The panel keeps one look whether or not it has the keyboard. macOS draws glass darker and flat in a window that isn't key, and turns a tinted button gray. A pinned panel sits beside the app being typed in and is rarely key. The panel's window answers AppKit's `hasKeyAppearance` with yes. That method isn't in the public headers. SwiftUI's own switches for this, `appearsActive` and `controlActiveState`, were tried first and don't reach glass
+

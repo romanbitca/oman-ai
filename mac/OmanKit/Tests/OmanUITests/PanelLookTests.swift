@@ -29,6 +29,18 @@ import Testing
     }
 }
 
+@Suite struct ClearGlassColourTests {
+    @Test func clearGlassGetsControlCentersColourBoost() {
+        #expect(Liquid.colorBoost(usesClearGlass: true) == Liquid.clearGlassSaturation)
+        #expect(Liquid.clearGlassSaturation > 1)
+    }
+
+    @Test func frostedGlassKeepsItsColours() {
+        // Pinned, with the Light theme or with Reduce Transparency on, the panel must look as it did before.
+        #expect(Liquid.colorBoost(usesClearGlass: false) == 1)
+    }
+}
+
 @Suite struct PanelBackdropLayoutTests {
     private let screen = CGRect(x: 0, y: 0, width: 1728, height: 1084)
     private let tiles = CGRect(x: 1012, y: 779, width: 360, height: 300)

@@ -94,6 +94,7 @@ private struct ScreenshotThumbnail: View {
                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
+                    .keepingOwnColors()
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .frame(maxWidth: .infinity, maxHeight: 180)
             }

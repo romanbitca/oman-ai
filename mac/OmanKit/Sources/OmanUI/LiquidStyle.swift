@@ -5,8 +5,18 @@ enum Liquid {
     static let morph = Animation.smooth(duration: 0.28)
     static let press = Animation.easeOut(duration: 0.12)
     static let accent = Color(red: 0.40, green: 0.34, blue: 1.0)
-    /// Laid over clear glass so that it matches Control Center's tiles.
-    static let clearGlassShade = Color(white: 0.13, opacity: 0.29)
+    /// Laid over clear glass with a luminosity blend, so it sets how bright a tile is and leaves the colour of
+    /// what shows through alone. Measured against Control Center's tiles, as is the boost below.
+    static let clearGlassShade = Color(white: 0.13, opacity: 0.30)
+    /// Control Center shows what is behind a tile more vivid than it is.
+    static let clearGlassSaturation = 1.25
+
+    /// The tiles share one glass container, which draws the glass for all of them, so a boost on one tile never
+    /// reaches its glass. It goes on the whole panel instead.
+    static func colorBoost(usesClearGlass: Bool) -> Double {
+        usesClearGlass ? clearGlassSaturation : 1
+    }
+
     static let iridescence: [Color] = [
         Color(red: 0.40, green: 0.34, blue: 1.0),
         Color(red: 0.82, green: 0.32, blue: 0.96),
@@ -39,6 +49,24 @@ extension EnvironmentValues {
     @Entry var liquidClearGlass = false
     /// Controls inside a glass tile are flat, because Apple's glass isn't meant to sit on glass.
     @Entry var isInsideGlassTile = false
+    /// How much the panel boosts colour for its glass.
+    @Entry var liquidColorBoost = 1.0
+}
+
+private struct OwnColors: ViewModifier {
+    @Environment(\.liquidColorBoost) private var boost
+
+    func body(content: Content) -> some View {
+        content.saturation(1 / boost)
+    }
+}
+
+extension View {
+    /// For a picture on the panel, such as an app's icon: undoes the panel's colour boost, which is meant for
+    /// what shows through the glass.
+    func keepingOwnColors() -> some View {
+        modifier(OwnColors())
+    }
 }
 
 /// Which glass a shape gets. Kept apart from the view so the rules can be tested.
@@ -161,9 +189,10 @@ private struct LiquidGlassModifier<S: Shape>: ViewModifier {
             glassed(
                 content.background {
                     // Clear glass alone leaves white almost white, and white text can't be read on it. Control
-                    // Center darkens its tiles: measured through one, white is 73% and black 13%. This layer over
-                    // the glass gives exactly that.
-                    if choice.isClear { shape.fill(Liquid.clearGlassShade) }
+                    // Center darkens its tiles: measured through one, white is 73% and black 13%. A gray layer
+                    // over the glass gives that but washes out the colours behind it, so this one changes
+                    // brightness only.
+                    if choice.isClear { shape.fill(Liquid.clearGlassShade).blendMode(.luminosity) }
                 }
             )
         } else {

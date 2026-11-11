@@ -27,6 +27,12 @@ public struct PanelRootView: View {
         isAvailable && !isPinned && !reduceTransparency
     }
 
+    /// Clear glass is Control Center's dark glass with white text. With the Light theme the tiles stay frosted.
+    private var usesClearGlass: Bool {
+        colorScheme == .dark
+            && Self.showsBackdrop(isAvailable: hasBackdrop, isPinned: model.isPinned, reduceTransparency: reduceTransparency)
+    }
+
     public var body: some View {
         LiquidContainer(spacing: PanelMetrics.blend) {
             ZStack(alignment: .topTrailing) {
@@ -45,14 +51,11 @@ public struct PanelRootView: View {
                     .padding(.horizontal, PanelMetrics.sideMargin)
             }
         }
+        .saturation(Liquid.colorBoost(usesClearGlass: usesClearGlass))
+        .environment(\.liquidColorBoost, Liquid.colorBoost(usesClearGlass: usesClearGlass))
         .environment(\.liquidSpace, space)
         .environment(\.panelIsFloating, model.isPinned)
-        // Clear glass is Control Center's dark glass with white text. With the Light theme the tiles stay frosted.
-        .environment(
-            \.liquidClearGlass,
-            colorScheme == .dark
-                && Self.showsBackdrop(isAvailable: hasBackdrop, isPinned: model.isPinned, reduceTransparency: reduceTransparency)
-        )
+        .environment(\.liquidClearGlass, usesClearGlass)
         .withoutSystemWritingTools()
         .animation(Liquid.morph, value: model.screen)
         .animation(Liquid.morph, value: model.isPinned)

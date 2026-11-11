@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-11 — Tile colour and focus matched to Control Center
+
+- The maintainer liked the measured backdrop, but found the tiles too dark and not glassy enough next to Control Center, and noticed the panel turning darker when it lost focus
+- Measured Control Center's tiles on plain colour fields. Brightness follows the law found on grays, and colours come out about 1.25 times more vivid than what is behind the tile. Ours cut colour by a third, because of the gray layer over the glass
+- Tried eight ways to shade the glass in a lab window and scored each against Control Center on seven fields. A shade that changes brightness only, plus a saturation boost of 1.25, came closest: 17 levels of error in total over 21 readings, against 88 for that shade alone and 147 for the gray layer used before
+- In the real panel the boost did nothing at first, because the tiles share a glass container that draws their glass. Moved it to the whole panel. The app's icon and the screenshot preview undo it. A second way, a dodge blend on each tile, scored 97 or worse
+- Glass in a window that isn't key is drawn darker and flat. SwiftUI's environment switches didn't change that. Answering `hasKeyAppearance` from the panel's window did: a capture of the panel after it lost the keyboard reads the same as the focused one, and the Write button keeps its colour
+- Verified: 317 tests pass and the app builds. Through a tile the panel is within 4 levels in 100 of Control Center on all seven fields, and reads the same on dark grays. The app icon's colours are unchanged, and the pinned panel and the Light theme look as before. Captured next to Control Center over a colour gradient, a white page, a dark page and the desktop
+- Not verified: the installed app, since only the preview panel was captured; the look while text streams in; whether a boost over the whole panel costs anything while it animates; the colour of selected text in a pinned panel that isn't focused. Not released
+
 ## 2026-11-11 — Backdrop rebuilt from measurements of Control Center
 
 - The maintainer rejected the blurred card behind the panel as a box that was not really transparent, and a wider band of glass because it blurred everything. Stopped judging by eye: put a checkerboard behind the real Control Center and read its blur and tone square by square

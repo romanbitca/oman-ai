@@ -34,6 +34,12 @@ final class FloatingPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
+    /// macOS draws glass darker and flat in a window that isn't key. A pinned panel sits beside the app being
+    /// typed in and is rarely key, so it would look switched off most of the time. AppKit asks the window this
+    /// before it dims anything. The method isn't in the public headers, so if AppKit ever stops asking, the
+    /// panel goes back to dimming and nothing else changes.
+    @objc var hasKeyAppearance: Bool { true }
+
     override func cancelOperation(_ sender: Any?) {
         onEscape?()
     }

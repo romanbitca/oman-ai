@@ -138,6 +138,7 @@ struct SourceAppIcon: View {
                 .resizable()
                 .interpolation(.high)
                 .frame(width: 20, height: 20)
+                .keepingOwnColors()
         }
     }
 
