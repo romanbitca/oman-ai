@@ -4,6 +4,12 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-11 — A release needs no approval until the setup script has run
+
+The release workflow and docs/RELEASING.md expect the six release secrets in a `release` environment that asks the maintainer for approval. On this repository the environment doesn't exist yet and the secrets are still stored on the repository itself, because `mac/scripts/setup-release-secrets.sh` has not run since it changed. Until it does, the build and publish jobs start without approval, because GitHub creates a missing environment with no rules, and a workflow on any branch can read the secrets. Only someone who can push to the repository can add such a workflow, and only admins can push a `v*` tag. Fix: run the script once, as step 5 of docs/RELEASING.md describes.
+
+---
+
 ## 2026-11-11 — A copy made within a second of a failed capture can be undone
 
 When ⌘C brings nothing back in time, OmanAI watches the clipboard for one more second and undoes a text copy that arrives, because it is almost always the app's late answer. A copy you make yourself in that second, for example with ⌘C inside the panel, is undone too. The panel's Copy button is not affected.

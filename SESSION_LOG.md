@@ -14,7 +14,7 @@ Date-stamped log of what each work session accomplished.
 - Not verified: capture and paste in real apps with the new clipboard code, which needs an on-screen test. The new prompt format against the live API, which needs a few real rewrites. The workflows and `setup-release-secrets.sh`, which have not run since they changed. A real update from 0.2.0
 - A second review of the merged changes found ten more points. Fixed: overlapping clipboard operations, a black flag emoji that could hide text, a saved key that macOS won't hand over being reported as missing, a fragile check in the setup script, and two duplicated helpers. `Package.resolved` turned out to be rewritten by Xcode as well as by `swift test`, so it is no longer committed. 271 tests pass
 - Added the tag and `main` rulesets on GitHub, and a landing page in `site/` with a demo of the panel that visitors can try. Checked at desktop and phone widths in light and dark. It is not hosted anywhere yet
-- Next for the maintainer: merge, run `mac/scripts/setup-release-secrets.sh`, add the two rulesets from docs/RELEASING.md, then try a few rewrites and pastes in Slack and Mail before tagging a release
+- Next for the maintainer: merge the landing page and choose where to host it, run `mac/scripts/setup-release-secrets.sh` (until then a release needs no approval, see KNOWN_ISSUES.md), then try a few rewrites and pastes in Slack and Mail before tagging a release. The landing page's download button leads to the latest release, which is still 0.2.0 without these fixes, so tag a new one before sharing the page
 
 ## 2026-11-10 — Pivot to a menu bar writing tool, native Swift build
 
