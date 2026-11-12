@@ -20,6 +20,7 @@ struct ShortcutsSettingsView: View {
             Section {
                 ForEach(ShortcutAction.dictationActions, id: \.self) { action in
                     ShortcutRow(model: model, action: action)
+                    ModifierKeyRow(model: model, action: action)
                 }
                 LabeledContent("Cancel a dictation") {
                     Text("Esc").foregroundStyle(.secondary)
@@ -27,7 +28,7 @@ struct ShortcutsSettingsView: View {
             } header: {
                 Text("Dictation")
             } footer: {
-                Text("Hold the first while you speak, and let go to put the words in. For a longer dictation, press the second to start and again to finish.")
+                Text("Hold the first while you speak, and let go to put the words in. For a longer dictation, press the second to start and again to finish. A key on its own still works in shortcuts such as ⌥E. With the same key for both, a tap starts a long dictation and holding it dictates until you let go.")
             }
 
             Section("While a result is showing") {
@@ -84,6 +85,27 @@ struct ShortcutRow: View {
                         .frame(minWidth: 104)
                 }
             }
+        }
+    }
+}
+
+/// Option or Command pressed on its own, as another way to start a dictation.
+struct ModifierKeyRow: View {
+    let model: SettingsViewModel
+    let action: ShortcutAction
+
+    var body: some View {
+        Picker(selection: Binding(
+            get: { model.dictationKey(for: action) },
+            set: { model.setDictationKey($0, for: action) }
+        )) {
+            Text("None").tag(ModifierKey?.none)
+            Divider()
+            ForEach(ModifierKey.allCases) { key in
+                Text(key.displayName).tag(ModifierKey?.some(key))
+            }
+        } label: {
+            Text(action == .dictateLong ? "Or tap a key on its own" : "Or hold a key on its own")
         }
     }
 }

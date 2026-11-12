@@ -1,9 +1,11 @@
+import AudioToolbox
 import AVFoundation
+import CoreAudio
 import Foundation
 import OmanCore
 
-/// Listens to the Mac's input device, as chosen in System Settings, and hands the sound on in the format a model
-/// wants, together with how loud it is.
+/// Listens to the microphone chosen in Settings, or else the one chosen in System Settings, and hands the sound on
+/// in the format a model wants, together with how loud it is.
 final class MicrophoneCapture: @unchecked Sendable {
     private let engine = AVAudioEngine()
     private let targetFormat: AVAudioFormat
@@ -26,6 +28,17 @@ final class MicrophoneCapture: @unchecked Sendable {
 
     func start() throws {
         let input = engine.inputNode
+        if var device = AudioDevices.chosenDevice(), let unit = input.audioUnit {
+            // When this fails, the microphone chosen in System Settings is used instead.
+            AudioUnitSetProperty(
+                unit,
+                kAudioOutputUnitProperty_CurrentDevice,
+                kAudioUnitScope_Global,
+                0,
+                &device,
+                UInt32(MemoryLayout<AudioDeviceID>.size)
+            )
+        }
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
             throw DictationError.noMicrophone

@@ -31,6 +31,7 @@ public final class PanelViewModel {
     @ObservationIgnored private var changesCache: (original: String, draft: String, changes: TextChanges)?
     /// Set by the app shell, so the panel's microphone buttons can dictate into its fields.
     @ObservationIgnored public weak var dictation: DictationController?
+    @ObservationIgnored private var copiedTask: Task<Void, Never>?
 
     private(set) var screen: PanelScreen = .compose
     private(set) var capture = SelectionCapture(app: nil, text: nil)
@@ -64,6 +65,12 @@ public final class PanelViewModel {
     private(set) var notice: String?
     private(set) var errorMessage: String?
     private(set) var offersSettings = false
+    /// The panel opened on dictated words rather than a selection. They aren't in the app yet, so a result goes in
+    /// at the cursor instead of replacing anything.
+    private(set) var isDictated = false
+    /// Whether there is a transcript for Copy last transcript, from a dictation or a kept transcript.
+    private(set) var hasSavedTranscript = false
+    private(set) var copiedTranscript = false
     var showOriginal = false
     /// With changes shown, the words a proofread replaced are struck through beside the new ones.
     var showChanges = false
@@ -80,6 +87,9 @@ public final class PanelViewModel {
         cancelWork()
         self.capture = capture
         session += 1
+        isDictated = false
+        copiedTranscript = false
+        hasSavedTranscript = dictation?.lastTranscript() != nil
         instruction = ""
         composePrompt = ""
         adjustment = ""
@@ -111,6 +121,15 @@ public final class PanelViewModel {
            services.system.isScreenCaptureGranted {
             setIncludeScreen(true)
         }
+    }
+
+    /// Opens on words just dictated, to proofread or rewrite them before they go in where the cursor is.
+    public func begin(withDictatedText text: String, from app: SourceApp?) {
+        if let app {
+            services.system.rememberFocus(in: app)
+        }
+        begin(with: SelectionCapture(app: app, text: text))
+        isDictated = true
     }
 
     /// Carries out a global shortcut right after `begin(with:)`.
@@ -200,6 +219,20 @@ public final class PanelViewModel {
 
     func showNotice(_ text: String) {
         notice = text
+    }
+
+    var hasLastTranscript: Bool { hasSavedTranscript || dictation?.lastText != nil }
+
+    func copyLastTranscript() {
+        guard let text = dictation?.lastTranscript() else { return }
+        services.system.copyToClipboard(text)
+        copiedTranscript = true
+        copiedTask?.cancel()
+        copiedTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.copiedTranscript = false
+        }
     }
 
     private func cancelWork() {
@@ -546,7 +579,7 @@ public final class PanelViewModel {
         return false
     }
 
-    var primaryActionTitle: String { lastTaskIsCompose ? "Insert" : "Replace" }
+    var primaryActionTitle: String { lastTaskIsCompose || isDictated ? "Insert" : "Replace" }
     var canApplyResult: Bool { capture.app != nil && !isExplanation }
 
     var originalText: String? {
@@ -593,7 +626,7 @@ public final class PanelViewModel {
                 + "Press \(primaryActionTitle) again to paste it, or use Copy."
             return
         }
-        if lastTaskIsCompose {
+        if lastTaskIsCompose || isDictated {
             insert()
         } else {
             replace()

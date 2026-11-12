@@ -16,6 +16,8 @@ public final class MacSystemBridge: SystemBridging {
         postPaste: KeyEvents.postPaste
     )
     private let hotKeys = GlobalHotKeys()
+    private let modifierKeys = ModifierKeyMonitor()
+    private let outputMute = OutputMute()
     // CoreFoundation's equality is how two Accessibility references are compared.
     private var insertionTarget = InsertionTarget<AXUIElement> { CFEqual($0, $1) }
 
@@ -53,6 +55,33 @@ public final class MacSystemBridge: SystemBridging {
     @discardableResult
     public func setTemporaryShortcut(_ combo: KeyCombo?, for action: ShortcutAction) -> Bool {
         hotKeys.setTemporary(combo, for: action)
+    }
+
+    public var onModifierKey: (@MainActor (ModifierKeyEvent) -> Void)? {
+        get { modifierKeys.onEvent }
+        set { modifierKeys.onEvent = newValue }
+    }
+
+    public func watchModifierKeys(_ keys: Set<ModifierKey>) {
+        modifierKeys.watch(keys)
+    }
+
+    // MARK: Dictation
+
+    public func playSound(_ sound: DictationSound) {
+        let name = switch sound {
+        case .start: "Tink"
+        case .finish: "Pop"
+        }
+        NSSound(named: NSSound.Name(name))?.play()
+    }
+
+    public func setOutputMuted(_ muted: Bool) {
+        outputMute.setMuted(muted)
+    }
+
+    public func pressReturn(withCommand: Bool) {
+        KeyEvents.postReturn(command: withCommand)
     }
 
     // MARK: Permissions
@@ -112,6 +141,11 @@ public final class MacSystemBridge: SystemBridging {
     }
 
     // MARK: Selection
+
+    public func rememberFocus(in app: SourceApp) {
+        guard AXIsProcessTrusted() else { return }
+        insertionTarget.remember(SelectionReader.focusedElement(processID: app.processID), processID: app.processID)
+    }
 
     public func captureSelection() async -> SelectionCapture {
         // Whatever was remembered belongs to an earlier panel.

@@ -3,33 +3,38 @@ import FluidAudio
 import Foundation
 import OmanCore
 
-/// Moondream's Parakeet Ultra, a post-training of NVIDIA's Parakeet TDT v3, run by FluidAudio. It knows 25 European
-/// languages and works out which one is spoken; it can't be told which. It reads a whole recording at once, more
-/// than a hundred times faster than it was spoken, so while the person speaks it reads everything again every
-/// second to show the words so far.
+/// The Parakeet models that read a whole recording at once, run by FluidAudio: Moondream's Parakeet Ultra and
+/// Parakeet Redux in 25 European languages, which they work out themselves, and NVIDIA's Parakeet TDT v2 in
+/// English. Each reads a recording more than a hundred times faster than it was spoken, so while the person speaks
+/// everything said so far is read again every second to show the words so far.
 actor ParakeetEngine {
-    static let version: AsrModelVersion = .ultra
-    /// What the model writes, as ISO codes.
-    static let languageCodes = [
+    /// The 25 European languages of Parakeet v3 and the models built on it, as ISO codes.
+    static let europeanLanguages = [
         "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it",
         "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
     ]
 
+    let version: AsrModelVersion
+    private let model: DictationModel
     private let root: URL
     private var manager: AsrManager?
 
-    init(root: URL) {
+    init(model: DictationModel, version: AsrModelVersion, root: URL) {
+        self.model = model
+        self.version = version
         self.root = root
     }
+
+    var languageCodes: [String] { version == .v2 ? ["en"] : Self.europeanLanguages }
 
     /// FluidAudio keeps the model in a folder of its own beside this one, so `root` holds everything.
     private var directory: URL { root.appendingPathComponent("models", isDirectory: true) }
 
-    var isDownloaded: Bool { AsrModels.modelsExist(at: directory, version: Self.version) }
+    var isDownloaded: Bool { AsrModels.modelsExist(at: directory, version: version) }
 
     func download(progress: @escaping @Sendable (Double) -> Void) async throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        _ = try await AsrModels.download(to: directory, version: Self.version) { update in
+        _ = try await AsrModels.download(to: directory, version: version) { update in
             progress(update.fractionCompleted * 0.9)
         }
         try Task.checkCancellation()
@@ -51,7 +56,7 @@ actor ParakeetEngine {
     }
 
     func startSession() async throws -> any DictationSession {
-        guard isDownloaded else { throw DictationError.modelNotReady(.parakeet) }
+        guard isDownloaded else { throw DictationError.modelNotReady(model) }
         return try RereadingDictationSession.start(
             needsLoading: manager == nil,
             load: { _ = try await self.loaded() },
@@ -74,7 +79,7 @@ actor ParakeetEngine {
 
     private func loaded() async throws -> AsrManager {
         if let manager { return manager }
-        let models = try await AsrModels.load(from: directory, version: Self.version)
+        let models = try await AsrModels.load(from: directory, version: version)
         let manager = AsrManager(config: .default)
         try await manager.loadModels(models)
         self.manager = manager

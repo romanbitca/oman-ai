@@ -251,6 +251,19 @@ final class FakeSystem: SystemBridging {
     func captureWindow(of app: SourceApp) async throws -> ScreenshotAttachment {
         try screenshotResult.get()
     }
+
+    var onModifierKey: (@MainActor (ModifierKeyEvent) -> Void)?
+    var watchedKeys: Set<ModifierKey> = []
+    var sounds: [DictationSound] = []
+    var mutes: [Bool] = []
+    var returnPresses: [Bool] = []
+    var focusRemembered: [SourceApp] = []
+
+    func watchModifierKeys(_ keys: Set<ModifierKey>) { watchedKeys = keys }
+    func playSound(_ sound: DictationSound) { sounds.append(sound) }
+    func setOutputMuted(_ muted: Bool) { mutes.append(muted) }
+    func pressReturn(withCommand: Bool) { returnPresses.append(withCommand) }
+    func rememberFocus(in app: SourceApp) { focusRemembered.append(app) }
 }
 
 @MainActor
@@ -457,6 +470,16 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
     func prepare(_ model: DictationModel, language: DictationLanguage) async {
         lock.withLock { prepared.append((model, language)) }
     }
+
+    var availableMicrophones = [Microphone(id: "BuiltIn", name: "MacBook Pro Microphone")]
+    private var chosenMicrophones: [String?] = []
+    var microphonesUsed: [String?] { lock.withLock { chosenMicrophones } }
+
+    func microphones() async -> [Microphone] { availableMicrophones }
+
+    func useMicrophone(_ id: String?) async {
+        lock.withLock { chosenMicrophones.append(id) }
+    }
 }
 
 final class FakeDictations: DictationStore, @unchecked Sendable {
@@ -477,12 +500,22 @@ final class FakeDictations: DictationStore, @unchecked Sendable {
         lock.withLock { stored.sorted { $0.date > $1.date } }
     }
 
+    func latestDictation() throws -> SavedDictation? {
+        try savedDictations().first
+    }
+
     func deleteDictation(id: UUID) throws {
         lock.withLock { stored.removeAll { $0.id == id } }
     }
 
     func deleteAllDictations() throws {
         lock.withLock { stored.removeAll() }
+    }
+
+    func trimDictations(keepingNewest count: Int) throws {
+        lock.withLock {
+            stored = Array(stored.sorted { $0.date > $1.date }.prefix(max(count, 0)))
+        }
     }
 }
 
@@ -504,6 +537,12 @@ final class FakeDictationPresenter: DictationPresenting {
     }
 
     func setDictationActive(_ active: Bool) { activeValues.append(active) }
+
+    var panelOpenings: [(text: String, app: SourceApp?)] = []
+
+    func showPanel(withDictatedText text: String, from app: SourceApp?) {
+        panelOpenings.append((text, app))
+    }
 }
 
 @MainActor

@@ -3,30 +3,40 @@ import Foundation
 import OmanCore
 @preconcurrency import WhisperKit
 
-/// OpenAI's Whisper large-v3 turbo, in Argmax's compressed build for the Neural Engine, run by WhisperKit. It knows
-/// about a hundred languages, and can be told one or work it out.
+/// OpenAI's Whisper models in Argmax's compressed builds for the Neural Engine, run by WhisperKit. They know about a
+/// hundred languages, and can be told one or work it out.
 actor WhisperEngine {
-    static let variant = "openai_whisper-large-v3-v20240930_626MB"
     static let repository = "argmaxinc/whisperkit-coreml"
-    /// Measured from the files WhisperKit downloads, with the tokenizer.
-    static let downloadSize: Int64 = 629_000_000
+
+    /// Argmax's name for each build, from the folders of its repository.
+    static func variant(of model: DictationModel) -> String {
+        switch model {
+        case .whisperLarge: "openai_whisper-large-v3_947MB"
+        case .whisperSmall: "openai_whisper-small_216MB"
+        default: "openai_whisper-large-v3-v20240930_626MB"
+        }
+    }
 
     static let languages: [DictationLanguage] = Set(Constants.languages.values)
         .map(DictationLanguage.init(id:))
         .sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
 
+    private let model: DictationModel
+    private let variant: String
     private let root: URL
     private var whisper: WhisperKit?
     /// The person's own words, given to Whisper as text it has just heard, so it expects them.
     private var promptTokens: [Int]?
 
-    init(root: URL) {
+    init(model: DictationModel, root: URL) {
+        self.model = model
+        variant = Self.variant(of: model)
         self.root = root
     }
 
     /// WhisperKit keeps Hugging Face's layout under the folder it is given.
     private var modelFolder: URL {
-        root.appendingPathComponent("models/\(Self.repository)/\(Self.variant)", isDirectory: true)
+        root.appendingPathComponent("models/\(Self.repository)/\(variant)", isDirectory: true)
     }
 
     /// Written once the model and its tokenizer are both in place and have loaded, so a download that stopped
@@ -40,7 +50,7 @@ actor WhisperEngine {
 
     func download(progress: @escaping @Sendable (Double) -> Void) async throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        _ = try await WhisperKit.download(variant: Self.variant, downloadBase: root, from: Self.repository) { update in
+        _ = try await WhisperKit.download(variant: variant, downloadBase: root, from: Self.repository) { update in
             progress(update.fractionCompleted * 0.9)
         }
         try Task.checkCancellation()
@@ -64,7 +74,7 @@ actor WhisperEngine {
     }
 
     func startSession(language: DictationLanguage, words: [String]) async throws -> any DictationSession {
-        guard isDownloaded else { throw DictationError.modelNotReady(.whisper) }
+        guard isDownloaded else { throw DictationError.modelNotReady(model) }
         return try WhisperDictationSession.start(engine: self, language: language, needsLoading: whisper == nil) {
             let whisper = try await self.loaded()
             await self.setPrompt(words.isEmpty ? nil : whisper.tokenizer?.encode(text: " " + words.joined(separator: ", ")))

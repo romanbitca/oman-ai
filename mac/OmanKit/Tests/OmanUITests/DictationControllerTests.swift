@@ -239,7 +239,7 @@ import Testing
     @Test func transcriptsAreNotKeptWhenSettingsSaysNot() async throws {
         let harness = Harness()
         var preferences = AppPreferences()
-        preferences.keepsDictations = false
+        preferences.dictationHistory = .off
         try harness.settings.setPreferences(preferences)
         let controller = harness.makeDictation()
 

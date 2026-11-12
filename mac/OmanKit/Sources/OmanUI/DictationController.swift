@@ -50,7 +50,11 @@ public final class DictationController {
     @ObservationIgnored private var startedAt: Date?
     @ObservationIgnored private var panelBase = ""
     @ObservationIgnored private var targetApp: SourceApp?
-    @ObservationIgnored private var keepsDictations = true
+    @ObservationIgnored private var history: DictationHistory = .all
+    @ObservationIgnored private var preferences = AppPreferences()
+    /// The words go to the panel to be proofread or rewritten, rather than straight into the app.
+    @ObservationIgnored private var improvesAfter = false
+    @ObservationIgnored private var mutedOutput = false
     @ObservationIgnored private var words: [String] = []
     @ObservationIgnored private var removesFillers = true
     @ObservationIgnored private var unloadAfter: TimeInterval?
@@ -73,6 +77,8 @@ public final class DictationController {
     /// The model is still loading. The microphone already listens, and its words follow once the model is ready.
     public private(set) var isLoadingModel = false
     public private(set) var modelName = DictationModel.default.displayName
+    /// The words of the last dictation put in, for Copy last transcript, whether or not transcripts are kept.
+    public private(set) var lastText: String?
 
     public init(services: AppServices, presenter: any DictationPresenting, now: @escaping () -> Date = Date.init) {
         self.services = services
@@ -81,6 +87,12 @@ public final class DictationController {
     }
 
     public var isActive: Bool { phase != .idle }
+
+    /// The words of the last dictation: this one's since OmanAI started, or else the newest transcript kept.
+    func lastTranscript() -> String? {
+        if let lastText { return lastText }
+        return (try? services.dictations?.latestDictation())??.text
+    }
 
     // MARK: Starting and finishing
 
@@ -110,6 +122,19 @@ public final class DictationController {
     public func finishNow() {
         guard phase == .starting || phase == .listening else { return }
         finish()
+    }
+
+    /// The pill's ✨ button: finishes, and opens the panel with the words to proofread or rewrite them first.
+    public func improveNow() {
+        guard field == nil, phase == .starting || phase == .listening else { return }
+        improvesAfter = true
+        finish()
+    }
+
+    /// A tap on a key that both holds and starts a long dictation: it keeps listening after the key comes up.
+    func keepListening() {
+        guard mode == .hold, phase == .starting || phase == .listening else { return }
+        mode = .long
     }
 
     /// The microphone button beside one of the panel's fields.
@@ -149,16 +174,18 @@ public final class DictationController {
         transcript = LiveTranscript()
         level = 0
         finishWhenStarted = false
+        improvesAfter = false
         startedAt = nil
         phase = .starting
 
         let preferences = (try? services.settings.preferences()) ?? AppPreferences()
+        self.preferences = preferences
         position = preferences.dictationPillPosition
         pillStyle = preferences.dictationPillStyle
         model = preferences.dictationModel
         modelName = model.displayName
         isLoadingModel = false
-        keepsDictations = preferences.keepsDictations
+        history = preferences.dictationHistory
         words = preferences.dictationWords
         removesFillers = preferences.removesFillerWords
         unloadAfter = preferences.modelUnloadDelay.seconds
@@ -214,6 +241,7 @@ public final class DictationController {
         guard phase == .starting else { return }
 
         do {
+            await speech.useMicrophone(preferences.dictationMicrophone)
             let session = try await speech.startSession(model: model, language: language, words: words)
             guard phase == .starting, !Task.isCancelled else {
                 await session.cancel()
@@ -223,6 +251,13 @@ public final class DictationController {
             startedAt = now()
             listeningSince = startedAt
             phase = .listening
+            if preferences.playsDictationSounds {
+                services.system.playSound(.start)
+            }
+            if preferences.mutesAudioWhileDictating {
+                services.system.setOutputMuted(true)
+                mutedOutput = true
+            }
             updatesTask = Task { [weak self] in
                 for await update in session.updates {
                     self?.receive(update)
@@ -312,18 +347,36 @@ public final class DictationController {
             return
         }
         let duration = startedAt.map { now().timeIntervalSince($0) } ?? 0
+        lastText = text
+        restoreOutput()
+        if preferences.playsDictationSounds {
+            services.system.playSound(.finish)
+        }
         if let field, let panel {
             panel.setText(LiveTranscript.join(panelBase, text), in: field)
             save(text, duration: duration, appName: "OmanAI")
             end()
             return
         }
+        if improvesAfter {
+            save(text, duration: duration, appName: targetApp?.name)
+            let app = targetApp
+            end()
+            presenter?.showPanel(withDictatedText: text, from: app)
+            return
+        }
 
-        let outcome = await services.system.insertAtCursor(text, in: nil)
+        let pasted = preferences.addsSpaceAfterDictation ? text + " " : text
+        let outcome = await services.system.insertAtCursor(pasted, in: nil)
         save(text, duration: duration, appName: targetApp?.name)
         guard phase == .finishing else { return }
         switch outcome {
         case .inserted:
+            switch preferences.dictationSubmit {
+            case .off: break
+            case .returnKey: services.system.pressReturn(withCommand: false)
+            case .commandReturn: services.system.pressReturn(withCommand: true)
+            }
             end()
         case .permissionMissing:
             services.system.copyToClipboard(text)
@@ -335,7 +388,7 @@ public final class DictationController {
     }
 
     private func save(_ text: String, duration: TimeInterval, appName: String?) {
-        guard keepsDictations, let store = services.dictations else { return }
+        guard history != .off, let store = services.dictations else { return }
         let dictation = SavedDictation(
             date: startedAt ?? now(),
             text: text,
@@ -346,6 +399,9 @@ public final class DictationController {
         )
         do {
             try store.saveDictation(dictation)
+            if let limit = history.limit {
+                try store.trimDictations(keepingNewest: limit)
+            }
         } catch {
             dictationLog.error("Saving a dictation failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -363,8 +419,16 @@ public final class DictationController {
         }
     }
 
+    private func restoreOutput() {
+        guard mutedOutput else { return }
+        services.system.setOutputMuted(false)
+        mutedOutput = false
+    }
+
     /// Back to idle. With a notice, the sentence stays on screen for a moment.
     private func end(notice message: String? = nil) {
+        restoreOutput()
+        improvesAfter = false
         services.system.setTemporaryShortcut(nil, for: .cancelDictation)
         if let speech = services.speech {
             let delay = unloadAfter
@@ -406,16 +470,17 @@ public final class DictationController {
 
 /// The parts of the Dictation page in Settings.
 enum DictationPage: String, CaseIterable, Identifiable {
-    case model, look, words, transcripts
+    case transcripts, model, look, words, sound
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
+        case .transcripts: "Transcripts"
         case .model: "Model"
         case .look: "Look"
         case .words: "Words"
-        case .transcripts: "Transcripts"
+        case .sound: "Sound"
         }
     }
 }

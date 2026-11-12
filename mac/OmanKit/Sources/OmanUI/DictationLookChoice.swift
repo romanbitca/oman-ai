@@ -85,7 +85,8 @@ private struct LookPicture: View {
                 circle { wave }
                 capsule { Text("0:08").font(.system(size: 9, weight: .medium).monospacedDigit()) }
                 Spacer(minLength: 0)
-                circle { Image(systemName: "xmark").font(.system(size: 8, weight: .bold)) }
+                cancelCircle
+                circle { Image(systemName: "sparkles").font(.system(size: 8, weight: .bold)) }
                 circle { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)) }
             }
             Text(words)
@@ -119,7 +120,8 @@ private struct LookPicture: View {
                         Text("0:08").font(.system(size: 9, weight: .medium).monospacedDigit())
                     }
                 }
-                circle { Image(systemName: "xmark").font(.system(size: 8, weight: .bold)) }
+                cancelCircle
+                circle { Image(systemName: "sparkles").font(.system(size: 8, weight: .bold)) }
                 circle { Image(systemName: "checkmark").font(.system(size: 8, weight: .bold)) }
             }
         }
@@ -129,6 +131,16 @@ private struct LookPicture: View {
         DictationWave(amplitude: 0.8)
             .stroke(.white, style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
             .frame(width: 11, height: 11)
+    }
+
+    private var cancelCircle: some View {
+        Image(systemName: "xmark")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundStyle(DictationPillMetrics.cancelGlyph)
+            .frame(width: 20, height: 20)
+            .background {
+                glass(Circle()).overlay { Circle().fill(Color.red.opacity(0.1)) }
+            }
     }
 
     private func circle(@ViewBuilder _ content: () -> some View) -> some View {

@@ -188,7 +188,14 @@ import Testing
         preferences.dictationModel = .parakeet
         preferences.dictationPillPosition = .bottom
         preferences.dictationPillStyle = .floating
-        preferences.keepsDictations = false
+        preferences.dictationHistory = .last10
+        preferences.dictationHoldKey = .rightOption
+        preferences.dictationLongKey = .rightCommand
+        preferences.dictationMicrophone = "USB-1"
+        preferences.playsDictationSounds = true
+        preferences.mutesAudioWhileDictating = true
+        preferences.dictationSubmit = .commandReturn
+        preferences.addsSpaceAfterDictation = true
         preferences.dictationWords = ["AxiaPOS"]
         preferences.removesFillerWords = false
         preferences.modelUnloadDelay = .never
@@ -203,7 +210,14 @@ import Testing
         #expect(old.dictationWords.isEmpty)
         #expect(old.removesFillerWords)
         #expect(old.modelUnloadDelay == .fiveMinutes)
-        #expect(old.keepsDictations)
+        #expect(old.dictationHistory == .all)
+        #expect(old.dictationHoldKey == nil)
+        #expect(old.dictationLongKey == nil)
+        #expect(old.dictationMicrophone == nil)
+        #expect(!old.playsDictationSounds)
+        #expect(!old.mutesAudioWhileDictating)
+        #expect(old.dictationSubmit == .off)
+        #expect(!old.addsSpaceAfterDictation)
         #expect(old.dictationLanguages.isEmpty)
     }
 

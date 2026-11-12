@@ -63,6 +63,19 @@ public protocol SystemBridging: AnyObject {
 
     /// The app in front, other than OmanAI. Read without touching its selection.
     var frontmostApp: SourceApp? { get }
+    /// Remembers where the cursor is in the app, as opening the panel does, so `insertAtCursor` can tell if it
+    /// moves. Reads nothing from the app's text.
+    func rememberFocus(in app: SourceApp)
+
+    /// Called for the modifier keys being watched, and for any other key pressed while one of them is down.
+    var onModifierKey: (@MainActor (ModifierKeyEvent) -> Void)? { get set }
+    /// Watches these keys on their own, anywhere on the Mac; none stops watching.
+    func watchModifierKeys(_ keys: Set<ModifierKey>)
+    func playSound(_ sound: DictationSound)
+    /// Mutes the Mac's sound output, or brings back what it was.
+    func setOutputMuted(_ muted: Bool)
+    /// Presses Return, or ⌘Return, in the app in front.
+    func pressReturn(withCommand: Bool)
 
     var isLaunchAtLoginEnabled: Bool { get }
     func setLaunchAtLogin(_ enabled: Bool) throws
@@ -108,6 +121,8 @@ public protocol PanelPresenting: AnyObject {
 public protocol DictationPresenting: AnyObject {
     func showDictationPill(at position: DictationPillPosition)
     func hideDictationPill()
+    /// Opens the panel with dictated words as its text, to proofread or rewrite them before they go in.
+    func showPanel(withDictatedText text: String, from app: SourceApp?)
     /// While a dictation runs, the menu bar icon moves with the voice and a click on it finishes the dictation.
     func setDictationActive(_ active: Bool)
 }

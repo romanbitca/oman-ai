@@ -47,7 +47,7 @@ public final class SettingsViewModel {
     @ObservationIgnored private(set) var downloadTask: Task<Void, Never>?
     @ObservationIgnored private var downloadID: UUID?
     /// The part of the Dictation page on show.
-    var dictationPage: DictationPage = .model
+    var dictationPage: DictationPage = .transcripts
     /// What each model needs before it can listen, read from the models.
     private(set) var modelStatuses: [DictationModel: DictationModelStatus] = [:]
     /// The languages each model knows, as language codes such as "en".
@@ -61,6 +61,8 @@ public final class SettingsViewModel {
     private(set) var downloadProgress: Double?
     private(set) var dictationError: String?
     private(set) var microphoneAccess: MicrophoneAccess = .notDetermined
+    /// The microphones the Mac has now, to choose one for dictation.
+    private(set) var microphones: [Microphone] = []
     private(set) var savedDictations: [SavedDictation] = []
     private(set) var copiedDictationID: UUID?
     var newDictationWord = ""
@@ -155,6 +157,8 @@ public final class SettingsViewModel {
         let chosen = preferences.dictationModel
         dictationTask?.cancel()
         dictationTask = Task { [weak self] in
+            let microphones = await speech.microphones()
+            self?.microphones = microphones
             var statuses: [DictationModel: DictationModelStatus] = [:]
             var codes: [DictationModel: Set<String>] = [:]
             var chosenLanguages: [DictationLanguage] = []
@@ -545,6 +549,22 @@ public final class SettingsViewModel {
         Set(preferences.shortcuts.compactMap { key, combo in
             combo.isCopyOrPaste ? ShortcutAction(storageKey: key) : nil
         })
+    }
+
+    /// Option or Command on its own, for holding to dictate or for a long dictation.
+    func dictationKey(for action: ShortcutAction) -> ModifierKey? {
+        action == .dictateLong ? preferences.dictationLongKey : preferences.dictationHoldKey
+    }
+
+    func setDictationKey(_ key: ModifierKey?, for action: ShortcutAction) {
+        updatePreferences {
+            if action == .dictateLong {
+                $0.dictationLongKey = key
+            } else {
+                $0.dictationHoldKey = key
+            }
+        }
+        services.system.watchModifierKeys(preferences.dictationModifierKeys)
     }
 
     private func registerShortcuts() {

@@ -12,6 +12,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
     private let pillWindow = DictationPillWindow()
     private let pillState = DictationPillState()
     private var dictation: DictationController?
+    private var modifierDictation: ModifierKeyDictation?
     private var hidePillTask: Task<Void, Never>?
     private var iconTask: Task<Void, Never>?
     private var panelModel: PanelViewModel?
@@ -46,6 +47,13 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         pillWindow.setContentSize(DictationPillMetrics.windowSize)
         pillWindow.contentView = pillView
 
+        modifierDictation = ModifierKeyDictation(controller: dictation) { [services] in
+            (try? services.settings.preferences()) ?? AppPreferences()
+        }
+        services.system.onModifierKey = { [weak self] event in
+            self?.modifierDictation?.handle(event) { [weak self] in self?.panelDictationField() }
+        }
+
         services.system.onGlobalShortcut = { [weak self] action in self?.handleGlobalShortcut(action) }
         services.system.onGlobalShortcutReleased = { [weak self] action in
             if action == .dictateHold { self?.dictation?.holdReleased() }
@@ -58,6 +66,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         if let preferences = try? services.settings.preferences() {
             services.system.setAppearance(preferences.appearance)
             services.system.registerGlobalShortcuts(preferences.globalShortcuts)
+            services.system.watchModifierKeys(preferences.dictationModifierKeys)
         }
 
         if let button = statusItem.button {
@@ -289,6 +298,11 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         pillWindow.appearance = theme == .light ? nil : NSAppearance(named: .darkAqua)
         pillWindow.orderFrontRegardless()
         pillState.isShown = true
+    }
+
+    func showPanel(withDictatedText text: String, from app: SourceApp?) {
+        panelModel?.begin(withDictatedText: text, from: app)
+        showPanel()
     }
 
     func hideDictationPill() {

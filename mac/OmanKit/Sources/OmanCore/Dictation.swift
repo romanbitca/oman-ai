@@ -115,8 +115,11 @@ public protocol DictationStore: Sendable {
     func saveDictation(_ dictation: SavedDictation) throws
     /// Newest first.
     func savedDictations() throws -> [SavedDictation]
+    func latestDictation() throws -> SavedDictation?
     func deleteDictation(id: UUID) throws
     func deleteAllDictations() throws
+    /// Deletes all but the newest `count`.
+    func trimDictations(keepingNewest count: Int) throws
 }
 
 /// A speech model that turns what the person says into text. Every one runs on the Mac, so the sound never
@@ -128,11 +131,20 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
     case parakeetEnglish = "parakeet-unified-en"
     /// NVIDIA's Nemotron Unified, made to stream like Parakeet Unified, in 25 European languages.
     case nemotron = "nemotron-unified"
-    /// Moondream's Parakeet Ultra: the most accurate here in its 25 European languages, which it works out itself.
-    /// It reads what was said so far again every second, so its words lag a little.
+    /// Moondream's Parakeet Ultra: the most accurate Parakeet in its 25 European languages, which it works out.
     case parakeet = "parakeet-v3"
-    /// OpenAI's Whisper large-v3 turbo: about a hundred languages, chosen or worked out, and the slowest here.
+    /// NVIDIA's Canary 1B v2, in the same 25 European languages, told which one is spoken.
+    case canary = "canary-1b-v2"
+    /// NVIDIA's Parakeet TDT v2, English only, the most accurate Parakeet for English.
+    case parakeetEnglishV2 = "parakeet-tdt-v2"
+    /// OpenAI's Whisper large-v3: about a hundred languages, and the most accurate in many of them.
+    case whisperLarge = "whisper-large-v3"
+    /// OpenAI's Whisper large-v3 turbo: the same languages, faster, a little less accurate.
     case whisper = "whisper-large-v3-turbo"
+    /// Moondream's Parakeet Redux: Parakeet's 25 European languages in a third of the download.
+    case parakeetSmall = "parakeet-redux"
+    /// OpenAI's Whisper small: about a hundred languages in a small download, less accurate.
+    case whisperSmall = "whisper-small"
 
     public static let `default`: DictationModel = .apple
 
@@ -144,7 +156,12 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         case .parakeetEnglish: "Parakeet Unified"
         case .nemotron: "Nemotron Unified"
         case .parakeet: "Parakeet Ultra"
+        case .canary: "Canary 1B v2"
+        case .parakeetEnglishV2: "Parakeet TDT v2"
+        case .whisperLarge: "Whisper Large v3"
         case .whisper: "Whisper Large v3 Turbo"
+        case .parakeetSmall: "Parakeet Redux"
+        case .whisperSmall: "Whisper Small"
         }
     }
 
@@ -153,9 +170,32 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         switch self {
         case .apple: "Built into macOS, in one language at a time."
         case .parakeetEnglish: "The fastest and most accurate for English."
-        case .nemotron: "25 European languages. Choose yours, or let it work it out."
-        case .parakeet: "The most accurate in 25 European languages, worked out as you speak."
-        case .whisper: "About a hundred languages, but slower."
+        case .nemotron: "Live in 25 European languages. Choose yours, or let it work it out."
+        case .parakeet: "Very accurate in 25 European languages, worked out as you speak."
+        case .canary: "Very accurate in 25 European languages. Choose yours."
+        case .parakeetEnglishV2: "Very accurate English, with every word as it was said."
+        case .whisperLarge: "The most languages, about a hundred, and the most accurate in many."
+        case .whisper: "About a hundred languages, faster than Whisper Large v3."
+        case .parakeetSmall: "Parakeet's 25 European languages in a third of the download."
+        case .whisperSmall: "About a hundred languages in a small download, less accurate."
+        }
+    }
+
+    /// How models are grouped in Settings.
+    public enum Group: String, CaseIterable, Sendable {
+        /// Made to stream: words appear while they are being said.
+        case live
+        /// Read what was said again about every second: words follow a moment later, often more accurately.
+        case accurate
+        /// Small downloads, for a Mac short on space.
+        case small
+    }
+
+    public var group: Group {
+        switch self {
+        case .apple, .parakeetEnglish, .nemotron: .live
+        case .parakeet, .canary, .parakeetEnglishV2, .whisperLarge, .whisper: .accurate
+        case .parakeetSmall, .whisperSmall: .small
         }
     }
 
@@ -163,19 +203,16 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
     public var isDownloaded: Bool { self != .apple }
 
     /// Made to stream, so words appear while they are being said. The others read the sound again every second.
-    public var isLive: Bool {
-        switch self {
-        case .apple, .parakeetEnglish, .nemotron: true
-        case .parakeet, .whisper: false
-        }
-    }
+    public var isLive: Bool { group == .live }
 
-    /// From 1, slow, to 4, fastest, measured on an M-series Mac.
-    public var speed: Int {
+    /// How soon the words show, in plain words for Settings.
+    public var pace: String {
         switch self {
-        case .apple, .parakeetEnglish, .parakeet: 4
-        case .nemotron: 3
-        case .whisper: 2
+        case .apple, .parakeetEnglish: "Words as you speak"
+        case .nemotron: "Words within a second"
+        case .parakeet, .parakeetEnglishV2, .parakeetSmall, .canary: "Words a moment later"
+        case .whisper, .whisperSmall: "Words a second or two later"
+        case .whisperLarge: "Words a few seconds later"
         }
     }
 
@@ -186,7 +223,21 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         case .parakeetEnglish: 609_000_000
         case .nemotron: 621_000_000
         case .parakeet: 632_000_000
+        case .canary: 637_000_000
+        case .parakeetEnglishV2: 465_000_000
+        case .whisperLarge: 950_000_000
         case .whisper: 629_000_000
+        case .parakeetSmall: 220_000_000
+        case .whisperSmall: 219_000_000
+        }
+    }
+
+    /// The oldest macOS the model runs on, as a major version.
+    public var minimumMacOS: Int {
+        switch self {
+        case .apple: 26
+        case .parakeetSmall: 15
+        default: 14
         }
     }
 }
@@ -276,6 +327,10 @@ public protocol SpeechRecognizing: Sendable {
     ) async throws -> any DictationSession
     /// Frees the memory of loaded models after `seconds` without a dictation, or never with nil.
     func unloadModels(after seconds: TimeInterval?) async
+    /// The microphones the Mac has now.
+    func microphones() async -> [Microphone]
+    /// Listens to this microphone from the next dictation, or to the one chosen in System Settings with nil.
+    func useMicrophone(_ id: String?) async
     /// Loads a downloaded model into memory ahead of a dictation, so it starts at once. Does nothing for a model
     /// that isn't downloaded, or for Apple's, which macOS keeps ready itself.
     func prepare(_ model: DictationModel, language: DictationLanguage) async
@@ -308,4 +363,110 @@ public enum MicrophoneAccess: Equatable, Sendable {
     case granted
     case denied
     case notDetermined
+}
+
+/// A modifier key that starts a dictation on its own, without another key: Option or Command, on the left or
+/// right of the space bar.
+public enum ModifierKey: String, Codable, CaseIterable, Sendable, Identifiable {
+    case rightOption, leftOption, rightCommand, leftCommand
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .rightOption: "Right Option"
+        case .leftOption: "Left Option"
+        case .rightCommand: "Right Command"
+        case .leftCommand: "Left Command"
+        }
+    }
+
+    public var symbol: String {
+        switch self {
+        case .rightOption: "Right ⌥"
+        case .leftOption: "Left ⌥"
+        case .rightCommand: "Right ⌘"
+        case .leftCommand: "Left ⌘"
+        }
+    }
+
+    /// The key code macOS reports for it in a flags-changed event.
+    public var keyCode: UInt16 {
+        switch self {
+        case .rightOption: 61
+        case .leftOption: 58
+        case .rightCommand: 54
+        case .leftCommand: 55
+        }
+    }
+
+    public init?(keyCode: UInt16) {
+        guard let key = Self.allCases.first(where: { $0.keyCode == keyCode }) else { return nil }
+        self = key
+    }
+}
+
+/// What a modifier key on its own did: went down, came up, or another key was pressed while it was down, which
+/// makes it part of an ordinary shortcut rather than a dictation.
+public enum ModifierKeyEvent: Equatable, Sendable {
+    case down(ModifierKey)
+    case up(ModifierKey)
+    case otherKey
+}
+
+/// A key pressed after the words are pasted, to send a message in apps where Return sends.
+public enum DictationSubmit: String, Codable, CaseIterable, Sendable, Identifiable {
+    case off, returnKey, commandReturn
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .off: "Nothing"
+        case .returnKey: "Return"
+        case .commandReturn: "⌘Return"
+        }
+    }
+}
+
+/// How many transcripts are kept.
+public enum DictationHistory: String, Codable, CaseIterable, Sendable, Identifiable {
+    case off, last10, last50, all
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .off: "None"
+        case .last10: "The last 10"
+        case .last50: "The last 50"
+        case .all: "All of them"
+        }
+    }
+
+    /// The most kept, or nil for no limit.
+    public var limit: Int? {
+        switch self {
+        case .off: 0
+        case .last10: 10
+        case .last50: 50
+        case .all: nil
+        }
+    }
+}
+
+/// A microphone the Mac has, as macOS names it.
+public struct Microphone: Identifiable, Hashable, Sendable {
+    /// macOS's lasting identifier for the device.
+    public let id: String
+    public let name: String
+
+    public init(id: String, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+public enum DictationSound: Sendable {
+    case start, finish
 }

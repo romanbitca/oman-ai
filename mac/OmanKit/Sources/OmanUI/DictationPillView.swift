@@ -67,6 +67,9 @@ public enum DictationPillMetrics {
     static let wordsMaxHeight: CGFloat = 10 * 18.5
     static let control: CGFloat = 34
     static let gap: CGFloat = 8
+    /// The faintest red, so Cancel reads as Cancel without shouting.
+    static let cancelTint = Color(red: 1, green: 0.3, blue: 0.3).opacity(0.13)
+    static let cancelGlyph = Color(red: 1, green: 0.74, blue: 0.74)
 }
 
 public struct DictationPillView: View {
@@ -126,6 +129,7 @@ public struct DictationPillView: View {
                 if showsDone {
                     Group {
                         cancelButton
+                        if controller.field == nil { improveButton }
                         doneButton
                     }
                     .transition(.opacity.combined(with: .scale(scale: 0.8)))
@@ -166,6 +170,7 @@ public struct DictationPillView: View {
                 if showsDone {
                     Group {
                         cancelButton
+                        if controller.field == nil { improveButton }
                         doneButton
                     }
                     .transition(.opacity.combined(with: .scale(scale: 0.8)))
@@ -223,13 +228,29 @@ public struct DictationPillView: View {
         } label: {
             Image(systemName: "xmark")
                 .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(DictationPillMetrics.cancelGlyph)
+                .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
+                .contentShape(Circle())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .liquidGlass(in: Circle(), tint: DictationPillMetrics.cancelTint, interactive: true)
+        .help("Throw the words away")
+        .accessibilityLabel("Cancel")
+    }
+
+    private var improveButton: some View {
+        Button {
+            controller.improveNow()
+        } label: {
+            Image(systemName: "sparkles")
+                .font(.system(size: 14, weight: .semibold))
                 .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
                 .contentShape(Circle())
         }
         .buttonStyle(LiquidPressStyle())
         .liquidGlass(in: Circle(), interactive: true)
-        .help("Throw the words away")
-        .accessibilityLabel("Cancel")
+        .help("Open the words in OmanAI, to proofread or rewrite them before they go in")
+        .accessibilityLabel("Proofread or rewrite first")
     }
 
     private var doneButton: some View {

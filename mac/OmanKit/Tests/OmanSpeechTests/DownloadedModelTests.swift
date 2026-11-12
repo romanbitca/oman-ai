@@ -69,7 +69,7 @@ import Testing
 
     @Test func parakeetUltraShowsWordsWhileSpeaking() async throws {
         guard Self.isOn("parakeet") else { return }
-        let engine = ParakeetEngine(root: Self.modelsDirectory.appendingPathComponent("parakeet"))
+        let engine = ParakeetEngine(model: .parakeet, version: .ultra, root: Self.modelsDirectory.appendingPathComponent("parakeet"))
         if await !engine.isDownloaded {
             try await timed("Parakeet Ultra download") { try await engine.download { _ in } }
         }
@@ -100,7 +100,7 @@ import Testing
 
     @Test func whisperHearsEnglishAndShowsWordsOnTheWay() async throws {
         guard Self.isOn("whisper") else { return }
-        let engine = WhisperEngine(root: Self.modelsDirectory.appendingPathComponent("whisper"))
+        let engine = WhisperEngine(model: .whisper, root: Self.modelsDirectory.appendingPathComponent("whisper"))
         if await !engine.isDownloaded {
             try await timed("Whisper download") { try await engine.download { _ in } }
         }
@@ -122,7 +122,7 @@ import Testing
 
     @Test func whisperGivesNoWordsForSilence() async throws {
         guard Self.isOn("whisper") else { return }
-        let engine = WhisperEngine(root: Self.modelsDirectory.appendingPathComponent("whisper"))
+        let engine = WhisperEngine(model: .whisper, root: Self.modelsDirectory.appendingPathComponent("whisper"))
         guard await engine.isDownloaded else { return }
         let url = try SpokenSample.make("[[slnc 3000]]")
         let (session, feeding) = try await WhisperDictationSession.start(engine: engine, language: .automatic, file: url)
@@ -131,9 +131,53 @@ import Testing
         #expect(text.isEmpty)
     }
 
+    /// The models that read again: each must download, load and write the sentence, with its first words soon.
+    @Test(arguments: [DictationModel.parakeetEnglishV2, .parakeetSmall, .canary, .whisperSmall, .whisperLarge])
+    func eachAccurateModelHearsTheSentence(model: DictationModel) async throws {
+        guard Self.isOn(model.rawValue) else { return }
+        let macOS = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        guard macOS >= model.minimumMacOS else { return }
+        let service = SpeechService(modelsDirectory: Self.modelsDirectory)
+        if await service.status(of: model, language: .automatic) != .ready {
+            try await timed("\(model.displayName) download") {
+                try await service.download(model, language: .automatic) { _ in }
+            }
+        }
+        let url = try SpokenSample.make(Self.english)
+        let samples = try SpeechAudio.samples(ofFile: url)
+        let language = await service.defaultLanguage(for: model)
+        let text = try await timed("\(model.displayName) reading") {
+            try await Self.read(samples, with: model, language: language, in: service)
+        }
+        print("\(model.displayName) heard:", text)
+        #expect(text.lowercased().contains("report"))
+        #expect(text.lowercased().contains("friday"))
+    }
+
+    /// Reads a whole recording through the engine behind `model`, as each reading during a dictation does.
+    static func read(_ samples: [Float], with model: DictationModel, language: DictationLanguage, in service: SpeechService) async throws -> String {
+        let root = modelsDirectory
+        switch model {
+        case .parakeetEnglishV2:
+            return try await ParakeetEngine(model: model, version: .v2, root: root.appendingPathComponent("parakeet-tdt-v2")).transcribe(samples)
+        case .parakeetSmall:
+            return try await ParakeetEngine(model: model, version: .redux, root: root.appendingPathComponent("parakeet-redux")).transcribe(samples)
+        case .canary:
+            return try await CanaryEngine(root: root.appendingPathComponent("canary")).transcribe(samples, language: language)
+        case .whisperSmall:
+            return try await WhisperEngine(model: model, root: root.appendingPathComponent("whisper-small"))
+                .transcribe(samples, language: language).map(\.text).joined(separator: " ")
+        case .whisperLarge:
+            return try await WhisperEngine(model: model, root: root.appendingPathComponent("whisper-large-v3"))
+                .transcribe(samples, language: language).map(\.text).joined(separator: " ")
+        default:
+            return ""
+        }
+    }
+
     @Test func unloadingFreesTheModelAndItLoadsAgain() async throws {
         guard Self.isOn("parakeet") else { return }
-        let engine = ParakeetEngine(root: Self.modelsDirectory.appendingPathComponent("parakeet"))
+        let engine = ParakeetEngine(model: .parakeet, version: .ultra, root: Self.modelsDirectory.appendingPathComponent("parakeet"))
         guard await engine.isDownloaded else { return }
         let url = try SpokenSample.make(Self.english)
         let samples = try SpeechAudio.samples(ofFile: url)

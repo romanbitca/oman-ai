@@ -340,7 +340,17 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var dictationLanguages: [String: DictationLanguage] = [:]
     public var dictationPillPosition: DictationPillPosition = .menuBar
     public var dictationPillStyle: DictationPillStyle = .card
-    public var keepsDictations = true
+    public var dictationHistory: DictationHistory = .all
+    /// Option or Command on their own, as the key held down to dictate and the key tapped for a long dictation.
+    /// Each takes the place of that action's ordinary shortcut while it is set.
+    public var dictationHoldKey: ModifierKey?
+    public var dictationLongKey: ModifierKey?
+    /// The microphone's identifier, or nil for the one chosen in System Settings.
+    public var dictationMicrophone: String?
+    public var playsDictationSounds = false
+    public var mutesAudioWhileDictating = false
+    public var dictationSubmit: DictationSubmit = .off
+    public var addsSpaceAfterDictation = false
     /// Names and other words the person says often, spelled their way.
     public var dictationWords: [String] = []
     public var removesFillerWords = true
@@ -383,13 +393,29 @@ public struct AppPreferences: Codable, Equatable, Sendable {
         dictationPillStyle =
             (try? values.decodeIfPresent(DictationPillStyle.self, forKey: .dictationPillStyle))
             ?? defaults.dictationPillStyle
-        keepsDictations = (try? values.decodeIfPresent(Bool.self, forKey: .keepsDictations)) ?? defaults.keepsDictations
+        dictationHistory =
+            (try? values.decodeIfPresent(DictationHistory.self, forKey: .dictationHistory)) ?? defaults.dictationHistory
+        dictationHoldKey = try? values.decodeIfPresent(ModifierKey.self, forKey: .dictationHoldKey)
+        dictationLongKey = try? values.decodeIfPresent(ModifierKey.self, forKey: .dictationLongKey)
+        dictationMicrophone = try? values.decodeIfPresent(String.self, forKey: .dictationMicrophone)
+        playsDictationSounds =
+            (try? values.decodeIfPresent(Bool.self, forKey: .playsDictationSounds)) ?? defaults.playsDictationSounds
+        mutesAudioWhileDictating =
+            (try? values.decodeIfPresent(Bool.self, forKey: .mutesAudioWhileDictating)) ?? defaults.mutesAudioWhileDictating
+        dictationSubmit = (try? values.decodeIfPresent(DictationSubmit.self, forKey: .dictationSubmit)) ?? defaults.dictationSubmit
+        addsSpaceAfterDictation =
+            (try? values.decodeIfPresent(Bool.self, forKey: .addsSpaceAfterDictation)) ?? defaults.addsSpaceAfterDictation
         dictationWords = (try? values.decodeIfPresent([String].self, forKey: .dictationWords)) ?? defaults.dictationWords
         removesFillerWords =
             (try? values.decodeIfPresent(Bool.self, forKey: .removesFillerWords)) ?? defaults.removesFillerWords
         modelUnloadDelay =
             (try? values.decodeIfPresent(ModelUnloadDelay.self, forKey: .modelUnloadDelay)) ?? defaults.modelUnloadDelay
         shortcuts = (try? values.decodeIfPresent([String: KeyCombo].self, forKey: .shortcuts)) ?? defaults.shortcuts
+    }
+
+    /// Option or Command keys that dictate on their own, to be watched.
+    public var dictationModifierKeys: Set<ModifierKey> {
+        Set([dictationHoldKey, dictationLongKey].compactMap { $0 })
     }
 
     public func dictationLanguage(for model: DictationModel) -> DictationLanguage? {

@@ -39,6 +39,15 @@ struct PanelComposeView: View {
                 }
 
                 HStack(spacing: 8) {
+                    if model.hasLastTranscript {
+                        LiquidButton(
+                            title: model.copiedTranscript ? "Copied" : "Copy last transcript",
+                            symbol: model.copiedTranscript ? "checkmark" : "doc.on.doc"
+                        ) {
+                            model.copyLastTranscript()
+                        }
+                        .help("Copies the words of your last dictation")
+                    }
                     Spacer()
                     if let dictation = model.dictation {
                         DictationMicButton(controller: dictation, field: .composePrompt)

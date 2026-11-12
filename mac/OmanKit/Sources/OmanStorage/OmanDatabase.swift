@@ -311,13 +311,22 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
     }
 
     public func savedDictations() throws -> [SavedDictation] {
+        try fetchDictations(limit: nil)
+    }
+
+    public func latestDictation() throws -> SavedDictation? {
+        try fetchDictations(limit: 1).first
+    }
+
+    private func fetchDictations(limit: Int?) throws -> [SavedDictation] {
         try writer.read { db in
             try Row.fetchAll(
                 db,
                 sql: """
                     SELECT id, created_at, body, duration, model, language, app_name
-                    FROM dictations ORDER BY created_at DESC, rowid DESC
-                    """
+                    FROM dictations ORDER BY created_at DESC, rowid DESC LIMIT ?
+                    """,
+                arguments: [limit ?? -1]
             ).map { row in
                 SavedDictation(
                     id: try Self.uuid(from: row["id"]),
@@ -341,6 +350,19 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
     public func deleteAllDictations() throws {
         try writer.write { db in
             try db.execute(sql: "DELETE FROM dictations")
+        }
+    }
+
+    public func trimDictations(keepingNewest count: Int) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    DELETE FROM dictations WHERE id NOT IN (
+                        SELECT id FROM dictations ORDER BY created_at DESC, rowid DESC LIMIT ?
+                    )
+                    """,
+                arguments: [max(count, 0)]
+            )
         }
     }
 }
