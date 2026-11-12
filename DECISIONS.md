@@ -311,3 +311,16 @@ Asked for by the maintainer after seeing the dark page: no black theme, a header
 - Settings is shown in its light pictures on the site and in the documentation. The README keeps both
 - Style sheets and scripts are kept by browsers for an hour, so their addresses carry a number (`?v=3`) that goes up with each redesign
 - The server's proxy no longer compresses what the site sends. It had gzipped the recordings too, and a gzipped file cannot be asked for in parts, which Safari needs before it plays a video. The site's own nginx compresses the text, as its config says. The setting is "Enable gzip compression" on the app in Coolify, now off. The recordings got new file names, because Cloudflare keeps the gzipped copies of the old ones for a week
+
+## 2026-11-12 — Proofread shows what it changed, at once or when asked
+
+Asked for by the maintainer: a way to see what Proofread changed, with a few ways offered to choose from. Four were drawn for them: marks in the text, highlights first, the original in a box above the result, and a list of changes. They chose the first two, and asked for both with a choice between them in Settings.
+
+- The panel compares the person's text with the corrected one word by word, on the Mac, so nothing more is sent anywhere. The texts are cut into words, runs of spacing and single marks, and compared with Swift's `difference(from:)`. The code is `TextChanges.swift`
+- Settings, under General, has "Show what Proofread changed". At once tints each changed word as soon as the result appears, and the header shows their count; clicking it shows the words they replaced, struck through just before them. When I ask keeps the result plain until Show changes is clicked
+- At once is the default. The assistant chose it because it shows the changes without a click; the maintainer asked for both and named no default
+- After a proofread the header shows this button where Show original was, and ⌘O does the same. It says "No changes" when nothing was corrected. When more than half of the words changed, counting both texts and in a text of at least 16 words, marks would cover everything, so Show original stays. Rewrite and Explain keep Show original, because their results are meant to differ from the text
+- A word keeps its apostrophe, an emoji stays whole, and in scripts written without spaces between words, such as Japanese, Chinese and Thai, each character stands alone, so one corrected character doesn't mark a whole sentence. A change of spacing alone is neither marked nor counted. A word replaced by another counts as one change, and changed words next to each other count one each
+- Replace and Copy deliver the corrected text, never the marks. While the old words are on show the text can't be selected, so a selection never mixes the two texts
+- New words are tinted green, and old words are red and struck through. With Differentiate without colour turned on, new words are underlined too. VoiceOver reads each change by name
+

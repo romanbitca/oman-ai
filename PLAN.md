@@ -119,6 +119,19 @@ Acceptance:
 
 ---
 
+## W11: What Proofread changed [IN PROGRESS]
+
+After a proofread the panel shows what changed, in one of two ways chosen in Settings.
+
+Acceptance:
+- With At once, each changed word is tinted as soon as the result appears, and the count in the header shows the words they replaced, struck through
+- With When I ask, the result stays plain until Show changes is clicked
+- "No changes" when nothing was corrected, and Show original when most of the words changed
+- Replace and Copy deliver the corrected text, whatever is on show
+- ⌘O does what the header button does
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.

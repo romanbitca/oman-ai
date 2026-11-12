@@ -4,6 +4,13 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — Proofread shows what it changed
+
+- The maintainer asked for a way to see what Proofread changed, with ways to choose from. Drew four in the conversation; they chose two and asked for both, with a choice in Settings (see DECISIONS.md)
+- Added `TextChanges`, which compares the person's text and the result word by word on the Mac, and the two ways the panel shows it: At once, the default, and When I ask. The choice is in Settings, under General. The documentation and the README describe both
+- 30 new tests. The whole suite of 399 tests passes and the app builds. Pull request 14, not merged or released
+- Not verified: the real panel with the marks, on screen (see KNOWN_ISSUES.md)
+
 ## 2026-11-12 — 0.3.5 released, and the website rebuilt in light and glass
 
 - The maintainer read the night's report and said to merge and release. Brought `main` up to the branch by fast-forward, which closed pull request 13, and published 0.3.5 from a tag on `main`. All three release jobs passed, and the release checks out from the outside: notarized, signed by the same Developer ID team, version 0.3.5 with build 3005, the update key the installed copy carries, and a feed and download whose signatures match that key. The public feed names 0.3.5

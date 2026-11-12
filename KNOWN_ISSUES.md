@@ -4,6 +4,12 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-12 — The marks after a proofread have not been seen in the real panel
+
+Tests cover what is marked and how it is counted, and the marked text was drawn on its own, selectable and not, where it looks as intended. The whole result panel could not be drawn off the screen. ImageRenderer leaves out what AppKit draws, which is the scrolling text and the field to make a change, and drops the glass at random. A window placed off every display draws only its AppKit parts. Nothing was put on the maintainer's screen to look at it, so how the green and red read over the glass, in light and in dark, is unchecked.
+
+---
+
 ## 2026-11-12 — Three pictures on the website show the app before 0.3.5
 
 The Proofread recording under Use cases was made with 0.3.4. It shows a message typed in lower case getting capitals and a full stop, and "untill" becoming "by". Since 0.3.5, Proofread with As written keeps the lower case and only corrects the spelling. For that reason the header plays three recordings and leaves Proofread out. The picture of the Writing page lacks the line under the quality control, and the picture of Spending was taken before the dates were centred under the bars.
