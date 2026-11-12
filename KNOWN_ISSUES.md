@@ -18,7 +18,7 @@ The speeds on the website and in the README are from the run of eleven tasks mad
 
 The numbers in DECISIONS.md come from checks on the text of each answer: a word is there or not, the line breaks are kept, the answer is not longer than its text. They catch a wrong letter case, a missing apostrophe, a second version or a comment on the first, an added greeting, the wrong language. They do not judge whether a rewrite sounds like the person, or whether an explanation is a good reading.
 
-There are 27 kinds of text, almost all English and short. Seventeen were looked at while the wording was tuned, so the ten that were not are the fairer measure: 1 answer in 80 failed there.
+There are 29 kinds of text, almost all English and short. Seventeen were looked at while the wording was tuned, so the ten that were not are the fairer measure: 1 answer in 80 failed there. Two more send a picture of a made-up conversation, drawn by the test, the way the Screen switch sends a screenshot: all 12 answers used it. A capture of a real window was not tried.
 
 What still goes wrong, about once in a hundred answers: "its" left where "it's" is meant, and an explanation of a grudging message that gives its warning inside the first paragraph instead of a second one.
 

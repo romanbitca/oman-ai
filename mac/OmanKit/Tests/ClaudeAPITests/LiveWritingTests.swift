@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import OmanCore
 import Testing
@@ -14,6 +15,7 @@ import Testing
 //   OMAN_LIVE_MODELS     haiku,sonnet,opus    (default haiku)
 //   OMAN_LIVE_QUALITIES  fast,balanced,best   (default fast)
 //   OMAN_LIVE_RUNS       times each case is asked (default 2)
+//   OMAN_LIVE_ONLY       only the cases whose name contains this, such as "proofread" or "screen"
 //   OMAN_LIVE_REPORT     a file to write every answer that failed a check to
 
 private typealias Check = @Sendable (String) -> Bool
@@ -23,6 +25,8 @@ private struct LiveCase: Sendable {
     let task: WritingTask
     var style: WritingStyle?
     var context = ""
+    /// Lines of a made-up conversation, drawn into a picture and sent as the Screen switch would send it.
+    var screen: [String] = []
     var refinement: Refinement?
     let checks: [(name: String, passes: Check)]
 }
@@ -83,6 +87,31 @@ private func noRemarkOnTheLanguage(_ text: String) -> Bool {
 
 private func speaksToTheWriter(_ text: String) -> Bool {
     !has(text, "the sender") && !plain(text).hasPrefix("you will read")
+}
+
+/// A plain picture of a few lines of text, standing in for a screenshot of the window being written in.
+private func picture(of lines: [String]) -> ScreenshotAttachment? {
+    let width = 900
+    let height = 60 + 44 * lines.count
+    guard !lines.isEmpty,
+          let bitmap = NSBitmapImageRep(
+              bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height, bitsPerSample: 8, samplesPerPixel: 4,
+              hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+          ),
+          let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return nil }
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = context
+    NSColor.white.setFill()
+    NSRect(x: 0, y: 0, width: width, height: height).fill()
+    for (index, line) in lines.enumerated() {
+        (line as NSString).draw(
+            at: NSPoint(x: 30, y: height - 60 - index * 44),
+            withAttributes: [.font: NSFont.systemFont(ofSize: 24), .foregroundColor: NSColor.black]
+        )
+    }
+    NSGraphicsContext.restoreGraphicsState()
+    guard let jpeg = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.85]) else { return nil }
+    return ScreenshotAttachment(jpegData: jpeg, pixelWidth: width, pixelHeight: height)
 }
 
 // MARK: Material
@@ -290,6 +319,30 @@ private let cases: [LiveCase] = [
             ("facts kept", { has($0, "after lunch") }),
         ]
     ),
+
+    // With the Screen switch on: the picture is the only place the conversation is.
+    LiveCase(
+        name: "explain with the screen",
+        task: .explain(text: "ok will do tomorrow"),
+        screen: ["#finance", "Dana: Can you send me the Q3 numbers?", "Dana: I need them before the board meeting at 5 pm today."],
+        checks: [
+            ("read the picture", { has($0, "today") || has($0, "5 pm") || has($0, "board") }),
+            ("names the problem", { paragraphs($0).count == 2 }),
+            ("no remark on the language", noRemarkOnTheLanguage),
+        ]
+    ),
+    LiveCase(
+        name: "compose with the screen",
+        task: .compose(request: "say yes, i'll send them by 4", selectedText: nil),
+        style: slack,
+        screen: ["#finance", "Dana: Can you send me the Q3 numbers?", "Dana: I need them before the board meeting at 5 pm today."],
+        checks: [
+            ("short", { $0.count < 160 && !$0.contains("\n\n") }),
+            ("lower case", { $0.first?.isLowercase == true }),
+            ("facts kept", { $0.contains("4") }),
+            ("voice of the picture not copied", { !$0.hasPrefix("Dana:") }),
+        ]
+    ),
     LiveCase(
         name: "change a draft",
         task: .rewrite(text: "cant make it thursday, something came up. can we do friday morning instead? sorry", instruction: nil),
@@ -314,13 +367,15 @@ private let cases: [LiveCase] = [
         let models = (environment["OMAN_LIVE_MODELS"] ?? "haiku").split(separator: ",").compactMap { Self.models[String($0)] }
         let qualities = (environment["OMAN_LIVE_QUALITIES"] ?? "fast").split(separator: ",").compactMap { WritingQuality(rawValue: String($0)) }
         let runs = max(1, environment["OMAN_LIVE_RUNS"].flatMap(Int.init) ?? 2)
+        let only = environment["OMAN_LIVE_ONLY"]
+        let chosen = cases.filter { liveCase in only.map(liveCase.name.contains) ?? true }
         let router = WritingRouter()
 
         var jobs: [(WritingModel, WritingQuality, LiveCase)] = []
         for _ in 0..<runs {
             for model in models {
                 for quality in qualities {
-                    jobs += cases.map { (model, quality, $0) }
+                    jobs += chosen.map { (model, quality, $0) }
                 }
             }
         }
@@ -374,7 +429,7 @@ private let cases: [LiveCase] = [
         let request = WritingRequest(
             task: liveCase.task,
             style: liveCase.style,
-            context: WritingContext(pastedText: liveCase.context),
+            context: WritingContext(pastedText: liveCase.context, screenshot: picture(of: liveCase.screen)),
             refinement: liveCase.refinement,
             model: model,
             quality: quality
