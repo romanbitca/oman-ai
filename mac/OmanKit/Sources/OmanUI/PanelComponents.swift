@@ -123,9 +123,6 @@ struct PanelHeaderButtons: View {
             ) {
                 model.togglePin()
             }
-            PanelIconButton(symbol: "gearshape", label: "Settings") {
-                model.openSettings()
-            }
         }
     }
 }
