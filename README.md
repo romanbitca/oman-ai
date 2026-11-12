@@ -114,15 +114,17 @@ In the same tests every Claude model matched a style, followed instructions and 
 
 ### Dictation
 
-Every dictation model runs on your Mac and is free. Choose one, and its language, under Dictation in Settings.
+Every dictation model runs on your Mac and is free. Choose one, and its language, under Dictation in Settings. Live models show your words as you say them; the others read what you said again every second or so.
 
-| Model | Download | Languages | Best for |
-| --- | --- | --- | --- |
-| Apple | None. macOS fetches each language once | 68, one at a time | Starting at once, on macOS 26 or later |
-| Parakeet | About 630 MB | 25 European ones, worked out as you speak | Switching between European languages |
-| Whisper | About 630 MB | About 100, chosen or worked out | Any other language |
+| Model | Live | Download | Languages | Best for |
+| --- | --- | --- | --- | --- |
+| Apple | Yes | None. macOS fetches each language once | 68, one at a time | Starting at once, on macOS 26 or later |
+| Parakeet Unified | Yes | About 610 MB | English | English, fastest |
+| Nemotron Unified | Yes | About 620 MB | 25 European ones, chosen or worked out | European languages, live |
+| Parakeet Ultra | | About 630 MB | 25 European ones, worked out as you speak | European languages, most accurate |
+| Whisper Large v3 Turbo | | About 630 MB | About 100, chosen or worked out | Any other language |
 
-Parakeet is [Moondream's Parakeet Ultra](https://huggingface.co/moondream/parakeet-ultra), built on NVIDIA's Parakeet, run by [FluidAudio](https://github.com/FluidInference/FluidAudio). Whisper is OpenAI's large-v3 turbo, run by Argmax's [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift).
+NVIDIA's Parakeet and Nemotron models, and [Moondream's Parakeet Ultra](https://huggingface.co/moondream/parakeet-ultra), run through [FluidAudio](https://github.com/FluidInference/FluidAudio). Whisper is OpenAI's large-v3 turbo, run by Argmax's [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift). Add your own words, such as names, under Dictation, Words, and they are written your way.
 
 ## Install
 

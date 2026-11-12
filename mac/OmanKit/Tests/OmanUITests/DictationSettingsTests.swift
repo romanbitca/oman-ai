@@ -55,11 +55,13 @@ import Testing
         await settings.dictationTask?.value
         #expect(settings.dictationStatus == .needsDownload(bytes: 626_000_000))
 
-        settings.downloadDictationModel()
+        settings.downloadModel(.parakeet)
         #expect(settings.downloadProgress == 0)
+        #expect(settings.downloadingModel == .parakeet)
         await settings.downloadTask?.value
         await settings.dictationTask?.value
         #expect(settings.downloadProgress == nil)
+        #expect(settings.downloadingModel == nil)
         #expect(settings.dictationStatus == .ready)
         #expect(harness.speech.downloads == [.parakeet])
     }
@@ -72,23 +74,64 @@ import Testing
         settings.setDictationModel(.whisper)
         await settings.dictationTask?.value
 
-        settings.downloadDictationModel()
+        settings.downloadModel(.whisper)
         await settings.downloadTask?.value
         #expect(settings.dictationError == "The download stopped: offline")
         #expect(settings.downloadProgress == nil)
     }
 
-    @Test func removingADownloadAsksForItAgain() async {
+    @Test func removingTheChosenDownloadGoesBackToApple() async {
         let harness = Harness()
         let settings = await loaded(harness)
         settings.setDictationModel(.whisper)
         await settings.dictationTask?.value
 
-        settings.removeDictationModel()
-        await settings.dictationTask?.value
-        await settings.dictationTask?.value
-        #expect(harness.speech.removals == [.whisper])
-        #expect(await eventually { settings.dictationStatus == .needsDownload(bytes: 1_000) })
+        settings.removeModel(.whisper)
+        #expect(await eventually { harness.speech.removals == [.whisper] })
+        #expect(await eventually { settings.preferences.dictationModel == .apple })
+        #expect(await eventually { settings.modelStatuses[.whisper] == .needsDownload(bytes: 1_000) })
+    }
+
+    @Test func choosingAModelStillToDownloadDownloadsItThenChoosesIt() async {
+        let harness = Harness()
+        harness.speech.setStatus(.needsDownload(bytes: 609_000_000), for: .parakeetEnglish)
+        let settings = await loaded(harness)
+        #expect(settings.modelStatuses[.parakeetEnglish] == .needsDownload(bytes: 609_000_000))
+
+        settings.chooseModel(.parakeetEnglish)
+        #expect(settings.downloadingModel == .parakeetEnglish)
+        #expect(settings.preferences.dictationModel == .apple)
+        await settings.downloadTask?.value
+        #expect(await eventually { settings.preferences.dictationModel == .parakeetEnglish })
+        #expect(await eventually { settings.dictationLanguage == DictationLanguage(id: "en") })
+    }
+
+    @Test func eachModelSaysWhichOfThePersonsLanguagesItKnows() async {
+        let harness = Harness()
+        let settings = await loaded(harness)
+        #expect(settings.modelLanguageCodes[.parakeetEnglish] == ["en"])
+        #expect(settings.modelLanguageCodes[.nemotron] == ["en", "ro", "ru"])
+        #expect(settings.modelLanguageCodes[.apple] == ["en", "ro"])
+        #expect(SettingsViewModel.languageCode("ro-RO") == "ro")
+        #expect(SettingsViewModel.languageCode("en") == "en")
+        #expect(!settings.personLanguages.isEmpty)
+    }
+
+    @Test func wordsAreAddedOnceEachAndCanBeRemoved() {
+        let harness = Harness()
+        let settings = harness.makeSettings()
+        settings.reload()
+
+        settings.newDictationWord = "AxiaPOS, Geri ,  "
+        settings.addDictationWords()
+        settings.newDictationWord = "axiapos"
+        settings.addDictationWords()
+        #expect(settings.preferences.dictationWords == ["AxiaPOS", "Geri"])
+        #expect(settings.newDictationWord.isEmpty)
+
+        settings.removeDictationWord("Geri")
+        #expect(settings.preferences.dictationWords == ["AxiaPOS"])
+        #expect((try? harness.settings.preferences())?.dictationWords == ["AxiaPOS"])
     }
 
     @Test func transcriptsCanBeCopiedAndDeleted() async {
@@ -146,6 +189,9 @@ import Testing
         preferences.dictationPillPosition = .bottom
         preferences.dictationPillStyle = .floating
         preferences.keepsDictations = false
+        preferences.dictationWords = ["AxiaPOS"]
+        preferences.removesFillerWords = false
+        preferences.modelUnloadDelay = .never
         preferences.setDictationLanguage(DictationLanguage(id: "ro"), for: .whisper)
         let data = try JSONEncoder().encode(preferences)
         #expect(try JSONDecoder().decode(AppPreferences.self, from: data) == preferences)
@@ -154,6 +200,9 @@ import Testing
         #expect(old.dictationModel == .apple)
         #expect(old.dictationPillPosition == .menuBar)
         #expect(old.dictationPillStyle == .card)
+        #expect(old.dictationWords.isEmpty)
+        #expect(old.removesFillerWords)
+        #expect(old.modelUnloadDelay == .fiveMinutes)
         #expect(old.keepsDictations)
         #expect(old.dictationLanguages.isEmpty)
     }

@@ -51,6 +51,9 @@ public final class DictationController {
     @ObservationIgnored private var panelBase = ""
     @ObservationIgnored private var targetApp: SourceApp?
     @ObservationIgnored private var keepsDictations = true
+    @ObservationIgnored private var words: [String] = []
+    @ObservationIgnored private var removesFillers = true
+    @ObservationIgnored private var unloadAfter: TimeInterval?
     @ObservationIgnored private var model: DictationModel = .default
     @ObservationIgnored private var language: DictationLanguage = .automatic
 
@@ -151,6 +154,9 @@ public final class DictationController {
         pillStyle = preferences.dictationPillStyle
         model = preferences.dictationModel
         keepsDictations = preferences.keepsDictations
+        words = preferences.dictationWords
+        removesFillers = preferences.removesFillerWords
+        unloadAfter = preferences.modelUnloadDelay.seconds
         targetApp = field == nil ? services.system.frontmostApp : nil
         panelBase = field.flatMap { panel?.text(in: $0) } ?? ""
 
@@ -203,7 +209,7 @@ public final class DictationController {
         guard phase == .starting else { return }
 
         do {
-            let session = try await speech.startSession(model: model, language: language)
+            let session = try await speech.startSession(model: model, language: language, words: words)
             guard phase == .starting, !Task.isCancelled else {
                 await session.cancel()
                 return
@@ -250,8 +256,9 @@ public final class DictationController {
 
     private func receive(_ update: DictationUpdate) {
         switch update {
-        case .transcript(let live):
+        case .transcript(let heard):
             guard phase == .listening || phase == .finishing else { return }
+            let live = LiveTranscript(confirmed: tidy(heard.confirmed), tentative: tidy(heard.tentative))
             transcript = live
             if let field, let panel {
                 panel.setText(LiveTranscript.join(panelBase, live.text), in: field)
@@ -261,9 +268,15 @@ public final class DictationController {
         }
     }
 
+    /// Hesitations taken out, if Settings says so, and the person's own words spelled their way.
+    private func tidy(_ text: String) -> String {
+        let kept = removesFillers ? DictationText.removingFillers(from: text) : text
+        return DictationText.applying(words, to: kept)
+    }
+
     private func deliver(_ heard: String) async {
         guard phase == .finishing else { return }
-        let text = heard.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = tidy(heard.trimmingCharacters(in: .whitespacesAndNewlines))
         transcript = LiveTranscript(confirmed: text)
         guard !text.isEmpty else {
             if let field, let panel {
@@ -327,6 +340,10 @@ public final class DictationController {
     /// Back to idle. With a notice, the sentence stays on screen for a moment.
     private func end(notice message: String? = nil) {
         services.system.setTemporaryShortcut(nil, for: .cancelDictation)
+        if let speech = services.speech {
+            let delay = unloadAfter
+            Task { await speech.unloadModels(after: delay) }
+        }
         presenter?.setDictationActive(false)
         updatesTask?.cancel()
         updatesTask = nil
@@ -356,6 +373,22 @@ public final class DictationController {
             guard let self, !Task.isCancelled, self.phase == .idle else { return }
             self.notice = nil
             self.presenter?.hideDictationPill()
+        }
+    }
+}
+
+/// The parts of the Dictation page in Settings.
+enum DictationPage: String, CaseIterable, Identifiable {
+    case model, look, words, transcripts
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .model: "Model"
+        case .look: "Look"
+        case .words: "Words"
+        case .transcripts: "Transcripts"
         }
     }
 }

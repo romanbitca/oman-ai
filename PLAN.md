@@ -145,6 +145,10 @@ Acceptance:
 - In the panel, the microphone buttons and the shortcuts put the words into the field being typed in, live
 - Apple's model works on macOS 26 and later with no download from OmanAI; Parakeet and Whisper download from Settings with progress, and can be removed
 - The language list follows the model, with Automatic first where the model can work the language out
+- With a live model, the first words show within about a second of being said
+- Settings lists the models with their languages, speed and size, and downloads, chooses and deletes them
+- The person's own words are written their way, filler words go if Settings says so, and a downloaded model is unloaded after the time Settings gives
+- Cancel and Done sit beside the words for a long dictation
 - With Keep transcripts on, each dictation's text is listed in Settings with Copy and Delete; the sound is never kept
 - Without the microphone permission, or with a model still to download, the pill says what to do
 

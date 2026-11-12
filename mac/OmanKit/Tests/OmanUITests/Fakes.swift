@@ -360,6 +360,8 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
 
     var languagesByModel: [DictationModel: [DictationLanguage]] = [
         .apple: [DictationLanguage(id: "en-US"), DictationLanguage(id: "ro-RO")],
+        .parakeetEnglish: [DictationLanguage(id: "en")],
+        .nemotron: [.automatic, DictationLanguage(id: "en"), DictationLanguage(id: "ro"), DictationLanguage(id: "ru")],
         .parakeet: [.automatic, DictationLanguage(id: "en"), DictationLanguage(id: "ro")],
         .whisper: [.automatic, DictationLanguage(id: "en"), DictationLanguage(id: "ro"), DictationLanguage(id: "ja")],
     ]
@@ -390,7 +392,18 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
     }
 
     func defaultLanguage(for model: DictationModel) async -> DictationLanguage {
-        model == .apple ? DictationLanguage(id: "en-US") : .automatic
+        switch model {
+        case .apple: DictationLanguage(id: "en-US")
+        case .parakeetEnglish: DictationLanguage(id: "en")
+        default: .automatic
+        }
+    }
+
+    func spokenLanguages(of model: DictationModel) async -> [String] {
+        switch model {
+        case .parakeet, .nemotron: ["en", "ro", "ru"]
+        default: (languagesByModel[model] ?? []).filter { !$0.isAutomatic }.map(\.id)
+        }
     }
 
     func download(
@@ -414,14 +427,28 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
         }
     }
 
-    func startSession(model: DictationModel, language: DictationLanguage) async throws -> any DictationSession {
+    func startSession(
+        model: DictationModel,
+        language: DictationLanguage,
+        words: [String]
+    ) async throws -> any DictationSession {
         try lock.withLock {
             if let startError { throw startError }
             let session = FakeDictationSession()
             started.append((model, language))
+            startWords.append(words)
             made.append(session)
             return session
         }
+    }
+
+    private var startWords: [[String]] = []
+    private var unloads: [TimeInterval?] = []
+    var wordsGiven: [[String]] { lock.withLock { startWords } }
+    var unloadRequests: [TimeInterval?] { lock.withLock { unloads } }
+
+    func unloadModels(after seconds: TimeInterval?) async {
+        lock.withLock { unloads.append(seconds) }
     }
 }
 

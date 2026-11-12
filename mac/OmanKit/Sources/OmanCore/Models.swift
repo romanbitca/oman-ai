@@ -341,6 +341,10 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var dictationPillPosition: DictationPillPosition = .menuBar
     public var dictationPillStyle: DictationPillStyle = .card
     public var keepsDictations = true
+    /// Names and other words the person says often, spelled their way.
+    public var dictationWords: [String] = []
+    public var removesFillerWords = true
+    public var modelUnloadDelay: ModelUnloadDelay = .fiveMinutes
     /// Global shortcuts start empty so OmanAI never takes a combination another app is using.
     public var shortcuts: [String: KeyCombo] = [
         ShortcutAction.acceptResult.storageKey: KeyCombo(keyCode: 36, modifiers: KeyCombo.command),
@@ -380,6 +384,11 @@ public struct AppPreferences: Codable, Equatable, Sendable {
             (try? values.decodeIfPresent(DictationPillStyle.self, forKey: .dictationPillStyle))
             ?? defaults.dictationPillStyle
         keepsDictations = (try? values.decodeIfPresent(Bool.self, forKey: .keepsDictations)) ?? defaults.keepsDictations
+        dictationWords = (try? values.decodeIfPresent([String].self, forKey: .dictationWords)) ?? defaults.dictationWords
+        removesFillerWords =
+            (try? values.decodeIfPresent(Bool.self, forKey: .removesFillerWords)) ?? defaults.removesFillerWords
+        modelUnloadDelay =
+            (try? values.decodeIfPresent(ModelUnloadDelay.self, forKey: .modelUnloadDelay)) ?? defaults.modelUnloadDelay
         shortcuts = (try? values.decodeIfPresent([String: KeyCombo].self, forKey: .shortcuts)) ?? defaults.shortcuts
     }
 

@@ -1,22 +1,22 @@
-import AVFoundation
+@preconcurrency import CoreML
 import FluidAudio
 import Foundation
 import OmanCore
 
-/// NVIDIA's Parakeet in Moondream's improved Ultra version, run by FluidAudio. It knows 25 European languages and
-/// works out which one is spoken; it can't be told which.
+/// Moondream's Parakeet Ultra, a post-training of NVIDIA's Parakeet TDT v3, run by FluidAudio. It knows 25 European
+/// languages and works out which one is spoken; it can't be told which. It reads a whole recording at once, more
+/// than a hundred times faster than it was spoken, so while the person speaks it reads everything again every
+/// second to show the words so far.
 actor ParakeetEngine {
     static let version: AsrModelVersion = .ultra
-    /// Measured from the files FluidAudio downloads.
-    static let downloadSize: Int64 = 632_000_000
-    /// What the model writes, as ISO codes, for the explanation in Settings.
+    /// What the model writes, as ISO codes.
     static let languageCodes = [
         "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr", "hr", "hu", "it",
         "lt", "lv", "mt", "nl", "pl", "pt", "ro", "ru", "sk", "sl", "sv", "uk",
     ]
 
     private let root: URL
-    private var models: AsrModels?
+    private var manager: AsrManager?
 
     init(root: URL) {
         self.root = root
@@ -35,203 +35,153 @@ actor ParakeetEngine {
         try Task.checkCancellation()
         // Loading once here prepares the model for the Neural Engine, which takes a while the first time,
         // so the first dictation starts at once.
-        _ = try await loadedModels()
+        _ = try await loaded()
         progress(1)
     }
 
-    func remove() throws {
-        models = nil
+    func remove() async throws {
+        await unload()
         if FileManager.default.fileExists(atPath: root.path) {
             try FileManager.default.removeItem(at: root)
         }
     }
 
+    func unload() async {
+        manager = nil
+    }
+
     func startSession() async throws -> any DictationSession {
         guard isDownloaded else { throw DictationError.modelNotReady(.parakeet) }
-        return try await ParakeetDictationSession.start(models: try await loadedModels())
+        _ = try await loaded()
+        return try RereadingDictationSession.start { samples in
+            try await self.transcribe(samples)
+        }
     }
 
-    /// Plays a recording into the same live path the microphone uses, for the tests that check the model without
-    /// one. Returns the live words seen on the way and the final text.
-    func transcribe(file url: URL) async throws -> (live: [LiveTranscript], text: String) {
-        let samples = try SpeechAudio.samples(ofFile: url)
-        let manager = SlidingWindowAsrManager(config: .streaming)
-        try await manager.loadModels(try await loadedModels())
-        let transcriptions = await manager.transcriptionUpdates
-        try await manager.startStreaming(source: .system)
-        let collector = Task {
-            var seen: [LiveTranscript] = []
-            for await update in transcriptions {
-                seen.append(LiveTranscript(confirmed: update.confirmedTranscript, tentative: update.volatileTranscript))
-            }
-            return seen
-        }
-        let step = Int(SpeechAudio.sampleRate / 10)
-        for start in stride(from: 0, to: samples.count, by: step) {
-            guard let buffer = SpeechAudio.buffer(from: Array(samples[start..<min(start + step, samples.count)])) else {
-                continue
-            }
-            await manager.streamAudio(buffer)
-        }
-        let text = try await manager.finish()
-        await manager.cancel()
-        return (await collector.value, text)
+    /// The text of a whole recording.
+    func transcribe(_ samples: [Float]) async throws -> String {
+        let manager = try await loaded()
+        var state = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
+        return try await manager.transcribe(samples, decoderState: &state).text
     }
 
-    private func loadedModels() async throws -> AsrModels {
-        if let models { return models }
-        let loaded = try await AsrModels.load(from: directory, version: Self.version)
-        models = loaded
-        return loaded
+    private func loaded() async throws -> AsrManager {
+        if let manager { return manager }
+        let models = try await AsrModels.load(from: directory, version: Self.version)
+        let manager = AsrManager(config: .default)
+        try await manager.loadModels(models)
+        self.manager = manager
+        return manager
     }
 }
 
-/// One dictation through Parakeet. FluidAudio decodes the last seconds again every second, so the newest words
-/// are a guess that settles as more is heard.
-final class ParakeetDictationSession: DictationSession, @unchecked Sendable {
+/// One dictation through a model that reads a whole recording at once: everything said so far is read again
+/// every second while the person speaks, and once more at the end. The last words of each reading are shown as a
+/// guess, since the next reading may change them.
+final class RereadingDictationSession: DictationSession, @unchecked Sendable {
+    static let readInterval = Duration.milliseconds(900)
+    /// Readings of a long dictation come less often, since each one reads more.
+    static let longDictation = 45 * Int(SpeechAudio.sampleRate)
+    /// Quieter than this, as a root mean square, counts as silence, so nothing is read before anything is said.
+    static let silence: Float = 0.006
+
     let updates: AsyncStream<DictationUpdate>
     private let updatesContinuation: AsyncStream<DictationUpdate>.Continuation
-    private let manager: SlidingWindowAsrManager
-    private let capture: MicrophoneCapture
-    private let samplesContinuation: AsyncStream<[Float]>.Continuation
-    private let feedTask: Task<Void, Never>
-    private let resultsTask: Task<Void, Never>
+    private let read: @Sendable ([Float]) async throws -> String
+    private var capture: MicrophoneCapture?
+    private let lock = NSLock()
+    private var samples: [Float] = []
+    private var readSamples = 0
+    private var heardSpeech = false
+    private var readTask: Task<Void, Never>?
 
-    private init(
-        manager: SlidingWindowAsrManager,
-        capture: MicrophoneCapture,
-        samplesContinuation: AsyncStream<[Float]>.Continuation,
-        feedTask: Task<Void, Never>,
-        resultsTask: Task<Void, Never>,
-        updates: AsyncStream<DictationUpdate>,
-        updatesContinuation: AsyncStream<DictationUpdate>.Continuation
-    ) {
-        self.manager = manager
-        self.capture = capture
-        self.samplesContinuation = samplesContinuation
-        self.feedTask = feedTask
-        self.resultsTask = resultsTask
-        self.updates = updates
-        self.updatesContinuation = updatesContinuation
+    private init(read: @escaping @Sendable ([Float]) async throws -> String) {
+        self.read = read
+        (updates, updatesContinuation) = AsyncStream.makeStream(of: DictationUpdate.self)
     }
 
-    static func start(models: AsrModels) async throws -> ParakeetDictationSession {
-        let manager = SlidingWindowAsrManager(config: .streaming)
-        try await manager.loadModels(models)
-        // Subscribed before any sound goes in, as FluidAudio asks.
-        let transcriptions = await manager.transcriptionUpdates
-        try await manager.startStreaming(source: .microphone)
-
-        let (updates, updatesContinuation) = AsyncStream.makeStream(of: DictationUpdate.self)
-        let resultsTask = Task {
-            for await update in transcriptions {
-                updatesContinuation.yield(.transcript(LiveTranscript(
-                    confirmed: update.confirmedTranscript,
-                    tentative: update.volatileTranscript
-                )))
-            }
-        }
-
-        let (samples, samplesContinuation) = AsyncStream.makeStream(of: [Float].self)
-        // In order, one buffer after another, which separate tasks per buffer would not keep.
-        let feedTask = Task {
-            for await chunk in samples {
-                guard let buffer = SpeechAudio.buffer(from: chunk) else { continue }
-                await manager.streamAudio(buffer)
-            }
-        }
+    static func start(read: @escaping @Sendable ([Float]) async throws -> String) throws -> RereadingDictationSession {
+        let session = RereadingDictationSession(read: read)
         let capture = MicrophoneCapture(
             targetFormat: SpeechAudio.format16k,
-            onAudio: { buffer in samplesContinuation.yield(SpeechAudio.samples(of: buffer)) },
-            onLevel: { level in updatesContinuation.yield(.level(level)) }
+            onAudio: { [weak session] buffer in session?.append(SpeechAudio.samples(of: buffer)) },
+            onLevel: { [weak session] level in session?.updatesContinuation.yield(.level(level)) }
         )
-        let session = ParakeetDictationSession(
-            manager: manager,
-            capture: capture,
-            samplesContinuation: samplesContinuation,
-            feedTask: feedTask,
-            resultsTask: resultsTask,
-            updates: updates,
-            updatesContinuation: updatesContinuation
-        )
-        do {
-            try capture.start()
-        } catch {
-            await session.cancel()
-            throw error
+        session.capture = capture
+        try capture.start()
+        session.readTask = Task { [weak session] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: readInterval)
+                guard !Task.isCancelled, let session else { return }
+                await session.readAgain()
+            }
         }
         return session
     }
 
+    /// For the tests: plays a recording in, a tenth of a second at a time, as the microphone would, reading again
+    /// as it goes.
+    static func start(read: @escaping @Sendable ([Float]) async throws -> String, file url: URL) throws
+        -> (session: RereadingDictationSession, feeding: Task<Void, Never>) {
+        let session = RereadingDictationSession(read: read)
+        let all = try SpeechAudio.samples(ofFile: url)
+        let feeding = Task {
+            let step = Int(SpeechAudio.sampleRate / 10)
+            var sinceRead = 0
+            for start in stride(from: 0, to: all.count, by: step) {
+                session.append(Array(all[start..<min(start + step, all.count)]))
+                try? await Task.sleep(for: .milliseconds(100))
+                sinceRead += 100
+                if sinceRead >= 900 {
+                    sinceRead = 0
+                    await session.readAgain()
+                }
+            }
+        }
+        return (session, feeding)
+    }
+
+    private func append(_ chunk: [Float]) {
+        lock.withLock {
+            samples.append(contentsOf: chunk)
+            if !heardSpeech, SpeechAudio.energy(of: chunk[...]) > Self.silence {
+                heardSpeech = true
+            }
+        }
+    }
+
+    private func readAgain() async {
+        let (all, fresh, speech) = lock.withLock { (samples, samples.count - readSamples, heardSpeech) }
+        let needed = all.count > Self.longDictation ? Int(SpeechAudio.sampleRate) * 2 : Int(SpeechAudio.sampleRate) / 2
+        guard speech, fresh >= needed else { return }
+        lock.withLock { readSamples = all.count }
+        guard let text = try? await read(all), !Task.isCancelled else { return }
+        updatesContinuation.yield(.transcript(Self.split(text)))
+    }
+
+    /// The last three words as the guess, the rest as settled.
+    static func split(_ text: String) -> LiveTranscript {
+        let words = text.split(separator: " ")
+        let settledCount = max(words.count - 3, 0)
+        return LiveTranscript(
+            confirmed: words[..<settledCount].joined(separator: " "),
+            tentative: words[settledCount...].joined(separator: " ")
+        )
+    }
+
     func finish() async throws -> String {
-        capture.stop()
-        samplesContinuation.finish()
-        await feedTask.value
-        let text = try await manager.finish()
-        resultsTask.cancel()
+        capture?.stop()
+        readTask?.cancel()
+        await readTask?.value
+        let (all, speech) = lock.withLock { (samples, heardSpeech) }
         updatesContinuation.finish()
-        return text
+        guard speech, !all.isEmpty else { return "" }
+        return try await read(all)
     }
 
     func cancel() async {
-        capture.stop()
-        samplesContinuation.finish()
-        feedTask.cancel()
-        await manager.cancel()
-        resultsTask.cancel()
+        capture?.stop()
+        readTask?.cancel()
         updatesContinuation.finish()
-    }
-}
-
-/// Sound as the downloaded models take it: 16,000 samples a second, one channel, as floating point numbers.
-enum SpeechAudio {
-    static let sampleRate = 16_000.0
-
-    // A format this plain always exists; the force unwrap can't fail.
-    nonisolated(unsafe) static let format16k = AVAudioFormat(
-        commonFormat: .pcmFormatFloat32,
-        sampleRate: sampleRate,
-        channels: 1,
-        interleaved: false
-    )!
-
-    static func samples(of buffer: AVAudioPCMBuffer) -> [Float] {
-        guard let channel = buffer.floatChannelData?[0] else { return [] }
-        return Array(UnsafeBufferPointer(start: channel, count: Int(buffer.frameLength)))
-    }
-
-    static func buffer(from samples: [Float]) -> AVAudioPCMBuffer? {
-        guard !samples.isEmpty,
-              let buffer = AVAudioPCMBuffer(pcmFormat: format16k, frameCapacity: AVAudioFrameCount(samples.count)),
-              let channel = buffer.floatChannelData?[0]
-        else { return nil }
-        samples.withUnsafeBufferPointer { source in
-            channel.update(from: source.baseAddress!, count: samples.count)
-        }
-        buffer.frameLength = AVAudioFrameCount(samples.count)
-        return buffer
-    }
-
-    /// A recording's sound in the models' format.
-    static func samples(ofFile url: URL) throws -> [Float] {
-        let file = try AVAudioFile(forReading: url)
-        guard let source = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) else {
-            return []
-        }
-        try file.read(into: source)
-        guard let converter = AVAudioConverter(from: file.processingFormat, to: format16k),
-              let converted = MicrophoneCapture.convert(source, with: converter, to: format16k)
-        else { return [] }
-        return samples(of: converted)
-    }
-
-    /// How loud a stretch of sound is, as its root mean square.
-    static func energy(of samples: ArraySlice<Float>) -> Float {
-        guard !samples.isEmpty else { return 0 }
-        var sum: Float = 0
-        for sample in samples {
-            sum += sample * sample
-        }
-        return (sum / Float(samples.count)).squareRoot()
     }
 }

@@ -50,6 +50,15 @@ struct AccessSettingsView: View {
                 ) {
                     model.requestScreenCapture()
                 }
+                permissionRow(
+                    title: "Microphone",
+                    detail: model.microphoneAccess == .denied
+                        ? "Turn on OmanAI in System Settings, under Privacy & Security, then Microphone."
+                        : "Only needed when you dictate.",
+                    isGranted: model.microphoneAccess == .granted
+                ) {
+                    model.allowMicrophone()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in

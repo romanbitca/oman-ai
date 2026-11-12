@@ -27,7 +27,7 @@ To test reading and pasting text, copy your build to `/Applications` and allow A
 - Everything opens from the menu bar icon. Nothing may appear in or near the text field being edited. The one exception is the dictation pill, which the person can move to the bottom of the screen in Settings.
 - No bouncing or springy motion anywhere, and no animation at all in Settings.
 - Writing goes through the Anthropic API or Apple's on-device model. Please open an issue before proposing another provider.
-- Dictation runs on the Mac only, through Apple's speech model, Parakeet with FluidAudio, or Whisper with WhisperKit. The sound is never sent anywhere or kept.
+- Dictation runs on the Mac only, through Apple's speech model, NVIDIA's Parakeet and Nemotron models with FluidAudio, or Whisper with WhisperKit. The sound is never sent anywhere or kept.
 
 The reasoning behind these and other choices is in [DECISIONS.md](DECISIONS.md).
 

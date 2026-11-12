@@ -124,9 +124,14 @@ public protocol DictationStore: Sendable {
 public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiable {
     /// Apple's speech model, part of macOS 26 and later. macOS downloads each language the first time it is used.
     case apple
-    /// NVIDIA's Parakeet, downloaded once. Works out which of its European languages is spoken.
+    /// NVIDIA's Parakeet Unified, English only, made to stream: words appear as they are said.
+    case parakeetEnglish = "parakeet-unified-en"
+    /// NVIDIA's Nemotron Unified, made to stream like Parakeet Unified, in 25 European languages.
+    case nemotron = "nemotron-unified"
+    /// Moondream's Parakeet Ultra: the most accurate here in its 25 European languages, which it works out itself.
+    /// It reads what was said so far again every second, so its words lag a little.
     case parakeet = "parakeet-v3"
-    /// OpenAI's Whisper, downloaded once. Knows the most languages and can work out which one is spoken.
+    /// OpenAI's Whisper large-v3 turbo: about a hundred languages, chosen or worked out, and the slowest here.
     case whisper = "whisper-large-v3-turbo"
 
     public static let `default`: DictationModel = .apple
@@ -136,13 +141,84 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
     public var displayName: String {
         switch self {
         case .apple: "Apple"
-        case .parakeet: "Parakeet"
-        case .whisper: "Whisper"
+        case .parakeetEnglish: "Parakeet Unified"
+        case .nemotron: "Nemotron Unified"
+        case .parakeet: "Parakeet Ultra"
+        case .whisper: "Whisper Large v3 Turbo"
+        }
+    }
+
+    /// One line for the list of models in Settings.
+    public var summary: String {
+        switch self {
+        case .apple: "Built into macOS, in one language at a time."
+        case .parakeetEnglish: "The fastest and most accurate for English."
+        case .nemotron: "25 European languages. Choose yours, or let it work it out."
+        case .parakeet: "The most accurate in 25 European languages, worked out as you speak."
+        case .whisper: "About a hundred languages, but slower."
         }
     }
 
     /// Whether the model is a download the person starts, rather than part of macOS.
     public var isDownloaded: Bool { self != .apple }
+
+    /// Made to stream, so words appear while they are being said. The others read the sound again every second.
+    public var isLive: Bool {
+        switch self {
+        case .apple, .parakeetEnglish, .nemotron: true
+        case .parakeet, .whisper: false
+        }
+    }
+
+    /// From 1, slow, to 4, fastest, measured on an M-series Mac.
+    public var speed: Int {
+        switch self {
+        case .apple, .parakeetEnglish, .parakeet: 4
+        case .nemotron: 3
+        case .whisper: 2
+        }
+    }
+
+    /// What its download comes to, measured from the files. Nil for Apple's, which macOS downloads per language.
+    public var downloadSize: Int64? {
+        switch self {
+        case .apple: nil
+        case .parakeetEnglish: 609_000_000
+        case .nemotron: 621_000_000
+        case .parakeet: 632_000_000
+        case .whisper: 629_000_000
+        }
+    }
+}
+
+/// How long a downloaded model stays loaded after a dictation, ready for the next one. Unloading frees the memory
+/// it takes, and the next dictation then takes a moment to load it again.
+public enum ModelUnloadDelay: String, Codable, CaseIterable, Sendable, Identifiable {
+    case immediately, oneMinute, fiveMinutes, fifteenMinutes, oneHour, never
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .immediately: "Right away"
+        case .oneMinute: "After 1 minute"
+        case .fiveMinutes: "After 5 minutes"
+        case .fifteenMinutes: "After 15 minutes"
+        case .oneHour: "After an hour"
+        case .never: "Never"
+        }
+    }
+
+    public var seconds: TimeInterval? {
+        switch self {
+        case .immediately: 0
+        case .oneMinute: 60
+        case .fiveMinutes: 300
+        case .fifteenMinutes: 900
+        case .oneHour: 3_600
+        case .never: nil
+        }
+    }
 }
 
 /// What a model needs before it can listen.
@@ -175,6 +251,9 @@ public protocol SpeechRecognizing: Sendable {
     /// The languages a model can listen for, with `DictationLanguage.automatic` first when it can work the
     /// language out itself.
     func languages(for model: DictationModel) async -> [DictationLanguage]
+    /// Every language a model knows, as identifiers such as "en" or "ro-RO", for showing which of the person's
+    /// languages it covers. Unlike `languages(for:)`, this lists them even for a model that can't be told one.
+    func spokenLanguages(of model: DictationModel) async -> [String]
     /// The language to use when the person has not chosen one.
     func defaultLanguage(for model: DictationModel) async -> DictationLanguage
     /// Downloads what the model needs for the language. `progress` goes from 0 to 1.
@@ -185,8 +264,15 @@ public protocol SpeechRecognizing: Sendable {
     ) async throws
     /// Deletes a downloaded model's files. Apple's model is part of macOS and has none.
     func removeDownload(of model: DictationModel) async throws
-    /// Starts listening to the microphone.
-    func startSession(model: DictationModel, language: DictationLanguage) async throws -> any DictationSession
+    /// Starts listening to the microphone. `words` are the person's own words, such as names, for a model that
+    /// can be told to expect them.
+    func startSession(
+        model: DictationModel,
+        language: DictationLanguage,
+        words: [String]
+    ) async throws -> any DictationSession
+    /// Frees the memory of loaded models after `seconds` without a dictation, or never with nil.
+    func unloadModels(after seconds: TimeInterval?) async
 }
 
 public enum DictationError: Error, Equatable, Sendable {

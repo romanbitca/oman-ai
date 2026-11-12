@@ -4,25 +4,26 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
-## 2026-11-12 — Dictation has not been tried with a microphone
+## 2026-11-12 — Dictation: what has been tried, and what hasn't
 
-What was checked: each model was given a sentence spoken by macOS's `say`, and Parakeet and Whisper got it through the same live path the microphone feeds. Apple's model, Parakeet and Whisper each wrote "Please send the report to Anna before Friday. Thank you." word for word, and Whisper wrote nothing for three seconds of silence. The rest of dictation is covered by tests with a pretend model and microphone.
+Tried: the maintainer dictated with the microphone in a signed test copy, with Parakeet Ultra. It worked, but its first words came about 10 seconds late, which led to the models that stream. Each model was then given a sentence spoken by macOS's `say`, a tenth of a second at a time as a microphone would give it. Apple's model, Parakeet Unified, Nemotron Unified, Parakeet Ultra and Whisper each wrote "Please send the report to Anna before Friday. Thank you." word for word. Parakeet Unified showed its first words 1.7 seconds after the sentence began, Nemotron 2.0 seconds and Parakeet Ultra 3.0 seconds, each growing word by word after that. Whisper wrote nothing for three seconds of silence. The pill was shown on the screen once in both looks and both places.
 
 Not yet tried:
 
-- A real microphone: macOS's question about it, the level that moves the wave, and Bluetooth headsets, which drop to call quality while their microphone is open
-- The moving menu bar icon, the panel's microphone buttons and the Dictation tab on the screen. The pill was shown on the screen once, with the maintainer's yes, in both looks and both places, with scripted words instead of a microphone. Under the menu bar it looked as intended. At the bottom of the screen its window's edge cut off the bottom rim of the glass; the pill now has room below it inside the window, and that has not been seen on the screen yet
-- Hold to dictate by hand. It relies on Carbon telling OmanAI when a shortcut's keys are let go, which it hadn't been asked for before
-- A real speaker of another language. Both downloaded models garbled a French sentence read by the Mac's French voice, which says more about that voice than about them
+- The models that stream with a real microphone, and the new Settings: the list of models, the Look pictures, Words and Transcripts
+- The cancel button, the moving menu bar icon and the panel's microphone buttons by hand
+- The pill at the bottom of the screen since its room below was added
+- The person's own words with real speech. They are checked against what a model writes, and Apple's model and Whisper are told to expect them; a word a model mishears badly is not caught
+- A real speaker of another language. The downloaded models garbled a French sentence read by the Mac's French voice, which says more about that voice than about them
+- Bluetooth headsets, which drop to call quality while their microphone is open
 
 Known limits:
 
-- Parakeet can't be told the language. Spoken in a language outside its 25, it writes something wrong rather than nothing
+- Parakeet Ultra and Nemotron set to Automatic can't be told the language. Spoken in a language outside their 25, they write something wrong rather than nothing
 - Whisper reads the words not yet settled again every second, so its live words trail by a second or two and a long dictation keeps the Neural Engine busy
+- Nemotron takes its language when it loads, so changing the language loads it again
+- A downloaded model is prepared for the Neural Engine once, at the end of its download, so that the first dictation starts at once. Each download here took about 2 to 5 minutes
 - The Floating look blurs what is behind it with the same undocumented Core Animation layer as the panel's backdrop. If a macOS drops it, the words keep only the darkening and their shadow, which may be hard to read over a bright window
-- A downloaded model is prepared for the Neural Engine once, at the end of its download, so that the first dictation starts at once. With the download, that took 2 min 42 s for Parakeet and 5 min for Whisper here
-
-One full test run, just after those downloads, had ten panel tests that wait 2 seconds for a result time out. They passed alone, and in the full runs since.
 
 ---
 

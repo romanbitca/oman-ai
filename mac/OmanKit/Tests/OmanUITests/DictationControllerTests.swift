@@ -272,3 +272,56 @@ import Testing
         #expect(panel.dictationField == .instruction)
     }
 }
+
+@MainActor
+@Suite struct DictationTidyingTests {
+    @Test func fillersGoAndTheChosenWordsAreSpelledTheirWay() async throws {
+        let harness = Harness()
+        var preferences = AppPreferences()
+        preferences.dictationWords = ["AxiaPOS"]
+        try harness.settings.setPreferences(preferences)
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        #expect(await eventually { controller.phase == .listening })
+        let session = try #require(harness.speech.sessions.last)
+        #expect(harness.speech.wordsGiven == [["AxiaPOS"]])
+
+        session.send(.transcript(LiveTranscript(confirmed: "Um, the axia pos release", tentative: "is uh ready")))
+        #expect(await eventually { controller.transcript.text == "The AxiaPOS release is ready" })
+
+        session.willFinish(with: "Um, the axia pos release is uh ready.")
+        controller.finishNow()
+        #expect(await eventually { controller.phase == .idle })
+        #expect(harness.system.insertCalls.map(\.text) == ["The AxiaPOS release is ready."])
+    }
+
+    @Test func fillersStayWhenSettingsSaysSo() async throws {
+        let harness = Harness()
+        var preferences = AppPreferences()
+        preferences.removesFillerWords = false
+        try harness.settings.setPreferences(preferences)
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        #expect(await eventually { controller.phase == .listening })
+        let session = try #require(harness.speech.sessions.last)
+        session.willFinish(with: "Um, yes.")
+        controller.finishNow()
+        #expect(await eventually { controller.phase == .idle })
+        #expect(harness.system.insertCalls.map(\.text) == ["Um, yes."])
+    }
+
+    @Test func theModelIsUnloadedWhenSettingsSays() async throws {
+        let harness = Harness()
+        var preferences = AppPreferences()
+        preferences.modelUnloadDelay = .oneMinute
+        try harness.settings.setPreferences(preferences)
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        #expect(await eventually { controller.phase == .listening })
+        controller.cancel()
+        #expect(await eventually { harness.speech.unloadRequests == [60] })
+    }
+}

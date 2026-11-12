@@ -17,6 +17,19 @@ struct ShortcutsSettingsView: View {
                 Text("Select text in any app, then press the shortcut. The result opens in the panel.")
             }
 
+            Section {
+                ForEach(ShortcutAction.dictationActions, id: \.self) { action in
+                    ShortcutRow(model: model, action: action)
+                }
+                LabeledContent("Cancel a dictation") {
+                    Text("Esc").foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Dictation")
+            } footer: {
+                Text("Hold the first while you speak, and let go to put the words in. For a longer dictation, press the second to start and again to finish.")
+            }
+
             Section("While a result is showing") {
                 ForEach(ShortcutAction.panelActions, id: \.self) { action in
                     ShortcutRow(model: model, action: action)

@@ -15,7 +15,9 @@ Date-stamped log of what each work session accomplished.
 - 458 tests pass, the temporary harness's included. The app builds, and its build copy was unregistered and deleted
 - Nine looks for the pill were drawn as moving mockups. The maintainer chose two, Card with the seconds and Done above the words and Floating with the words on a soft blur, and Settings chooses between them; Card is the default. Done now sits outside the words in both
 - With the maintainer's yes, both looks were shown once on the screen, under the menu bar and at the bottom, with scripted words. At the bottom the window's edge cut off the glass's bottom rim, so the pill now has room below it inside its window
-- Not yet done: a real microphone, the fixed bottom position on the screen, the documentation page and pictures
+- The maintainer tried a signed test copy with the microphone, not installed, with the installed OmanAI quit meanwhile. It worked, but Parakeet Ultra showed its first words about 10 seconds late. Two models that stream were added through FluidAudio, Parakeet Unified for English and Nemotron Unified for 25 European languages, and Parakeet Ultra now reads what was said again every second
+- Settings' Dictation page is now in four parts, Model, Look, Words and Transcripts, with a list of the models as in Handy and a drawing of each look; its shortcuts moved to the Shortcuts tab and the microphone to Key & Permissions. New: the person's own words, filler words taken out, unloading a model after a while, and a cancel button beside Done
+- Not yet done: the fixed bottom position on the screen, the documentation page and pictures
 
 ## 2026-11-12 — A sitemap for crawlers
 

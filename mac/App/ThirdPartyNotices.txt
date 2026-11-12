@@ -224,6 +224,14 @@ parakeet-tdt-0.6b-v3 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), in Fl
 Whisper large-v3 turbo by OpenAI (https://huggingface.co/openai/whisper-large-v3-turbo), MIT License, in Argmax's
 Core ML build (https://huggingface.co/argmaxinc/whisperkit-coreml), MIT License.
 
+Parakeet Unified by NVIDIA (https://huggingface.co/nvidia/parakeet-unified-en-0.6b), in FluidInference's Core ML
+build (https://huggingface.co/FluidInference/parakeet-unified-en-0.6b-coreml). Licensed under Creative Commons
+Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+Nemotron Unified by NVIDIA (https://huggingface.co/nvidia/nemotron-labs-unified-asr-0.6b), in FluidInference's
+Core ML build (https://huggingface.co/FluidInference/nemotron-labs-unified-asr-0.6b-coreml). Licensed under the
+OpenMDW License, version 1.1.
+
 
 ================================================================
 Apache License, Version 2.0

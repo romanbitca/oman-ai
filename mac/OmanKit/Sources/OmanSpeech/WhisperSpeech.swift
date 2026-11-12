@@ -17,6 +17,8 @@ actor WhisperEngine {
 
     private let root: URL
     private var whisper: WhisperKit?
+    /// The person's own words, given to Whisper as text it has just heard, so it expects them.
+    private var promptTokens: [Int]?
 
     init(root: URL) {
         self.root = root
@@ -49,23 +51,32 @@ actor WhisperEngine {
         progress(1)
     }
 
-    func remove() throws {
-        whisper = nil
+    func remove() async throws {
+        await unload()
         if FileManager.default.fileExists(atPath: root.path) {
             try FileManager.default.removeItem(at: root)
         }
     }
 
-    func startSession(language: DictationLanguage) async throws -> any DictationSession {
+    func unload() async {
+        await whisper?.unloadModels()
+        whisper = nil
+    }
+
+    func startSession(language: DictationLanguage, words: [String]) async throws -> any DictationSession {
         guard isDownloaded else { throw DictationError.modelNotReady(.whisper) }
-        _ = try await loaded()
+        let whisper = try await loaded()
+        promptTokens = words.isEmpty ? nil : whisper.tokenizer?.encode(text: " " + words.joined(separator: ", "))
         return try WhisperDictationSession.start(engine: self, language: language)
     }
 
     /// The text of each stretch of speech Whisper finds, with where it starts and ends in seconds.
     func transcribe(_ samples: [Float], language: DictationLanguage) async throws -> [WhisperSegment] {
         let whisper = try await loaded()
-        let results = try await whisper.transcribe(audioArray: samples, decodeOptions: Self.options(for: language))
+        let results = try await whisper.transcribe(
+            audioArray: samples,
+            decodeOptions: Self.options(for: language, prompt: promptTokens)
+        )
         return results.flatMap(\.segments).compactMap { segment in
             let text = segment.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty, !WhisperSegment.isNoise(text) else { return nil }
@@ -90,7 +101,7 @@ actor WhisperEngine {
         return loaded
     }
 
-    static func options(for language: DictationLanguage) -> DecodingOptions {
+    static func options(for language: DictationLanguage, prompt: [Int]? = nil) -> DecodingOptions {
         DecodingOptions(
             task: .transcribe,
             language: language.isAutomatic ? nil : language.id,
@@ -99,6 +110,7 @@ actor WhisperEngine {
             detectLanguage: language.isAutomatic,
             skipSpecialTokens: true,
             withoutTimestamps: false,
+            promptTokens: prompt,
             suppressBlank: true,
             noSpeechThreshold: 0.6,
             chunkingStrategy: .vad

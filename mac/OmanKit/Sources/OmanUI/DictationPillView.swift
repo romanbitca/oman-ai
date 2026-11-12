@@ -122,7 +122,11 @@ public struct DictationPillView: View {
                 }
                 Spacer(minLength: 0)
                 if showsDone {
-                    doneButton.transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    Group {
+                        cancelButton
+                        doneButton
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
             words(alignment: .leading)
@@ -163,7 +167,11 @@ public struct DictationPillView: View {
                 .frame(height: DictationPillMetrics.control)
                 .liquidGlass(in: Capsule())
                 if showsDone {
-                    doneButton.transition(.opacity.combined(with: .scale(scale: 0.8)))
+                    Group {
+                        cancelButton
+                        doneButton
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
         }
@@ -206,6 +214,21 @@ public struct DictationPillView: View {
         guard let start else { return "0:00" }
         let total = max(Int(now.timeIntervalSince(start)), 0)
         return "\(total / 60):" + String(format: "%02d", total % 60)
+    }
+
+    private var cancelButton: some View {
+        Button {
+            controller.cancel()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 13, weight: .semibold))
+                .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
+                .contentShape(Circle())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .liquidGlass(in: Circle(), interactive: true)
+        .help("Throw the words away")
+        .accessibilityLabel("Cancel")
     }
 
     private var doneButton: some View {

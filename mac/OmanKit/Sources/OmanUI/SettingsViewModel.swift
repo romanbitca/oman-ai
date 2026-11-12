@@ -46,19 +46,38 @@ public final class SettingsViewModel {
     @ObservationIgnored private(set) var dictationTask: Task<Void, Never>?
     @ObservationIgnored private(set) var downloadTask: Task<Void, Never>?
     @ObservationIgnored private var downloadID: UUID?
-    /// The languages the chosen model can listen for, read from the model.
+    /// The part of the Dictation page on show.
+    var dictationPage: DictationPage = .model
+    /// What each model needs before it can listen, read from the models.
+    private(set) var modelStatuses: [DictationModel: DictationModelStatus] = [:]
+    /// The languages each model knows, as language codes such as "en".
+    private(set) var modelLanguageCodes: [DictationModel: Set<String>] = [:]
+    /// The languages the chosen model can listen for.
     private(set) var dictationLanguages: [DictationLanguage] = []
     /// The language the chosen model listens for: the person's choice, or the model's default.
     private(set) var dictationLanguage: DictationLanguage?
-    /// Nil until the model has been asked.
-    private(set) var dictationStatus: DictationModelStatus?
-    /// From 0 to 1 while a download runs.
+    /// The model being downloaded, and how far along, from 0 to 1.
+    private(set) var downloadingModel: DictationModel?
     private(set) var downloadProgress: Double?
     private(set) var dictationError: String?
     private(set) var microphoneAccess: MicrophoneAccess = .notDetermined
     private(set) var savedDictations: [SavedDictation] = []
     private(set) var copiedDictationID: UUID?
+    var newDictationWord = ""
     var offersDictation: Bool { services.speech != nil }
+
+    /// The chosen model's state, for its chosen language.
+    var dictationStatus: DictationModelStatus? { modelStatuses[preferences.dictationModel] }
+
+    /// The person's languages, as listed in macOS's Language & Region settings, as language codes.
+    @ObservationIgnored lazy var personLanguages: [String] = {
+        var codes: [String] = []
+        for identifier in Locale.preferredLanguages {
+            let code = Self.languageCode(identifier)
+            if !codes.contains(code) { codes.append(code) }
+        }
+        return Array(codes.prefix(4))
+    }()
 
     public init(services: AppServices) {
         self.services = services
@@ -127,39 +146,70 @@ public final class SettingsViewModel {
 
     // MARK: Dictation
 
-    /// Asks the chosen model what it can do here, and reads the kept transcripts again.
+    /// Asks every model what it can do here, and reads the kept transcripts again.
     func reloadDictation() {
         microphoneAccess = services.system.microphoneAccess
         reloadSavedDictations()
         guard let speech = services.speech else { return }
-        let model = preferences.dictationModel
-        let chosen = preferences.dictationLanguage(for: model)
+        let preferences = self.preferences
+        let chosen = preferences.dictationModel
         dictationTask?.cancel()
         dictationTask = Task { [weak self] in
-            let languages = await speech.languages(for: model)
-            var language: DictationLanguage
-            if let chosen {
-                language = chosen
+            var statuses: [DictationModel: DictationModelStatus] = [:]
+            var codes: [DictationModel: Set<String>] = [:]
+            var chosenLanguages: [DictationLanguage] = []
+            var chosenLanguage = DictationLanguage.automatic
+            for candidate in DictationModel.allCases {
+                let languages = await speech.languages(for: candidate)
+                var language: DictationLanguage
+                if let saved = preferences.dictationLanguage(for: candidate) {
+                    language = saved
+                } else {
+                    language = await speech.defaultLanguage(for: candidate)
+                }
+                // A choice the model no longer offers falls back to its default.
+                if !languages.isEmpty, !languages.contains(language) {
+                    language = await speech.defaultLanguage(for: candidate)
+                }
+                statuses[candidate] = await speech.status(of: candidate, language: language)
+                codes[candidate] = Set(await speech.spokenLanguages(of: candidate).map(Self.languageCode))
+                if candidate == chosen {
+                    chosenLanguages = languages
+                    chosenLanguage = language
+                }
+            }
+            guard let self, !Task.isCancelled, self.preferences.dictationModel == chosen else { return }
+            self.modelStatuses = statuses
+            self.modelLanguageCodes = codes
+            self.dictationLanguages = chosenLanguages
+            self.dictationLanguage = chosenLanguage
+        }
+    }
+
+    static func languageCode(_ identifier: String) -> String {
+        Locale(identifier: identifier).language.languageCode?.identifier
+            ?? String(identifier.prefix { $0 != "-" && $0 != "_" })
+    }
+
+    /// A model that is ready is chosen at once; one still to download is downloaded, then chosen.
+    func chooseModel(_ model: DictationModel) {
+        switch modelStatuses[model] {
+        case .ready, .none:
+            setDictationModel(model)
+        case .needsDownload:
+            if model == .apple {
+                setDictationModel(model)
             } else {
-                language = await speech.defaultLanguage(for: model)
+                downloadModel(model)
             }
-            // A choice the model no longer offers falls back to its default.
-            if !languages.isEmpty, !languages.contains(language) {
-                language = await speech.defaultLanguage(for: model)
-            }
-            let status = await speech.status(of: model, language: language)
-            guard let self, !Task.isCancelled, self.preferences.dictationModel == model else { return }
-            self.dictationLanguages = languages
-            self.dictationLanguage = language
-            self.dictationStatus = status
+        case .unavailable:
+            break
         }
     }
 
     func setDictationModel(_ model: DictationModel) {
         guard model != preferences.dictationModel else { return }
-        cancelDownload()
         dictationError = nil
-        dictationStatus = nil
         dictationLanguages = []
         dictationLanguage = nil
         updatePreferences { $0.dictationModel = model }
@@ -168,29 +218,32 @@ public final class SettingsViewModel {
 
     func setDictationLanguage(_ language: DictationLanguage) {
         guard language != dictationLanguage else { return }
-        cancelDownload()
         dictationError = nil
         updatePreferences { $0.setDictationLanguage(language, for: $0.dictationModel) }
         dictationLanguage = language
-        dictationStatus = nil
         reloadDictation()
     }
 
-    func downloadDictationModel() {
-        guard let speech = services.speech, downloadProgress == nil else { return }
-        let model = preferences.dictationModel
-        let language = dictationLanguage ?? .automatic
+    /// Downloads a model, or the chosen language of Apple's, and chooses it once it is in place.
+    func downloadModel(_ model: DictationModel) {
+        guard let speech = services.speech, downloadingModel == nil else { return }
+        let language = model == preferences.dictationModel
+            ? (dictationLanguage ?? .automatic)
+            : (preferences.dictationLanguage(for: model) ?? .automatic)
         let download = UUID()
         downloadID = download
         dictationError = nil
+        downloadingModel = model
         downloadProgress = 0
         // Settings lives as long as the app, so holding on to it for the length of a download is fine.
         let report: @Sendable (Double) -> Void = { value in
             Task { @MainActor in self.noteProgress(value, of: download) }
         }
         downloadTask = Task {
+            var succeeded = false
             do {
                 try await speech.download(model, language: language, progress: report)
+                succeeded = true
             } catch is CancellationError {
             } catch {
                 if downloadID == download {
@@ -199,9 +252,14 @@ public final class SettingsViewModel {
             }
             guard downloadID == download else { return }
             downloadID = nil
+            downloadingModel = nil
             downloadProgress = nil
             downloadTask = nil
-            reloadDictation()
+            if succeeded, model != preferences.dictationModel {
+                setDictationModel(model)
+            } else {
+                reloadDictation()
+            }
         }
     }
 
@@ -214,19 +272,25 @@ public final class SettingsViewModel {
         downloadTask?.cancel()
         downloadTask = nil
         downloadID = nil
+        downloadingModel = nil
         downloadProgress = nil
     }
 
-    func removeDictationModel() {
-        guard let speech = services.speech else { return }
-        let model = preferences.dictationModel
+    /// Deletes a downloaded model's files. Removing the chosen one goes back to Apple's.
+    func removeModel(_ model: DictationModel) {
+        guard let speech = services.speech, model.isDownloaded else { return }
         dictationTask = Task { [weak self] in
             do {
                 try await speech.removeDownload(of: model)
             } catch {
                 self?.dictationError = error.localizedDescription
             }
-            self?.reloadDictation()
+            guard let self else { return }
+            if self.preferences.dictationModel == model {
+                self.setDictationModel(.apple)
+            } else {
+                self.reloadDictation()
+            }
         }
     }
 
@@ -240,6 +304,25 @@ public final class SettingsViewModel {
             _ = await self.services.system.requestMicrophoneAccess()
             self.microphoneAccess = self.services.system.microphoneAccess
         }
+    }
+
+    /// Adds what was typed, which may be several words split by commas, leaving out ones already there.
+    func addDictationWords() {
+        let typed = newDictationWord
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        newDictationWord = ""
+        guard !typed.isEmpty else { return }
+        updatePreferences { preferences in
+            for word in typed where !preferences.dictationWords.contains(where: { $0.lowercased() == word.lowercased() }) {
+                preferences.dictationWords.append(word)
+            }
+        }
+    }
+
+    func removeDictationWord(_ word: String) {
+        updatePreferences { $0.dictationWords.removeAll { $0 == word } }
     }
 
     func reloadSavedDictations() {

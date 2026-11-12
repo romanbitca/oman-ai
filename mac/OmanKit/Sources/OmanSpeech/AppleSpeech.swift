@@ -62,14 +62,14 @@ enum AppleSpeech {
         progress(1)
     }
 
-    static func startSession(language: DictationLanguage) async throws -> any DictationSession {
+    static func startSession(language: DictationLanguage, words: [String]) async throws -> any DictationSession {
         guard let modules = await modules(for: language), let transcriber = modules.first else {
             throw DictationError.unavailable("Apple's model doesn't know this language.")
         }
         guard await AssetInventory.status(forModules: modules) == .installed else {
             throw DictationError.modelNotReady(.apple)
         }
-        return try await AppleDictationSession.start(transcriber: transcriber)
+        return try await AppleDictationSession.start(transcriber: transcriber, words: words)
     }
 
     /// Reads a recording, for the tests that check the model without a microphone.
@@ -152,7 +152,7 @@ final class AppleDictationSession: DictationSession, @unchecked Sendable {
         self.updatesContinuation = updatesContinuation
     }
 
-    static func start(transcriber: any SpeechModule) async throws -> AppleDictationSession {
+    static func start(transcriber: any SpeechModule, words: [String]) async throws -> AppleDictationSession {
         let modules = [transcriber]
         guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: modules) else {
             throw DictationError.failed("Apple's model can't take the microphone's sound.")
@@ -161,6 +161,12 @@ final class AppleDictationSession: DictationSession, @unchecked Sendable {
             modules: modules,
             options: SpeechAnalyzer.Options(priority: .userInitiated, modelRetention: .whileInUse)
         )
+        if !words.isEmpty {
+            // Words the model should expect, such as names it wouldn't know.
+            let context = AnalysisContext()
+            context.contextualStrings[.general] = words
+            try? await analyzer.setContext(context)
+        }
         try await analyzer.prepareToAnalyze(in: format)
 
         let (inputs, inputContinuation) = AsyncStream.makeStream(of: AnalyzerInput.self)
