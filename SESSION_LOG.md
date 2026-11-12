@@ -14,7 +14,8 @@ Date-stamped log of what each work session accomplished.
 - The app asks for the microphone, and release builds carry the audio-input entitlement. The Debug build was checked for both, and Parakeet's unused parts, such as its 87 MB prebuilt text normaliser, are not in it
 - 458 tests pass, the temporary harness's included. The app builds, and its build copy was unregistered and deleted
 - Nine looks for the pill were drawn as moving mockups. The maintainer chose two, Card with the seconds and Done above the words and Floating with the words on a soft blur, and Settings chooses between them; Card is the default. Done now sits outside the words in both
-- Not yet done: a real microphone, the pill on the screen, the documentation page and pictures
+- With the maintainer's yes, both looks were shown once on the screen, under the menu bar and at the bottom, with scripted words. At the bottom the window's edge cut off the glass's bottom rim, so the pill now has room below it inside its window
+- Not yet done: a real microphone, the fixed bottom position on the screen, the documentation page and pictures
 
 ## 2026-11-12 — A sitemap for crawlers
 

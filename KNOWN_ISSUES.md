@@ -4,14 +4,14 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
-## 2026-11-12 — Dictation has not been tried with a microphone or seen on the screen
+## 2026-11-12 — Dictation has not been tried with a microphone
 
 What was checked: each model was given a sentence spoken by macOS's `say`, and Parakeet and Whisper got it through the same live path the microphone feeds. Apple's model, Parakeet and Whisper each wrote "Please send the report to Anna before Friday. Thank you." word for word, and Whisper wrote nothing for three seconds of silence. The rest of dictation is covered by tests with a pretend model and microphone.
 
 Not yet tried:
 
 - A real microphone: macOS's question about it, the level that moves the wave, and Bluetooth headsets, which drop to call quality while their microphone is open
-- The pill, the moving menu bar icon, the panel's microphone buttons and the Dictation tab on the screen. The pill is glass, which can't be drawn off the screen
+- The moving menu bar icon, the panel's microphone buttons and the Dictation tab on the screen. The pill was shown on the screen once, with the maintainer's yes, in both looks and both places, with scripted words instead of a microphone. Under the menu bar it looked as intended. At the bottom of the screen its window's edge cut off the bottom rim of the glass; the pill now has room below it inside the window, and that has not been seen on the screen yet
 - Hold to dictate by hand. It relies on Carbon telling OmanAI when a shortcut's keys are let go, which it hadn't been asked for before
 - A real speaker of another language. Both downloaded models garbled a French sentence read by the Mac's French voice, which says more about that voice than about them
 

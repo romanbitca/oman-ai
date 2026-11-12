@@ -56,8 +56,11 @@ public enum DictationPillMetrics {
     static let maxHeight: CGFloat = 156
     /// The window keeps one size; the pill sits at its top or bottom edge.
     public static let windowSize = CGSize(width: width + sideMargin * 2, height: PanelMetrics.menuBarGap + maxHeight)
-    /// Room above the Dock when the pill sits at the bottom of the screen.
-    public static let bottomGap: CGFloat = 16
+    /// Where the window sits above the Dock when the pill is at the bottom of the screen. With `bottomRoom` inside
+    /// the window, the pill is 18 points above the Dock.
+    public static let bottomGap: CGFloat = 6
+    /// Below the pill inside its window, so the rim of the glass isn't cut off by the window's edge.
+    static let bottomRoom: CGFloat = 12
     /// The most characters of live words shown. Earlier words give way to the newest.
     static let visibleCharacters = 150
     static let control: CGFloat = 34
@@ -84,6 +87,7 @@ public struct DictationPillView: View {
             if atTop { Spacer(minLength: 0) }
         }
         .padding(.top, atTop ? PanelMetrics.menuBarGap : 0)
+        .padding(.bottom, atTop ? 0 : DictationPillMetrics.bottomRoom)
         .padding(.horizontal, DictationPillMetrics.sideMargin)
         .frame(width: DictationPillMetrics.windowSize.width, height: DictationPillMetrics.windowSize.height)
         .animation(.easeOut(duration: 0.16), value: state.isShown)
