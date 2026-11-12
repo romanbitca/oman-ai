@@ -156,6 +156,7 @@ Acceptance:
 - Compose's Copy last transcript copies the last dictation
 - Settings chooses the microphone, sounds, muting the Mac while listening, a space after the words and Return or ⌘Return after them
 - The model list groups nine models as Live, Accurate and Small and says in words how soon each one's words show, which of the person's languages it knows and how big it is
+- Where nothing that takes text has the cursor, the words wait in the pill until a field gets it and they go in there, or until Copy, × or a minute
 
 ---
 

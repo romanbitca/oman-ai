@@ -118,7 +118,13 @@ public struct DictationPillView: View {
         VStack(spacing: DictationPillMetrics.gap) {
             HStack(spacing: DictationPillMetrics.gap) {
                 waveCircle
-                if showsSeconds {
+                if showsWaiting {
+                    waitingMessage
+                        .padding(.horizontal, 10)
+                        .frame(height: DictationPillMetrics.control)
+                        .liquidGlass(in: Capsule())
+                        .transition(.opacity)
+                } else if showsSeconds {
                     seconds
                         .padding(.horizontal, 12)
                         .frame(height: DictationPillMetrics.control)
@@ -126,14 +132,7 @@ public struct DictationPillView: View {
                         .transition(.opacity)
                 }
                 Spacer(minLength: 0)
-                if showsDone {
-                    Group {
-                        cancelButton
-                        if controller.field == nil { improveButton }
-                        doneButton
-                    }
-                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                }
+                buttons
             }
             wordsArea(alignment: .leading, padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
                 .frame(width: DictationPillMetrics.width)
@@ -162,19 +161,16 @@ public struct DictationPillView: View {
             HStack(spacing: DictationPillMetrics.gap) {
                 HStack(spacing: 8) {
                     leadingSymbol
-                    if showsSeconds { seconds }
+                    if showsWaiting {
+                        waitingMessage
+                    } else if showsSeconds {
+                        seconds
+                    }
                 }
                 .padding(.horizontal, 12)
                 .frame(height: DictationPillMetrics.control)
                 .liquidGlass(in: Capsule())
-                if showsDone {
-                    Group {
-                        cancelButton
-                        if controller.field == nil { improveButton }
-                        doneButton
-                    }
-                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                }
+                buttons
             }
         }
     }
@@ -182,8 +178,29 @@ public struct DictationPillView: View {
     // MARK: Pieces
 
     private var showsNotice: Bool { controller.notice != nil && controller.phase == .idle }
-    private var showsSeconds: Bool { controller.listeningSince != nil && !showsNotice }
+    /// Nothing that takes text had the cursor, so the words wait for a click into a field.
+    private var showsWaiting: Bool { controller.phase == .holding }
+    private var showsSeconds: Bool { controller.listeningSince != nil && !showsNotice && !showsWaiting }
     private var showsDone: Bool { controller.mode == .long && controller.phase == .listening }
+
+    /// Cancel, ✨ and Done during a long dictation, or × and Copy while the words wait for a field.
+    @ViewBuilder
+    private var buttons: some View {
+        if showsDone {
+            Group {
+                cancelButton
+                if controller.field == nil { improveButton }
+                doneButton
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+        } else if showsWaiting {
+            Group {
+                cancelButton
+                copyButton
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+        }
+    }
 
     @ViewBuilder
     private var leadingSymbol: some View {
@@ -195,6 +212,10 @@ public struct DictationPillView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.multicolor)
                 .font(.system(size: 14))
+                .frame(width: 20, height: 20)
+        } else if showsWaiting {
+            Image(systemName: "cursorarrow.click")
+                .font(.system(size: 14, weight: .medium))
                 .frame(width: 20, height: 20)
         } else {
             DictationWave(amplitude: controller.phase == .listening
@@ -214,6 +235,14 @@ public struct DictationPillView: View {
                 .foregroundStyle(.secondary)
         }
         .accessibilityLabel("Time listening")
+    }
+
+    /// 202 points wide at this size. In the card's top row, with the symbol, × and Copy beside it, 4 points are left.
+    private var waitingMessage: some View {
+        Text("Click where these words should go")
+            .font(.system(size: 12, weight: .medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
     }
 
     nonisolated static func elapsed(from start: Date?, to now: Date) -> String {
@@ -251,6 +280,21 @@ public struct DictationPillView: View {
         .liquidGlass(in: Circle(), interactive: true)
         .help("Open the words in OmanAI, to proofread or rewrite them before they go in")
         .accessibilityLabel("Proofread or rewrite first")
+    }
+
+    private var copyButton: some View {
+        Button {
+            controller.copyHeldWords()
+        } label: {
+            Image(systemName: "doc.on.doc")
+                .font(.system(size: 13, weight: .semibold))
+                .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
+                .contentShape(Circle())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .liquidGlass(in: Circle(), interactive: true)
+        .help("Copy the words")
+        .accessibilityLabel("Copy")
     }
 
     private var doneButton: some View {

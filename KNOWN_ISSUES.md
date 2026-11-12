@@ -4,6 +4,24 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-12 — Words that wait for a field: what has been tried, and what hasn't
+
+Tried: tests for each answer, a paste when a field gets the cursor with the space after and Return, Copy, ×, the minute, and opening the panel or starting a dictation meanwhile; and the rules for each role. What apps answer was read, without changing anything, from the apps open on this Mac while it was locked, so every one answered as an app in the background: Slack and the other Electron apps said nothing had focus, and so did Mail; Notes, Telegram, WhatsApp and Messages named the app itself, and the Finder named its desktop, a group with the subrole AXDesktop and a text range. Messages didn't answer within the 0.25 seconds the first time it was asked, which counts as can't be told. The app's own reader, built on its own, sorted them as the rules say: the Electron apps can't be told, the desktop takes no text. Asking an app took 20 to 130 milliseconds.
+
+Not yet tried:
+
+- Any of it on the screen. Above all, what apps answer while they are in front: a field in Slack or another Electron app, expected to be can't be told; a mail being composed in Mail, expected to be a page whose value can be set; Messages and WhatsApp, which named the app itself from the background and should name their field in front; a Finder window in icon view; a page in Safari with no field in focus
+- macOS before 27, where the desktop may answer differently
+
+Known limits:
+
+- In Slack and other apps that don't say what has the cursor, waiting words don't go in when their field is clicked: use Copy. A dictation made in them goes in as before, so where nothing there takes text it is still pasted into nowhere and kept only in Transcripts and Copy last transcript
+- Something with a role OmanAI doesn't know counts as can't be told, and is pasted into as before. A Finder window in icon view may be one
+- Escape stays taken while words wait, for up to a minute, so it doesn't reach the app in front meanwhile. Its first press throws the words away; their transcript stays
+- Waiting words go into whatever field gets the cursor next, even one clicked for something else, such as a search field
+
+---
+
 ## 2026-11-12 — Spending's fixes: what has been tried, and what hasn't
 
 Tried: tests for noting each text written and marking it when it is put back, a change counting as the action it changes, a failed request noting nothing, a store that fails leaving the result alone, the bars, the actions, the apps, the earlier requests without a kind, the scales and the words of the details card. The page and the details card were drawn off the screen, light and dark, and looked at.

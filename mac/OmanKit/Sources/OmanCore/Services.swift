@@ -83,6 +83,9 @@ public protocol SystemBridging: AnyObject {
     func captureSelection() async -> SelectionCapture
     func replaceSelection(expected: String, with text: String, in app: SourceApp) async -> InsertOutcome
     func insertAtCursor(_ text: String, in app: SourceApp?) async -> InsertOutcome
+    /// What has the cursor in the app in front, read through Accessibility without touching it, so that dictated
+    /// words aren't pasted where nothing can take them.
+    func textFocus() async -> TextFocus
     func copyToClipboard(_ text: String)
     /// Whether the clipboard offers text, decided from its types alone so nothing is read until the person asks.
     var hasClipboardText: Bool { get }

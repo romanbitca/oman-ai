@@ -42,12 +42,12 @@ public final class ModifierKeyDictation {
             usedWithOtherKey = false
             startedHold = false
             holdTask?.cancel()
-            guard key == preferences().dictationHoldKey, controller.phase == .idle else { return }
+            guard key == preferences().dictationHoldKey, !controller.isActive else { return }
             let delay = holdDelay
             holdTask = Task { [weak self] in
                 try? await Task.sleep(for: delay)
                 guard let self, !Task.isCancelled, self.pressed == key, !self.usedWithOtherKey,
-                      self.controller.phase == .idle
+                      !self.controller.isActive
                 else { return }
                 self.controller.holdPressed(into: panelField())
                 self.startedHold = true

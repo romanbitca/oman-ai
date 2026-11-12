@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — Dictated words wait when nothing can take them
+
+- The maintainer asked, in another session, whether OmanAI could notice when a dictation has nowhere to go, offer to copy the words or let them click into a field, and then go. Built on a branch from 0.4.0 (58b37ff), then moved onto 0.4.1 (2f59e3c); the choices are in DECISIONS.md
+- Read, without changing anything, what the apps open on this Mac answer when asked what has the cursor. Slack and the other Electron apps answered that nothing had focus, the answer the design had taken to mean that nothing takes text, so that answer now counts as can't be told and is pasted into as before. The Finder's desktop answered with a text range, so a text range alone no longer means a field
+- Before a dictation is pasted into another app, OmanAI now asks what has the cursor. Where nothing takes text, the words wait in the pill, which says "Click where these words should go", with × and Copy. They go in as soon as a field gets the cursor, with the space after them and Return as Settings says, and after a minute they are copied
+- 27 new tests. The whole suite passes, 522 tests on top of 0.4.1, and the dictation tests passed 12 runs in a row. The pill's new row was drawn off the screen in both looks and fits. The app builds, and its build copy was unregistered and deleted
+- Not verified: anything on the screen, above all what apps answer while they are in front (see KNOWN_ISSUES.md). Not merged or released: the maintainer decides when it ships
+
 ## 2026-11-12 — Spending: fixes beside the money, by action and by app
 
 - The maintainer asked for every bar on the Spending page to be split in two, the fixes applied to text and the money spent, with details on hover, and for the page to be more advanced. The choices are in DECISIONS.md

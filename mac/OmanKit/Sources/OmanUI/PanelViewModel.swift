@@ -85,7 +85,7 @@ public final class PanelViewModel {
     // MARK: Session
 
     public func begin(with capture: SelectionCapture, keepPinned: Bool = false) {
-        dictation?.panelWasReset()
+        dictation?.panelWillOpen()
         cancelWork()
         self.capture = capture
         session += 1

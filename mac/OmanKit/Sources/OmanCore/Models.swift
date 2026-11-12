@@ -79,6 +79,18 @@ public enum InsertOutcome: Equatable, Sendable {
     case permissionMissing
 }
 
+/// Whether what has the cursor in the app in front can take text, as far as Accessibility tells.
+public enum TextFocus: Equatable, Sendable {
+    /// A text field, a text area or an editable page has the cursor.
+    case takesText
+    /// The app says what has the cursor, and it is something that takes no text, such as the desktop, a list or a
+    /// web page with no field. OmanAI itself in front counts too.
+    case cannotTakeText
+    /// The app doesn't say, as Electron apps don't, or it is an app OmanAI pastes into without asking. A password
+    /// field counts here too, so that words waiting in the pill never go into one.
+    case unknown
+}
+
 public struct ScreenshotAttachment: Equatable, Sendable {
     public let jpegData: Data
     public let pixelWidth: Int
