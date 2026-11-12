@@ -33,6 +33,19 @@ Known limits:
 
 ---
 
+## 2026-11-13 — The Floating look's background: variants, and what has been tried
+
+The maintainer finds the darkening behind the Floating look's words too easy to notice, and asked for variants. White words need something dark behind them only where the screen is bright. An even darkening shows as a dark cloud over a mid-toned desktop picture, where it isn't needed, and is still too weak over a white window.
+
+Tried:
+- Five variants drawn as simulated pictures in a headless browser, over the maintainer's desktop picture, a white window of text and a dark one: the look of 0.4.3 and of 0.4.4, half the darkening, a blur with none, a shadow on the letters alone, and a blur that presses down only what is bright. A simulation, not the app: the browser's blur and curve stand in for Core Animation's.
+- This macOS has the filter the last variant needs, `luminanceCurveMap`, and `BackdropBlur` can add it to its layer with a ceiling on brightness. `FloatingBackdrop` holds the numbers of a variant, with those of 0.4.4 as its default.
+- A test that shows each variant once on the screen, over the desktop and over a white and a dark sheet of text, beside the same background with no words on it, and saves a picture of each. It is written and builds.
+
+Not yet tried:
+- Any of it on the screen. The test waits for the maintainer's yes.
+- What `luminanceCurveMap` does with the four values it is given. They are a guess at "leave the dark alone and hold the bright under a ceiling" and have to be measured on grey steps.
+
 ## 2026-11-12 — OmanAI's window, keys held together and the pill's new look: what has been tried
 
 Tried:
