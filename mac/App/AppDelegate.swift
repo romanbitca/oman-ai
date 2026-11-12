@@ -1,6 +1,7 @@
 import AppKit
 import ClaudeAPI
 import OmanCore
+import OmanSpeech
 import OmanStorage
 import SystemBridge
 
@@ -19,7 +20,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 apiKeys: KeychainAPIKeyStore(),
                 system: MacSystemBridge(),
                 updates: UpdaterController.makeIfConfigured(),
-                usage: database
+                usage: database,
+                speech: SpeechService(),
+                dictations: database
             )
             coordinator = MenuBarCoordinator(services: services)
         } catch {

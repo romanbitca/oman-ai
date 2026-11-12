@@ -156,6 +156,9 @@ struct PanelInputField: View {
     let prompt: String
     @Binding var text: String
     var id: String? = LiquidID.input
+    /// With both set, a microphone at the end of the field dictates into it.
+    var dictation: DictationController?
+    var field: PanelField?
     let onSubmit: () -> Void
     @FocusState private var isFocused: Bool
 
@@ -170,8 +173,12 @@ struct PanelInputField: View {
                 .focused($isFocused)
                 .focusEffectDisabled()
                 .onSubmit(onSubmit)
+            if let dictation, let field {
+                DictationMicButton(controller: dictation, field: field)
+            }
         }
-        .padding(.horizontal, 15)
+        .padding(.leading, 15)
+        .padding(.trailing, dictation != nil && field != nil ? 8 : 15)
         .frame(height: 42)
         .contentShape(Capsule())
         .onTapGesture { isFocused = true }

@@ -38,8 +38,11 @@ struct PanelComposeView: View {
                     ContextSectionView(model: model)
                 }
 
-                HStack {
+                HStack(spacing: 8) {
                     Spacer()
+                    if let dictation = model.dictation {
+                        DictationMicButton(controller: dictation, field: .composePrompt)
+                    }
                     LiquidButton(title: "Write", symbol: "arrow.up", prominent: true) { model.compose() }
                         .disabled(!model.canCompose)
                 }

@@ -4,13 +4,12 @@ import SwiftUI
 
 struct ShortcutsSettingsView: View {
     let model: SettingsViewModel
-    @State private var monitor: Any?
 
     var body: some View {
         SettingsForm {
             Section {
                 ForEach(model.globalShortcutActions, id: \.self) { action in
-                    row(action)
+                    ShortcutRow(model: model, action: action)
                 }
             } header: {
                 Text("Anywhere on your Mac")
@@ -20,26 +19,23 @@ struct ShortcutsSettingsView: View {
 
             Section("While a result is showing") {
                 ForEach(ShortcutAction.panelActions, id: \.self) { action in
-                    row(action)
+                    ShortcutRow(model: model, action: action)
                 }
-                if let notice = model.shortcutNotice {
-                    Text(notice).font(.callout).foregroundStyle(.secondary)
-                }
-                if let error = model.preferencesError {
-                    SettingsError(text: error)
-                }
+                ShortcutMessages(model: model)
             }
         }
-        .onChange(of: model.recordingAction) { syncMonitor() }
-        .onDisappear {
-            model.cancelRecording()
-            removeMonitor()
-        }
+        .recordsShortcuts(model)
     }
+}
 
-    private func row(_ action: ShortcutAction) -> some View {
+/// A shortcut's name, and the button that records a new combination for it.
+struct ShortcutRow: View {
+    let model: SettingsViewModel
+    let action: ShortcutAction
+
+    var body: some View {
         LabeledContent {
-            recorder(action)
+            recorder
         } label: {
             Text(model.title(for: action))
             if model.failedShortcuts.contains(action) {
@@ -48,7 +44,7 @@ struct ShortcutsSettingsView: View {
         }
     }
 
-    private func recorder(_ action: ShortcutAction) -> some View {
+    private var recorder: some View {
         let isRecording = model.recordingAction == action
         let combo = model.preferences.combo(for: action)
         return HStack(spacing: 6) {
@@ -76,6 +72,35 @@ struct ShortcutsSettingsView: View {
                 }
             }
         }
+    }
+}
+
+/// What happened to the last shortcut recorded, under the rows it belongs to.
+struct ShortcutMessages: View {
+    let model: SettingsViewModel
+
+    var body: some View {
+        if let notice = model.shortcutNotice {
+            Text(notice).font(.callout).foregroundStyle(.secondary)
+        }
+        if let error = model.preferencesError {
+            SettingsError(text: error)
+        }
+    }
+}
+
+/// Listens for the keys of a new shortcut while one of the page's rows is recording.
+private struct ShortcutRecording: ViewModifier {
+    let model: SettingsViewModel
+    @State private var monitor: Any?
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: model.recordingAction) { syncMonitor() }
+            .onDisappear {
+                model.cancelRecording()
+                removeMonitor()
+            }
     }
 
     private func syncMonitor() {
@@ -110,5 +135,11 @@ struct ShortcutsSettingsView: View {
             NSSound.beep()
         }
         return nil
+    }
+}
+
+extension View {
+    func recordsShortcuts(_ model: SettingsViewModel) -> some View {
+        modifier(ShortcutRecording(model: model))
     }
 }

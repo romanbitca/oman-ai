@@ -43,6 +43,7 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 - GRDB for SQLite, Keychain for the API key
 - Sparkle for automatic updates, published through GitHub Releases
 - Anthropic Messages API over URLSession, plus Apple's on-device model through FoundationModels; no other model provider
+- Dictation on the Mac only: Apple's Speech framework (SpeechAnalyzer), Parakeet through FluidAudio and Whisper through WhisperKit; no speech service in the cloud
 - macOS 14 or later
 
 ## Current phase

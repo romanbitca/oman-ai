@@ -4,11 +4,16 @@ import OmanUI
 import SwiftUI
 
 @MainActor
-final class MenuBarCoordinator: NSObject, PanelPresenting {
+final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
     private let services: AppServices
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let panel = FloatingPanel()
     private let backdrop = PanelBackdrop()
+    private let pillWindow = DictationPillWindow()
+    private let pillState = DictationPillState()
+    private var dictation: DictationController?
+    private var hidePillTask: Task<Void, Never>?
+    private var iconTask: Task<Void, Never>?
     private var panelModel: PanelViewModel?
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
@@ -32,7 +37,19 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         panel.onEscape = { [weak self] in self?.dismissPanel() }
         panel.onKeyCombo = { [weak self] combo in self?.panelModel?.handlePanelShortcut(combo) ?? false }
 
+        let dictation = DictationController(services: services, presenter: self)
+        dictation.panel = model
+        model.dictation = dictation
+        self.dictation = dictation
+        let pillView = PanelHostingView(rootView: DictationPillView(controller: dictation, state: pillState))
+        pillView.sizingOptions = []
+        pillWindow.setContentSize(DictationPillMetrics.windowSize)
+        pillWindow.contentView = pillView
+
         services.system.onGlobalShortcut = { [weak self] action in self?.handleGlobalShortcut(action) }
+        services.system.onGlobalShortcutReleased = { [weak self] action in
+            if action == .dictateHold { self?.dictation?.holdReleased() }
+        }
         if let preferences = try? services.settings.preferences() {
             services.system.setAppearance(preferences.appearance)
             services.system.registerGlobalShortcuts(preferences.globalShortcuts)
@@ -53,6 +70,11 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
             showStatusMenu()
             return
         }
+        // While a dictation runs, the moving icon is its stop button.
+        if let dictation, dictation.isActive {
+            dictation.finishNow()
+            return
+        }
         togglePanel()
     }
 
@@ -66,11 +88,24 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
     }
 
     private func handleGlobalShortcut(_ action: ShortcutAction) {
-        if action == .openPanel {
+        switch action {
+        case .openPanel:
             togglePanel()
-        } else {
+        case .dictateHold:
+            dictation?.holdPressed(into: panelDictationField())
+        case .dictateLong:
+            dictation?.longPressed(into: panelDictationField())
+        case .cancelDictation:
+            dictation?.cancel()
+        default:
             openPanel(then: action)
         }
+    }
+
+    /// With the panel open and holding the keyboard, a dictation goes into its field instead of the app behind.
+    private func panelDictationField() -> PanelField? {
+        guard panel.isVisible, panel.isKeyWindow else { return nil }
+        return panelModel?.dictationField
     }
 
     private func openPanel(then action: ShortcutAction?) {
@@ -237,5 +272,90 @@ final class MenuBarCoordinator: NSObject, PanelPresenting {
         }
         NSApp.activate()
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    // MARK: DictationPresenting
+
+    func showDictationPill(at position: DictationPillPosition) {
+        hidePillTask?.cancel()
+        pillState.position = position
+        placePill(at: position)
+        let theme = (try? services.settings.preferences().appearance) ?? .system
+        pillWindow.appearance = theme == .light ? nil : NSAppearance(named: .darkAqua)
+        pillWindow.orderFrontRegardless()
+        pillState.isShown = true
+    }
+
+    func hideDictationPill() {
+        pillState.isShown = false
+        hidePillTask?.cancel()
+        hidePillTask = Task { [weak self] in
+            // Long enough for the pill to fade before its window goes.
+            try? await Task.sleep(for: .milliseconds(220))
+            guard let self, !Task.isCancelled, !self.pillState.isShown else { return }
+            self.pillWindow.orderOut(nil)
+        }
+    }
+
+    func setDictationActive(_ active: Bool) {
+        iconTask?.cancel()
+        iconTask = nil
+        guard active else {
+            statusItem.button?.image = NSImage(named: "MenuBarIcon")
+            statusItem.button?.image?.isTemplate = true
+            statusItem.button?.image?.accessibilityDescription = "OmanAI"
+            return
+        }
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        iconTask = Task { [weak self] in
+            var shown: CGFloat = 1
+            while !Task.isCancelled {
+                guard let self, let dictation = self.dictation else { return }
+                let target = dictation.phase == .listening && !reduceMotion
+                    ? DictationWave.amplitude(forLevel: dictation.level) : 0.35
+                // Eased toward the voice, so the wave moves smoothly instead of jumping with each reading.
+                shown += (target - shown) * 0.45
+                let image = Self.waveIcon(amplitude: shown)
+                image.accessibilityDescription = "OmanAI, dictating"
+                self.statusItem.button?.image = image
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+        }
+    }
+
+    private func placePill(at position: DictationPillPosition) {
+        let size = DictationPillMetrics.windowSize
+        switch position {
+        case .menuBar:
+            guard let buttonRect = statusButtonScreenRect(),
+                  let visible = (statusItem.button?.window?.screen ?? NSScreen.main)?.visibleFrame
+            else { return }
+            // The window's side margins are transparent, so they may hang off the screen, as the panel's do.
+            let inset: CGFloat = 8 - DictationPillMetrics.sideMargin
+            let x = min(max(buttonRect.midX - size.width / 2, visible.minX + inset), visible.maxX - size.width - inset)
+            pillWindow.setFrameTopLeftPoint(NSPoint(x: x, y: menuBarBottom(belowTopOf: visible)))
+        case .bottom:
+            // The screen of the window being typed in.
+            guard let visible = (NSScreen.main ?? statusItem.button?.window?.screen)?.visibleFrame else { return }
+            pillWindow.setFrameOrigin(NSPoint(
+                x: visible.midX - size.width / 2,
+                y: visible.minY + DictationPillMetrics.bottomGap
+            ))
+        }
+    }
+
+    /// The menu bar icon's wave, drawn with the given height. At 1 it matches MenuBarIcon.svg.
+    private static func waveIcon(amplitude: CGFloat) -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { rect in
+            let path = NSBezierPath(cgPath: DictationWave.cgPath(in: rect, amplitude: amplitude))
+            path.lineWidth = 2
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            NSColor.black.setStroke()
+            path.stroke()
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 }

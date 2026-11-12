@@ -29,6 +29,8 @@ public final class PanelViewModel {
     @ObservationIgnored private var preferences = AppPreferences()
     @ObservationIgnored private var terminalPasteConfirmed = false
     @ObservationIgnored private var changesCache: (original: String, draft: String, changes: TextChanges)?
+    /// Set by the app shell, so the panel's microphone buttons can dictate into its fields.
+    @ObservationIgnored public weak var dictation: DictationController?
 
     private(set) var screen: PanelScreen = .compose
     private(set) var capture = SelectionCapture(app: nil, text: nil)
@@ -74,6 +76,7 @@ public final class PanelViewModel {
     // MARK: Session
 
     public func begin(with capture: SelectionCapture, keepPinned: Bool = false) {
+        dictation?.panelWasReset()
         cancelWork()
         self.capture = capture
         session += 1
@@ -131,6 +134,8 @@ public final class PanelViewModel {
             }
         case .openPanel, .acceptResult, .copyResult, .tryAgain, .toggleOriginal:
             break
+        case .dictateHold, .dictateLong, .cancelDictation:
+            break
         }
     }
 
@@ -161,7 +166,40 @@ public final class PanelViewModel {
     }
 
     public func panelDidClose() {
+        dictation?.panelWasReset()
         cancelWork()
+    }
+
+    // MARK: Dictation
+
+    /// The field a dictation fills while the panel has the keyboard, or nil on a screen with nowhere to type.
+    public var dictationField: PanelField? {
+        switch screen {
+        case .home: .instruction
+        case .compose: .composePrompt
+        case .result: isExplanation ? nil : .adjustment
+        case .setup, .working, .failed: nil
+        }
+    }
+
+    func text(in field: PanelField) -> String {
+        switch field {
+        case .instruction: instruction
+        case .composePrompt: composePrompt
+        case .adjustment: adjustment
+        }
+    }
+
+    func setText(_ text: String, in field: PanelField) {
+        switch field {
+        case .instruction: instruction = text
+        case .composePrompt: composePrompt = text
+        case .adjustment: adjustment = text
+        }
+    }
+
+    func showNotice(_ text: String) {
+        notice = text
     }
 
     private func cancelWork() {

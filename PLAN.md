@@ -132,6 +132,23 @@ Acceptance:
 
 ---
 
+## W12: Dictation [IN PROGRESS]
+
+Speak instead of typing, in any app or in the panel, with the words shown live and turned into text on the Mac.
+
+Acceptance:
+- Holding Hold to dictate shows the glass pill with the words as they are said, and letting go pastes them at the cursor
+- Start or stop a long dictation starts listening on one press and pastes on the next; the pill's check button and the menu bar icon finish it too
+- Escape cancels and pastes nothing
+- The pill hangs under the menu bar icon, or sits at the bottom of the screen when Settings says so, and never takes the keyboard
+- In the panel, the microphone buttons and the shortcuts put the words into the field being typed in, live
+- Apple's model works on macOS 26 and later with no download from OmanAI; Parakeet and Whisper download from Settings with progress, and can be removed
+- The language list follows the model, with Automatic first where the model can work the language out
+- With Keep transcripts on, each dictation's text is listed in Settings with Copy and Delete; the sound is never kept
+- Without the microphone permission, or with a model still to download, the pill says what to do
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.

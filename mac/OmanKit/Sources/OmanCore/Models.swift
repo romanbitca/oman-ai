@@ -265,14 +265,30 @@ public enum ShortcutAction: Hashable, Sendable {
     case openPanel, proofread, rewrite, explain, compose
     case style(UUID)
     case acceptResult, copyResult, tryAgain, toggleOriginal
+    /// Held down while the person speaks. Letting go puts the words in.
+    case dictateHold
+    /// Pressed once to start listening and again to put the words in, for a longer dictation.
+    case dictateLong
+    /// Escape, taken only while a dictation runs. It is never saved, so it is in no list below.
+    case cancelDictation
 
     public static let globalActions: [ShortcutAction] = [.openPanel, .proofread, .rewrite, .explain, .compose]
     public static let panelActions: [ShortcutAction] = [.acceptResult, .copyResult, .tryAgain, .toggleOriginal]
+    /// Set under Dictation in Settings rather than with the other shortcuts.
+    public static let dictationActions: [ShortcutAction] = [.dictateHold, .dictateLong]
 
     public var isGlobal: Bool {
         switch self {
         case .openPanel, .proofread, .rewrite, .explain, .compose, .style: true
+        case .dictateHold, .dictateLong, .cancelDictation: true
         case .acceptResult, .copyResult, .tryAgain, .toggleOriginal: false
+        }
+    }
+
+    public var isDictation: Bool {
+        switch self {
+        case .dictateHold, .dictateLong, .cancelDictation: true
+        default: false
         }
     }
 
@@ -288,6 +304,9 @@ public enum ShortcutAction: Hashable, Sendable {
         case .copyResult: "copyResult"
         case .tryAgain: "tryAgain"
         case .toggleOriginal: "toggleOriginal"
+        case .dictateHold: "dictateHold"
+        case .dictateLong: "dictateLong"
+        case .cancelDictation: "cancelDictation"
         }
     }
 
@@ -297,7 +316,8 @@ public enum ShortcutAction: Hashable, Sendable {
             self = .style(id)
             return
         }
-        guard let match = (Self.globalActions + Self.panelActions).first(where: { $0.storageKey == storageKey }) else {
+        let saved = Self.globalActions + Self.panelActions + Self.dictationActions
+        guard let match = saved.first(where: { $0.storageKey == storageKey }) else {
             return nil
         }
         self = match
@@ -314,6 +334,12 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var includesScreenByDefault = false
     public var keepsPanelOpen = false
     public var proofreadChanges: ProofreadChanges = .atOnce
+    public var dictationModel: DictationModel = .default
+    /// The language chosen for each model, keyed by the model's identifier. The lists differ from model to model,
+    /// so each keeps its own choice. A model without one listens for its default language.
+    public var dictationLanguages: [String: DictationLanguage] = [:]
+    public var dictationPillPosition: DictationPillPosition = .menuBar
+    public var keepsDictations = true
     /// Global shortcuts start empty so OmanAI never takes a combination another app is using.
     public var shortcuts: [String: KeyCombo] = [
         ShortcutAction.acceptResult.storageKey: KeyCombo(keyCode: 36, modifiers: KeyCombo.command),
@@ -341,7 +367,24 @@ public struct AppPreferences: Codable, Equatable, Sendable {
         keepsPanelOpen = (try? values.decodeIfPresent(Bool.self, forKey: .keepsPanelOpen)) ?? defaults.keepsPanelOpen
         proofreadChanges =
             (try? values.decodeIfPresent(ProofreadChanges.self, forKey: .proofreadChanges)) ?? defaults.proofreadChanges
+        dictationModel =
+            (try? values.decodeIfPresent(DictationModel.self, forKey: .dictationModel)) ?? defaults.dictationModel
+        dictationLanguages =
+            (try? values.decodeIfPresent([String: DictationLanguage].self, forKey: .dictationLanguages))
+            ?? defaults.dictationLanguages
+        dictationPillPosition =
+            (try? values.decodeIfPresent(DictationPillPosition.self, forKey: .dictationPillPosition))
+            ?? defaults.dictationPillPosition
+        keepsDictations = (try? values.decodeIfPresent(Bool.self, forKey: .keepsDictations)) ?? defaults.keepsDictations
         shortcuts = (try? values.decodeIfPresent([String: KeyCombo].self, forKey: .shortcuts)) ?? defaults.shortcuts
+    }
+
+    public func dictationLanguage(for model: DictationModel) -> DictationLanguage? {
+        dictationLanguages[model.rawValue]
+    }
+
+    public mutating func setDictationLanguage(_ language: DictationLanguage?, for model: DictationModel) {
+        dictationLanguages[model.rawValue] = language
     }
 
     public func combo(for action: ShortcutAction) -> KeyCombo? {

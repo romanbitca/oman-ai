@@ -56,6 +56,14 @@ public protocol SystemBridging: AnyObject {
     var isScreenCaptureGranted: Bool { get }
     func requestScreenCapture()
 
+    var microphoneAccess: MicrophoneAccess { get }
+    /// Shows macOS's question the first time. Afterwards the answer can only be changed in System Settings.
+    func requestMicrophoneAccess() async -> Bool
+    func openMicrophoneSettings()
+
+    /// The app in front, other than OmanAI. Read without touching its selection.
+    var frontmostApp: SourceApp? { get }
+
     var isLaunchAtLoginEnabled: Bool { get }
     func setLaunchAtLogin(_ enabled: Bool) throws
 
@@ -71,11 +79,17 @@ public protocol SystemBridging: AnyObject {
     func setAppearance(_ mode: AppearanceMode)
 
     var onGlobalShortcut: (@MainActor (ShortcutAction) -> Void)? { get set }
+    /// Called when the keys of a shortcut are let go, so a shortcut can be held down for as long as it is needed.
+    var onGlobalShortcutReleased: (@MainActor (ShortcutAction) -> Void)? { get set }
     /// Replaces every registered shortcut. Returns the actions whose combination could not be registered.
     @discardableResult
     func registerGlobalShortcuts(_ shortcuts: [ShortcutAction: KeyCombo]) -> Set<ShortcutAction>
     /// Stops shortcuts firing while the user records a new one. Registering again resumes them.
     func suspendGlobalShortcuts()
+    /// Takes one more combination beside the registered shortcuts, or gives it back with nil, such as Escape while
+    /// a dictation runs. Returns false when it could not be taken.
+    @discardableResult
+    func setTemporaryShortcut(_ combo: KeyCombo?, for action: ShortcutAction) -> Bool
 }
 
 /// Implemented by the app shell, which owns the status item and the panel window.
@@ -87,6 +101,15 @@ public protocol PanelPresenting: AnyObject {
     /// How tall the panel's tiles are now, so that what is drawn behind them can follow.
     func setPanelContentHeight(_ height: CGFloat)
     func openSettings()
+}
+
+/// Implemented by the app shell, which owns the pill that shows the live words of a dictation.
+@MainActor
+public protocol DictationPresenting: AnyObject {
+    func showDictationPill(at position: DictationPillPosition)
+    func hideDictationPill()
+    /// While a dictation runs, the menu bar icon moves with the voice and a click on it finishes the dictation.
+    func setDictationActive(_ active: Bool)
 }
 
 /// Implemented by the app shell. Builds without an update signing key don't have one.
@@ -105,6 +128,8 @@ public struct AppServices {
     public let system: any SystemBridging
     public let updates: (any AppUpdating)?
     public let usage: (any UsageStore)?
+    public let speech: (any SpeechRecognizing)?
+    public let dictations: (any DictationStore)?
 
     public init(
         writing: any WritingService,
@@ -113,7 +138,9 @@ public struct AppServices {
         apiKeys: any APIKeyStore,
         system: any SystemBridging,
         updates: (any AppUpdating)? = nil,
-        usage: (any UsageStore)? = nil
+        usage: (any UsageStore)? = nil,
+        speech: (any SpeechRecognizing)? = nil,
+        dictations: (any DictationStore)? = nil
     ) {
         self.writing = writing
         self.styles = styles
@@ -122,5 +149,7 @@ public struct AppServices {
         self.system = system
         self.updates = updates
         self.usage = usage
+        self.speech = speech
+        self.dictations = dictations
     }
 }

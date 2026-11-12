@@ -43,6 +43,23 @@ public final class SettingsViewModel {
     private(set) var spending = SpendingSummary.make(from: [], now: Date(), calendar: .current)
     private(set) var spendingError: String?
 
+    @ObservationIgnored private(set) var dictationTask: Task<Void, Never>?
+    @ObservationIgnored private(set) var downloadTask: Task<Void, Never>?
+    @ObservationIgnored private var downloadID: UUID?
+    /// The languages the chosen model can listen for, read from the model.
+    private(set) var dictationLanguages: [DictationLanguage] = []
+    /// The language the chosen model listens for: the person's choice, or the model's default.
+    private(set) var dictationLanguage: DictationLanguage?
+    /// Nil until the model has been asked.
+    private(set) var dictationStatus: DictationModelStatus?
+    /// From 0 to 1 while a download runs.
+    private(set) var downloadProgress: Double?
+    private(set) var dictationError: String?
+    private(set) var microphoneAccess: MicrophoneAccess = .notDetermined
+    private(set) var savedDictations: [SavedDictation] = []
+    private(set) var copiedDictationID: UUID?
+    var offersDictation: Bool { services.speech != nil }
+
     public init(services: AppServices) {
         self.services = services
     }
@@ -105,6 +122,153 @@ public final class SettingsViewModel {
         isAccessibilityGranted = services.system.isAccessibilityGranted
         isScreenCaptureGranted = services.system.isScreenCaptureGranted
         isLaunchAtLogin = services.system.isLaunchAtLoginEnabled
+        microphoneAccess = services.system.microphoneAccess
+    }
+
+    // MARK: Dictation
+
+    /// Asks the chosen model what it can do here, and reads the kept transcripts again.
+    func reloadDictation() {
+        microphoneAccess = services.system.microphoneAccess
+        reloadSavedDictations()
+        guard let speech = services.speech else { return }
+        let model = preferences.dictationModel
+        let chosen = preferences.dictationLanguage(for: model)
+        dictationTask?.cancel()
+        dictationTask = Task { [weak self] in
+            let languages = await speech.languages(for: model)
+            var language: DictationLanguage
+            if let chosen {
+                language = chosen
+            } else {
+                language = await speech.defaultLanguage(for: model)
+            }
+            // A choice the model no longer offers falls back to its default.
+            if !languages.isEmpty, !languages.contains(language) {
+                language = await speech.defaultLanguage(for: model)
+            }
+            let status = await speech.status(of: model, language: language)
+            guard let self, !Task.isCancelled, self.preferences.dictationModel == model else { return }
+            self.dictationLanguages = languages
+            self.dictationLanguage = language
+            self.dictationStatus = status
+        }
+    }
+
+    func setDictationModel(_ model: DictationModel) {
+        guard model != preferences.dictationModel else { return }
+        cancelDownload()
+        dictationError = nil
+        dictationStatus = nil
+        dictationLanguages = []
+        dictationLanguage = nil
+        updatePreferences { $0.dictationModel = model }
+        reloadDictation()
+    }
+
+    func setDictationLanguage(_ language: DictationLanguage) {
+        guard language != dictationLanguage else { return }
+        cancelDownload()
+        dictationError = nil
+        updatePreferences { $0.setDictationLanguage(language, for: $0.dictationModel) }
+        dictationLanguage = language
+        dictationStatus = nil
+        reloadDictation()
+    }
+
+    func downloadDictationModel() {
+        guard let speech = services.speech, downloadProgress == nil else { return }
+        let model = preferences.dictationModel
+        let language = dictationLanguage ?? .automatic
+        let download = UUID()
+        downloadID = download
+        dictationError = nil
+        downloadProgress = 0
+        // Settings lives as long as the app, so holding on to it for the length of a download is fine.
+        let report: @Sendable (Double) -> Void = { value in
+            Task { @MainActor in self.noteProgress(value, of: download) }
+        }
+        downloadTask = Task {
+            do {
+                try await speech.download(model, language: language, progress: report)
+            } catch is CancellationError {
+            } catch {
+                if downloadID == download {
+                    dictationError = (error as? DictationError)?.message ?? error.localizedDescription
+                }
+            }
+            guard downloadID == download else { return }
+            downloadID = nil
+            downloadProgress = nil
+            downloadTask = nil
+            reloadDictation()
+        }
+    }
+
+    private func noteProgress(_ value: Double, of download: UUID) {
+        guard downloadID == download, let progress = downloadProgress else { return }
+        downloadProgress = max(progress, min(value, 1))
+    }
+
+    func cancelDownload() {
+        downloadTask?.cancel()
+        downloadTask = nil
+        downloadID = nil
+        downloadProgress = nil
+    }
+
+    func removeDictationModel() {
+        guard let speech = services.speech else { return }
+        let model = preferences.dictationModel
+        dictationTask = Task { [weak self] in
+            do {
+                try await speech.removeDownload(of: model)
+            } catch {
+                self?.dictationError = error.localizedDescription
+            }
+            self?.reloadDictation()
+        }
+    }
+
+    func allowMicrophone() {
+        guard services.system.microphoneAccess == .notDetermined else {
+            services.system.openMicrophoneSettings()
+            return
+        }
+        Task { [weak self] in
+            guard let self else { return }
+            _ = await self.services.system.requestMicrophoneAccess()
+            self.microphoneAccess = self.services.system.microphoneAccess
+        }
+    }
+
+    func reloadSavedDictations() {
+        savedDictations = (try? services.dictations?.savedDictations()) ?? []
+    }
+
+    func copyDictation(_ dictation: SavedDictation) {
+        services.system.copyToClipboard(dictation.text)
+        copiedDictationID = dictation.id
+    }
+
+    func deleteDictation(id: UUID) {
+        do {
+            try services.dictations?.deleteDictation(id: id)
+            dictationError = nil
+        } catch {
+            dictationError = error.localizedDescription
+        }
+        reloadSavedDictations()
+    }
+
+    func deleteAllDictations() {
+        do {
+            try services.dictations?.deleteAllDictations()
+            dictationError = nil
+        } catch {
+            dictationError = error.localizedDescription
+        }
+        reloadSavedDictations()
     }
 
     func saveAPIKey() async {
@@ -249,6 +413,9 @@ public final class SettingsViewModel {
         case .copyResult: "Copy result"
         case .tryAgain: "Try again"
         case .toggleOriginal: "Show original or changes"
+        case .dictateHold: "Hold to dictate"
+        case .dictateLong: "Start or stop a long dictation"
+        case .cancelDictation: "Cancel a dictation"
         }
     }
 

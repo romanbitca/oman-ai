@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import AVFoundation
 import OmanCore
 import ServiceManagement
 
@@ -35,6 +36,11 @@ public final class MacSystemBridge: SystemBridging {
         set { hotKeys.onTrigger = newValue }
     }
 
+    public var onGlobalShortcutReleased: (@MainActor (ShortcutAction) -> Void)? {
+        get { hotKeys.onRelease }
+        set { hotKeys.onRelease = newValue }
+    }
+
     @discardableResult
     public func registerGlobalShortcuts(_ shortcuts: [ShortcutAction: KeyCombo]) -> Set<ShortcutAction> {
         hotKeys.register(shortcuts)
@@ -42,6 +48,11 @@ public final class MacSystemBridge: SystemBridging {
 
     public func suspendGlobalShortcuts() {
         hotKeys.unregisterAll()
+    }
+
+    @discardableResult
+    public func setTemporaryShortcut(_ combo: KeyCombo?, for action: ShortcutAction) -> Bool {
+        hotKeys.setTemporary(combo, for: action)
     }
 
     // MARK: Permissions
@@ -59,6 +70,35 @@ public final class MacSystemBridge: SystemBridging {
 
     public func requestScreenCapture() {
         CGRequestScreenCaptureAccess()
+    }
+
+    public var microphoneAccess: MicrophoneAccess {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized: .granted
+        case .notDetermined: .notDetermined
+        default: .denied
+        }
+    }
+
+    public func requestMicrophoneAccess() async -> Bool {
+        await AVCaptureDevice.requestAccess(for: .audio)
+    }
+
+    public func openMicrophoneSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    public var frontmostApp: SourceApp? {
+        guard let front = NSWorkspace.shared.frontmostApplication,
+              front.processIdentifier != ProcessInfo.processInfo.processIdentifier
+        else { return nil }
+        return SourceApp(
+            name: front.localizedName ?? front.bundleIdentifier ?? "App",
+            bundleID: front.bundleIdentifier,
+            processID: front.processIdentifier
+        )
     }
 
     public var isLaunchAtLoginEnabled: Bool { SMAppService.mainApp.status == .enabled }

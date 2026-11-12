@@ -4,6 +4,17 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — Dictation
+
+- Asked for by the maintainer, after the dictation app Handy. The maintainer then asked the assistant to make the remaining choices itself; they are in DECISIONS.md, and the phase is W12 in PLAN.md
+- Three models, all on the Mac: Apple's (SpeechAnalyzer, 68 languages on macOS 27), Parakeet Ultra through FluidAudio and Whisper large-v3 turbo through WhisperKit, both pinned to their release commits. Each was checked on a sentence spoken by `say`; all three wrote it word for word. Parakeet's download comes to 632 MB and Whisper's to 629 MB
+- Global shortcuts can now be held: Carbon also reports when their keys are let go. Hold to dictate and Start or stop a long dictation are new, empty at first; Escape is taken only while a dictation runs
+- A glass pill shows the live words while dictating into another app, under the menu bar icon or at the bottom of the screen; the menu bar icon's wave moves with the voice. In the panel, a microphone beside each field puts the words there as they are said
+- Settings has a Dictation tab, and kept transcripts go in a new `dictations` table, text only
+- The app asks for the microphone, and release builds carry the audio-input entitlement. The Debug build was checked for both, and Parakeet's unused parts, such as its 87 MB prebuilt text normaliser, are not in it
+- 458 tests pass, the temporary harness's included. The app builds, and its build copy was unregistered and deleted
+- Four looks for the pill were drawn as moving mockups for the maintainer to choose from. The one built is the first. Not yet done: a real microphone, the pill on the screen, the documentation page and pictures
+
 ## 2026-11-12 — A sitemap for crawlers
 
 - 9h Agent's crawler marked the site unreachable. Cloudflare's log shows it answered all three of the crawler's requests and blocked nothing: robots.txt and the home page with 200, and `/sitemap.xml` with 404 because there was none. Run locally, the crawler's own code allows every page and reads both pages, so its read failed on 9h's server after the download

@@ -71,6 +71,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
+- **Dictation** turns what you say into text in any app, on your Mac. Hold a shortcut while you speak, or press another to start a longer dictation. Your words appear live in a small glass pill and are pasted at your cursor. In the panel they go straight into the field you're typing in, with a microphone button beside each one.
 - **Context** from the window you are writing in, pasted messages or the clipboard. Only what is switched on is sent, and you see it first.
 - **Shortcuts** for any action and for each of your styles, and a panel you can pin and drag anywhere.
 - **Spending** by day, week, month and model, estimated from what each Claude request used.
@@ -110,6 +111,18 @@ Use Claude with your own Anthropic API key, or Apple's on-device model for free.
 These are averages over 11 short writing tasks at the Fast setting, run through the app's own client on 12 November 2026, at Anthropic's list prices. Yours will vary with the length of the text and your connection. Proofread checks the text before it writes, so with Claude Haiku a short message takes about 1.7 seconds and costs about $0.0002.
 
 In the same tests every Claude model matched a style, followed instructions and handled Romanian. Apple's on-device model proofread plain English well, but often ignored a style when rewriting and could not handle Romanian. It takes text only and needs macOS 26 or later with Apple Intelligence turned on.
+
+### Dictation
+
+Every dictation model runs on your Mac and is free. Choose one, and its language, under Dictation in Settings.
+
+| Model | Download | Languages | Best for |
+| --- | --- | --- | --- |
+| Apple | None. macOS fetches each language once | 68, one at a time | Starting at once, on macOS 26 or later |
+| Parakeet | About 630 MB | 25 European ones, worked out as you speak | Switching between European languages |
+| Whisper | About 630 MB | About 100, chosen or worked out | Any other language |
+
+Parakeet is [Moondream's Parakeet Ultra](https://huggingface.co/moondream/parakeet-ultra), built on NVIDIA's Parakeet, run by [FluidAudio](https://github.com/FluidInference/FluidAudio). Whisper is OpenAI's large-v3 turbo, run by Argmax's [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift).
 
 ## Install
 
@@ -165,10 +178,11 @@ Native macOS controls, in light and dark.
 - Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain. For the spending charts, the database also keeps each Claude request's date, model and token counts, never its text.
 - With Claude, each request sends the selected text, the chosen style's messages and any context you switched on to Anthropic, using your own API key. There is no server of ours in between.
 - With Apple's on-device model, your writing stays on your Mac.
+- Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. With Keep transcripts on, the database keeps the text of each dictation so you can find it again under Dictation in Settings; turn it off, or delete them there.
 - The screen is included only when you turn that on, and the panel shows the picture before it is sent.
-- There are no analytics and no account. Apart from your writing requests, OmanAI only contacts GitHub to check for updates.
+- There are no analytics and no account. Apart from your writing requests, OmanAI only contacts GitHub to check for updates, and Hugging Face when you download Parakeet or Whisper.
 
-macOS asks for two permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you use the Screen switch.
+macOS asks for up to three permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you use the Screen switch, and the Microphone only if you dictate.
 
 ## Build from source
 

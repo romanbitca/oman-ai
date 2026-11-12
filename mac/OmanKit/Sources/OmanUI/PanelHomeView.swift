@@ -8,7 +8,13 @@ struct PanelHomeView: View {
             VStack(alignment: .leading, spacing: PanelMetrics.gap) {
                 GlassTile(id: LiquidID.header) { header }
 
-                PanelInputField(symbol: "sparkle", prompt: "Describe your change", text: $model.instruction) {
+                PanelInputField(
+                    symbol: "sparkle",
+                    prompt: "Describe your change",
+                    text: $model.instruction,
+                    dictation: model.dictation,
+                    field: .instruction
+                ) {
                     model.rewrite()
                 }
 

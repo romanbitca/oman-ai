@@ -4,6 +4,27 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-12 — Dictation has not been tried with a microphone or seen on the screen
+
+What was checked: each model was given a sentence spoken by macOS's `say`, and Parakeet and Whisper got it through the same live path the microphone feeds. Apple's model, Parakeet and Whisper each wrote "Please send the report to Anna before Friday. Thank you." word for word, and Whisper wrote nothing for three seconds of silence. The rest of dictation is covered by tests with a pretend model and microphone.
+
+Not yet tried:
+
+- A real microphone: macOS's question about it, the level that moves the wave, and Bluetooth headsets, which drop to call quality while their microphone is open
+- The pill, the moving menu bar icon, the panel's microphone buttons and the Dictation tab on the screen. The pill is glass, which can't be drawn off the screen
+- Hold to dictate by hand. It relies on Carbon telling OmanAI when a shortcut's keys are let go, which it hadn't been asked for before
+- A real speaker of another language. Both downloaded models garbled a French sentence read by the Mac's French voice, which says more about that voice than about them
+
+Known limits:
+
+- Parakeet can't be told the language. Spoken in a language outside its 25, it writes something wrong rather than nothing
+- Whisper reads the words not yet settled again every second, so its live words trail by a second or two and a long dictation keeps the Neural Engine busy
+- A downloaded model is prepared for the Neural Engine once, at the end of its download, so that the first dictation starts at once. With the download, that took 2 min 42 s for Parakeet and 5 min for Whisper here
+
+One full test run, just after those downloads, had ten panel tests that wait 2 seconds for a result time out. They passed alone, and in the full runs since.
+
+---
+
 ## 2026-11-12 — The marks after a proofread have only been seen over dark glass
 
 Tests cover what is marked and how it is counted, and the marked text was drawn on its own, selectable and not, where it looks as intended. The marks were then filmed on the real panel, in the harness that makes the website's recordings. Over dark glass the tint on the new words and the red, struck-through old words read well, both at once and after a click on the count. The two pictures are in the documentation, under The result. Over light glass they have not been seen.

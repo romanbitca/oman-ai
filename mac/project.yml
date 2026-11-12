@@ -37,6 +37,8 @@ targets:
         product: SystemBridge
       - package: OmanKit
         product: OmanUI
+      - package: OmanKit
+        product: OmanSpeech
       - package: Sparkle
         product: Sparkle
     info:
@@ -55,10 +57,13 @@ targets:
         # release notes must be signed too.
         SUVerifyUpdateBeforeExtraction: true
         SURequireSignedFeed: true
+        NSMicrophoneUsageDescription: OmanAI listens while you dictate and turns what you say into text, on this Mac.
     entitlements:
       path: App/Oman.entitlements
       properties:
         com.apple.security.app-sandbox: false
+        # Release builds use the hardened runtime, which keeps the microphone closed without this.
+        com.apple.security.device.audio-input: true
     settings:
       base:
         PRODUCT_NAME: OmanAI

@@ -189,6 +189,20 @@ final class FakeSystem: SystemBridging {
 
     func requestAccessibility() { accessibilityRequests += 1 }
     func requestScreenCapture() { screenRequests += 1 }
+
+    var microphoneAccess: MicrophoneAccess = .granted
+    var microphoneAnswer = true
+    var microphoneRequests = 0
+    var microphoneSettingsOpened = 0
+    var frontmostApp: SourceApp? = Harness.slack
+
+    func requestMicrophoneAccess() async -> Bool {
+        microphoneRequests += 1
+        microphoneAccess = microphoneAnswer ? .granted : .denied
+        return microphoneAnswer
+    }
+
+    func openMicrophoneSettings() { microphoneSettingsOpened += 1 }
     func setLaunchAtLogin(_ enabled: Bool) throws { isLaunchAtLoginEnabled = enabled }
     func captureSelection() async -> SelectionCapture { SelectionCapture(app: nil, text: nil) }
 
@@ -217,6 +231,8 @@ final class FakeSystem: SystemBridging {
     var rejected: Set<ShortcutAction> = []
     var suspendCount = 0
     var onGlobalShortcut: (@MainActor (ShortcutAction) -> Void)?
+    var onGlobalShortcutReleased: (@MainActor (ShortcutAction) -> Void)?
+    var temporary: [ShortcutAction: KeyCombo] = [:]
 
     func setAppearance(_ mode: AppearanceMode) { appearance = mode }
 
@@ -226,6 +242,11 @@ final class FakeSystem: SystemBridging {
     }
 
     func suspendGlobalShortcuts() { suspendCount += 1 }
+
+    func setTemporaryShortcut(_ combo: KeyCombo?, for action: ShortcutAction) -> Bool {
+        temporary[action] = combo
+        return true
+    }
 
     func captureWindow(of app: SourceApp) async throws -> ScreenshotAttachment {
         try screenshotResult.get()
@@ -284,6 +305,173 @@ final class FakeUpdates: AppUpdating {
     func checkForUpdates() { checkCount += 1 }
 }
 
+final class FakeDictationSession: DictationSession, @unchecked Sendable {
+    let updates: AsyncStream<DictationUpdate>
+    private let continuation: AsyncStream<DictationUpdate>.Continuation
+    private let lock = NSLock()
+    private var finalText = ""
+    private var finishError: Error?
+    private var didFinish = false
+    private var didCancel = false
+
+    init() {
+        (updates, continuation) = AsyncStream.makeStream(of: DictationUpdate.self)
+    }
+
+    var finished: Bool { lock.withLock { didFinish } }
+    var cancelled: Bool { lock.withLock { didCancel } }
+
+    func send(_ update: DictationUpdate) {
+        continuation.yield(update)
+    }
+
+    func willFinish(with text: String, error: Error? = nil) {
+        lock.withLock {
+            finalText = text
+            finishError = error
+        }
+    }
+
+    func finish() async throws -> String {
+        let (text, error) = lock.withLock {
+            didFinish = true
+            return (finalText, finishError)
+        }
+        continuation.finish()
+        if let error { throw error }
+        return text
+    }
+
+    func cancel() async {
+        lock.withLock { didCancel = true }
+        continuation.finish()
+    }
+}
+
+final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
+    private let lock = NSLock()
+    private var statuses: [DictationModel: DictationModelStatus] = [:]
+    private var startError: Error?
+    private var started: [(model: DictationModel, language: DictationLanguage)] = []
+    private var made: [FakeDictationSession] = []
+    private var downloaded: [DictationModel] = []
+    private var removed: [DictationModel] = []
+    private var downloadError: Error?
+
+    var languagesByModel: [DictationModel: [DictationLanguage]] = [
+        .apple: [DictationLanguage(id: "en-US"), DictationLanguage(id: "ro-RO")],
+        .parakeet: [.automatic, DictationLanguage(id: "en"), DictationLanguage(id: "ro")],
+        .whisper: [.automatic, DictationLanguage(id: "en"), DictationLanguage(id: "ro"), DictationLanguage(id: "ja")],
+    ]
+
+    var sessions: [FakeDictationSession] { lock.withLock { made } }
+    var starts: [(model: DictationModel, language: DictationLanguage)] { lock.withLock { started } }
+    var downloads: [DictationModel] { lock.withLock { downloaded } }
+    var removals: [DictationModel] { lock.withLock { removed } }
+
+    func setStatus(_ status: DictationModelStatus, for model: DictationModel) {
+        lock.withLock { statuses[model] = status }
+    }
+
+    func failStart(with error: Error?) {
+        lock.withLock { startError = error }
+    }
+
+    func failDownload(with error: Error?) {
+        lock.withLock { downloadError = error }
+    }
+
+    func status(of model: DictationModel, language: DictationLanguage) async -> DictationModelStatus {
+        lock.withLock { statuses[model] ?? .ready }
+    }
+
+    func languages(for model: DictationModel) async -> [DictationLanguage] {
+        languagesByModel[model] ?? []
+    }
+
+    func defaultLanguage(for model: DictationModel) async -> DictationLanguage {
+        model == .apple ? DictationLanguage(id: "en-US") : .automatic
+    }
+
+    func download(
+        _ model: DictationModel,
+        language: DictationLanguage,
+        progress: @escaping @Sendable (Double) -> Void
+    ) async throws {
+        progress(0.5)
+        try lock.withLock {
+            if let downloadError { throw downloadError }
+            downloaded.append(model)
+            statuses[model] = .ready
+        }
+        progress(1)
+    }
+
+    func removeDownload(of model: DictationModel) async throws {
+        lock.withLock {
+            removed.append(model)
+            statuses[model] = .needsDownload(bytes: 1_000)
+        }
+    }
+
+    func startSession(model: DictationModel, language: DictationLanguage) async throws -> any DictationSession {
+        try lock.withLock {
+            if let startError { throw startError }
+            let session = FakeDictationSession()
+            started.append((model, language))
+            made.append(session)
+            return session
+        }
+    }
+}
+
+final class FakeDictations: DictationStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [SavedDictation] = []
+
+    var saved: [SavedDictation] { lock.withLock { stored } }
+
+    func seed(_ dictations: [SavedDictation]) {
+        lock.withLock { stored = dictations }
+    }
+
+    func saveDictation(_ dictation: SavedDictation) throws {
+        lock.withLock { stored.append(dictation) }
+    }
+
+    func savedDictations() throws -> [SavedDictation] {
+        lock.withLock { stored.sorted { $0.date > $1.date } }
+    }
+
+    func deleteDictation(id: UUID) throws {
+        lock.withLock { stored.removeAll { $0.id == id } }
+    }
+
+    func deleteAllDictations() throws {
+        lock.withLock { stored.removeAll() }
+    }
+}
+
+@MainActor
+final class FakeDictationPresenter: DictationPresenting {
+    var shownAt: [DictationPillPosition] = []
+    var hideCount = 0
+    var activeValues: [Bool] = []
+    var isShowing = false
+
+    func showDictationPill(at position: DictationPillPosition) {
+        shownAt.append(position)
+        isShowing = true
+    }
+
+    func hideDictationPill() {
+        hideCount += 1
+        isShowing = false
+    }
+
+    func setDictationActive(_ active: Bool) { activeValues.append(active) }
+}
+
 @MainActor
 final class Harness {
     let writing = FakeWriting()
@@ -294,6 +482,9 @@ final class Harness {
     let presenter = FakePresenter()
     let updates = FakeUpdates()
     let usage = FakeUsage()
+    let speech = FakeSpeech()
+    let dictations = FakeDictations()
+    let dictationPresenter = FakeDictationPresenter()
 
     static let slack = SourceApp(name: "Slack", bundleID: "com.tinyspeck.slackmacgap", processID: 42)
 
@@ -309,8 +500,18 @@ final class Harness {
             apiKeys: keys,
             system: system,
             updates: updates,
-            usage: usage
+            usage: usage,
+            speech: speech,
+            dictations: dictations
         )
+    }
+
+    /// A dictation controller wired to a panel, as the app shell does it.
+    func makeDictation(panel: PanelViewModel? = nil) -> DictationController {
+        let controller = DictationController(services: services, presenter: dictationPresenter)
+        controller.panel = panel
+        panel?.dictation = controller
+        return controller
     }
 
     func makePanel() -> PanelViewModel {

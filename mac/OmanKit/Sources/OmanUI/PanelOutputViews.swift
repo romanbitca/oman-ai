@@ -76,7 +76,13 @@ struct PanelResultView: View {
             .labelStyle(.titleOnly)
 
             if !model.isExplanation {
-                PanelInputField(symbol: "sparkle", prompt: "Make a change…", text: $model.adjustment) {
+                PanelInputField(
+                    symbol: "sparkle",
+                    prompt: "Make a change…",
+                    text: $model.adjustment,
+                    dictation: model.dictation,
+                    field: .adjustment
+                ) {
                     model.applyAdjustment()
                 }
             }

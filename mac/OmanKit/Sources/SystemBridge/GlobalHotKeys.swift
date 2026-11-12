@@ -15,9 +15,10 @@ private let hotKeyEventHandler: EventHandlerUPP = { _, event, userData in
     )
     guard status == noErr else { return status }
     let identifier = hotKeyID.id
+    let isRelease = GetEventKind(event) == UInt32(kEventHotKeyReleased)
     let hotKeys = Unmanaged<GlobalHotKeys>.fromOpaque(userData).takeUnretainedValue()
     // Carbon delivers hot key events on the main run loop.
-    MainActor.assumeIsolated { hotKeys.fire(identifier: identifier) }
+    MainActor.assumeIsolated { hotKeys.fire(identifier: identifier, isRelease: isRelease) }
     return noErr
 }
 
@@ -27,8 +28,14 @@ final class GlobalHotKeys {
     private static let signature: OSType = 0x6F6D_616E
 
     var onTrigger: (@MainActor (ShortcutAction) -> Void)?
+    /// Called when the keys are let go, for a shortcut that is held down while the person speaks.
+    var onRelease: (@MainActor (ShortcutAction) -> Void)?
 
     private var registered: [UInt32: (reference: EventHotKeyRef, action: ShortcutAction)] = [:]
+    /// Taken beside the registered shortcuts for a while, such as Escape during a dictation. Their identifiers
+    /// start far above the registered ones, which count up from 1.
+    private var temporary: [UInt32: (reference: EventHotKeyRef, action: ShortcutAction)] = [:]
+    private var nextTemporaryIdentifier: UInt32 = 10_000
     private var handler: EventHandlerRef?
 
     func register(_ shortcuts: [ShortcutAction: KeyCombo]) -> Set<ShortcutAction> {
@@ -64,22 +71,53 @@ final class GlobalHotKeys {
         registered.removeAll()
     }
 
-    func fire(identifier: UInt32) {
-        guard let action = registered[identifier]?.action else { return }
-        onTrigger?(action)
+    /// Adds one shortcut beside the registered ones without touching them, or takes it away again with nil.
+    /// Registering everything again would lose the release of a shortcut that is being held down.
+    /// Returns false when the combination could not be taken.
+    @discardableResult
+    func setTemporary(_ combo: KeyCombo?, for action: ShortcutAction) -> Bool {
+        if let entry = temporary.first(where: { $0.value.action == action }) {
+            UnregisterEventHotKey(entry.value.reference)
+            temporary[entry.key] = nil
+        }
+        guard let combo else { return true }
+        installHandlerIfNeeded()
+        let identifier = nextTemporaryIdentifier
+        nextTemporaryIdentifier += 1
+        var reference: EventHotKeyRef?
+        let status = RegisterEventHotKey(
+            UInt32(combo.keyCode),
+            Self.carbonModifiers(from: combo.modifiers),
+            EventHotKeyID(signature: Self.signature, id: identifier),
+            GetEventDispatcherTarget(),
+            0,
+            &reference
+        )
+        guard status == noErr, let reference else { return false }
+        temporary[identifier] = (reference, action)
+        return true
+    }
+
+    func fire(identifier: UInt32, isRelease: Bool) {
+        guard let action = registered[identifier]?.action ?? temporary[identifier]?.action else { return }
+        if isRelease {
+            onRelease?(action)
+        } else {
+            onTrigger?(action)
+        }
     }
 
     private func installHandlerIfNeeded() {
         guard handler == nil else { return }
-        var eventType = EventTypeSpec(
-            eventClass: OSType(kEventClassKeyboard),
-            eventKind: UInt32(kEventHotKeyPressed)
-        )
+        var eventTypes = [
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased)),
+        ]
         InstallEventHandler(
             GetEventDispatcherTarget(),
             hotKeyEventHandler,
-            1,
-            &eventType,
+            eventTypes.count,
+            &eventTypes,
             Unmanaged.passUnretained(self).toOpaque(),
             &handler
         )

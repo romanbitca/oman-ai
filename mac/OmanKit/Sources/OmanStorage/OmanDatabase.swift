@@ -13,7 +13,7 @@ enum OmanDatabaseError: LocalizedError, Equatable {
     }
 }
 
-public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Sendable {
+public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, DictationStore, Sendable {
     private static let selectedModelKey = "selected_model"
     private static let preferencesKey = "app_preferences"
 
@@ -95,6 +95,20 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Senda
                     cost_usd DOUBLE NOT NULL
                 );
                 CREATE INDEX api_usage_created_at ON api_usage(created_at);
+                """)
+        }
+        migrator.registerMigration("v3") { db in
+            try db.execute(sql: """
+                CREATE TABLE dictations (
+                    id TEXT PRIMARY KEY,
+                    created_at DOUBLE NOT NULL,
+                    body TEXT NOT NULL,
+                    duration DOUBLE NOT NULL,
+                    model TEXT NOT NULL,
+                    language TEXT,
+                    app_name TEXT
+                );
+                CREATE INDEX dictations_created_at ON dictations(created_at);
                 """)
         }
         return migrator
@@ -276,6 +290,57 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Senda
                     cost: row["cost_usd"]
                 )
             }
+        }
+    }
+
+    // MARK: DictationStore
+
+    public func saveDictation(_ dictation: SavedDictation) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO dictations (id, created_at, body, duration, model, language, app_name)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                arguments: [
+                    dictation.id.uuidString, dictation.date.timeIntervalSince1970, dictation.text,
+                    dictation.duration, dictation.model, dictation.language, dictation.appName,
+                ]
+            )
+        }
+    }
+
+    public func savedDictations() throws -> [SavedDictation] {
+        try writer.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT id, created_at, body, duration, model, language, app_name
+                    FROM dictations ORDER BY created_at DESC, rowid DESC
+                    """
+            ).map { row in
+                SavedDictation(
+                    id: try Self.uuid(from: row["id"]),
+                    date: Date(timeIntervalSince1970: row["created_at"]),
+                    text: row["body"],
+                    duration: row["duration"],
+                    model: row["model"],
+                    language: row["language"],
+                    appName: row["app_name"]
+                )
+            }
+        }
+    }
+
+    public func deleteDictation(id: UUID) throws {
+        try writer.write { db in
+            try db.execute(sql: "DELETE FROM dictations WHERE id = ?", arguments: [id.uuidString])
+        }
+    }
+
+    public func deleteAllDictations() throws {
+        try writer.write { db in
+            try db.execute(sql: "DELETE FROM dictations")
         }
     }
 }
