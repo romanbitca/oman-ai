@@ -4,6 +4,11 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — 0.4.2: the redrawn model list, and words that wait for a field
+
+- At the maintainer's word, merged pull requests #17 and #18 and released them as 0.4.2. #17 redraws the model list and Your words. #18 makes dictated words wait in the pill when nothing can take them. #18 went on top of #17. Only DECISIONS.md and SESSION_LOG.md overlapped, and both keep every entry. On the combined code 547 tests pass and the app builds
+- #18's check on the screen in Slack, Mail, Messages and WhatsApp hasn't run; the maintainer chose to release before it. Until it runs, an app that says nothing takes text may get its words held in the pill instead of pasted, with Copy one click away (see KNOWN_ISSUES.md)
+
 ## 2026-11-12 — 0.4.1 released, and the model list and Your words redrawn
 
 - At the maintainer's word, released the Spending change as 0.4.1 after 0.4.0 had published: brought `main` to it by fast-forward and tagged it. All three release jobs passed. Checked from outside:
