@@ -58,6 +58,8 @@ Proofread with As written always adds missing apostrophes, even for someone who 
 
 `site/Dockerfile` names one exact image. Nothing reminds anyone when nginx publishes a newer one. To move it on: `docker buildx imagetools inspect nginx:stable-alpine`, put the version and digest in the Dockerfile, build and try it locally, push.
 
+Cloudflare on this domain keeps a copy of a file only when its address has no question mark in it. So `styles.css?v=3` and `app.js?v=3` always come from the server itself, which is what a redesign needs, and a recording or picture that changes must change its file name, not get a number after a question mark.
+
 Cloudflare adds its Web Analytics script to pages on this domain. The site's response headers stop it from loading, which shows as one blocked-script line in the browser's console. Turning it off for this hostname is a Cloudflare setting and was left to the maintainer.
 
 ---
