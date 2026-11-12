@@ -152,6 +152,7 @@ public final class PanelViewModel {
             if capture.text != nil {
                 chooseStyleAndRewrite(style)
             } else {
+                // With nothing selected the shortcut only has the template ready for what is written next.
                 selectedStyleID = id
             }
         case .openPanel, .acceptResult, .copyResult, .tryAgain, .toggleOriginal:
@@ -247,14 +248,25 @@ public final class PanelViewModel {
         setupPollTask = nil
     }
 
+    /// The chip chosen last in this app, As written included. An app nothing was chosen in yet, or one whose
+    /// template has since been deleted, starts on the default from Settings.
     private func preselectedStyleID() -> UUID? {
-        if preferences.remembersStylePerApp,
-           let bundleID = capture.app?.bundleID,
-           let stored = try? services.styles.lastStyleID(forBundleID: bundleID),
-           styles.contains(where: { $0.id == stored }) {
-            return stored
+        if preferences.remembersStylePerApp, let choice = try? services.styles.lastStyleChoice(forApp: styleMemoryKey) {
+            switch choice {
+            case .asWritten:
+                return nil
+            case .style(let id):
+                if styles.contains(where: { $0.id == id }) { return id }
+            }
         }
         return styles.first(where: { $0.id == preferences.defaultStyleID })?.id
+    }
+
+    /// What an app's choice is kept under: its bundle identifier, its name where it has none, and one key for no
+    /// app at all, so that a choice is remembered wherever it is made.
+    private var styleMemoryKey: String {
+        guard let app = capture.app else { return "none" }
+        return app.bundleID ?? "name:\(app.name)"
     }
 
     private func loadAPIKey() -> String? {
@@ -385,14 +397,12 @@ public final class PanelViewModel {
     /// with capital letters and punctuation are the person's own and not mistakes.
     func proofread() {
         guard let text = capture.text else { return }
-        rememberStyleChoice()
         start(task: .proofread(text: text), style: selectedStyle, context: WritingContext())
     }
 
     func rewrite() {
         guard let text = capture.text else { return }
         let typed = instruction.trimmed
-        rememberStyleChoice()
         startWithContext(task: .rewrite(text: text, instruction: typed.isEmpty ? nil : typed), style: selectedStyle)
     }
 
@@ -403,29 +413,30 @@ public final class PanelViewModel {
     }
 
     /// Chooses the template the next Proofread, Rewrite or Compose uses, and starts nothing. No template is
-    /// As written: the person's own voice, as it shows in what they wrote.
+    /// As written: the person's own voice, as it shows in what they wrote. The choice is remembered for the app
+    /// at once, whether or not anything is then written with it.
     func selectStyle(_ style: WritingStyle?) {
         selectedStyleID = style?.id
+        rememberStyleChoice()
     }
 
-    /// A style's global shortcut is an action of its own: it rewrites in that style at once.
+    /// A style's global shortcut is an action of its own: it rewrites in that style at once. It is one rewrite and
+    /// not a choice, so the chip chosen for the app stays as it was for the next panel.
     func chooseStyleAndRewrite(_ style: WritingStyle) {
-        selectStyle(style)
+        selectedStyleID = style.id
         rewrite()
     }
 
     func compose() {
         let prompt = composePrompt.trimmed
         guard !prompt.isEmpty else { return }
-        rememberStyleChoice()
         startWithContext(task: .compose(request: prompt, selectedText: capture.text), style: selectedStyle)
     }
 
-    /// The template an app was last written in is chosen again the next time. After As written nothing is kept,
-    /// so the default template from Settings, or As written without one, is chosen.
+    /// The chip just chosen is the one this app's next panel opens on: a template, or As written.
     private func rememberStyleChoice() {
-        guard preferences.remembersStylePerApp, let bundleID = capture.app?.bundleID else { return }
-        try? services.styles.setLastStyleID(selectedStyleID, forBundleID: bundleID)
+        guard preferences.remembersStylePerApp else { return }
+        try? services.styles.setLastStyleChoice(StyleChoice(styleID: selectedStyleID), forApp: styleMemoryKey)
     }
 
     func tryAgain() {

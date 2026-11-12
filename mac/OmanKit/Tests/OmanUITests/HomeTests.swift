@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import OmanCore
@@ -226,6 +227,40 @@ import Testing
         #expect(fixes.apps == [.init(name: "Mail", count: 1)])
     }
 
+    @Test func aStepOfTheLineSaysWhenItWasAndWhatItHeld() throws {
+        let calendar = try makeCalendar()
+        // A Thursday; the week began on Monday 9 November.
+        let now = try date(calendar, 11, 12, 15)
+        let counts = [
+            said(try date(calendar, 11, 10), words: 800, seconds: 480),
+            said(try date(calendar, 11, 11), words: 1, seconds: 2),
+            said(try date(calendar, 10, 20), words: 40, seconds: 30),
+        ]
+
+        let week = summary(.week, counts: counts, now: now, calendar)
+        // 800 words take 20 minutes to type, and took 8 to say.
+        #expect(week.steps[1].minutesSaved == 12)
+        let tuesday = HomeFormat.lineStep(week, at: 1, calendar: calendar)
+        #expect(tuesday.when.contains("10"))
+        #expect(tuesday.what == "800 words · 12 min saved")
+        #expect(HomeFormat.lineStep(week, at: 2, calendar: calendar).what == "1 word")
+        #expect(HomeFormat.lineStep(week, at: 0, calendar: calendar).what == "No words")
+        // Today has time left, and the days after it haven't come.
+        #expect(HomeFormat.lineStep(week, at: 3, calendar: calendar).what == "No words yet")
+        #expect(HomeFormat.lineStep(week, at: 5, calendar: calendar).what == "Still to come")
+        #expect(HomeFormat.lineStep(week, at: 99, calendar: calendar).what.isEmpty)
+
+        let all = summary(.all, counts: counts, now: now, calendar)
+        let thisWeek = HomeFormat.lineStep(all, at: all.steps.count - 1, calendar: calendar)
+        #expect(thisWeek.when.hasPrefix("Week of "))
+        #expect(thisWeek.what == "801 words · 12 min saved")
+
+        // Someone who only writes is told of fixes instead.
+        let fixes = summary(.week, actions: [proofread(try date(calendar, 11, 10), changes: 1), proofread(try date(calendar, 11, 10), changes: 0)], now: now, calendar)
+        #expect(HomeFormat.lineStep(fixes, at: 1, calendar: calendar).what == "2 fixes")
+        #expect(HomeFormat.lineStep(fixes, at: 0, calendar: calendar).what == "No fixes")
+    }
+
     @Test func theYearMapHasASquareForEveryDayUpToToday() throws {
         let calendar = try makeCalendar()
         let now = try date(calendar, 11, 12, 15)
@@ -446,6 +481,23 @@ import Testing
         #expect(home.appURL(named: "Nowhere") == nil)
         #expect(home.appURL(named: nil) == nil)
         #expect(home.proofreadKeys == "⌃⌥P")
+    }
+
+    @Test func theWindowsToolbarOpensSettingsAndNothingElse() throws {
+        let harness = Harness()
+        let home = HomeViewModel(services: harness.services)
+        var opened = 0
+        home.openSettings = { opened += 1 }
+        // Made, and never shown.
+        let controller = HomeWindowController(model: home)
+        let toolbar = try #require(controller.window?.toolbar)
+
+        #expect(controller.window?.title == "OmanAI")
+        #expect(toolbar.items.map(\.itemIdentifier) == [.flexibleSpace, HomeWindowController.settingsItem])
+        let settings = try #require(toolbar.items.last)
+        #expect(settings.target === controller)
+        controller.openSettings()
+        #expect(opened == 1)
     }
 
     @Test func aProofreadNotesHowManyPlacesItChanged() async {

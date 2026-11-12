@@ -41,10 +41,16 @@ Tried:
 - Tests for the window's numbers: each stretch, speed, pages and time saved, the line's steps, the streak, fixes by kind, how the writing goes, the apps, the year map and its shades, and which tiles show for someone new, someone who only dictates, only writes, or does both.
 - Tests for counting a dictation without its words, with transcripts kept and not kept, for deleting transcripts leaving the counts, and for a database from 0.4.3 being counted once.
 - The window drawn off the screen, light and dark: with the maintainer's own dictations, with four months of made-up use, and with nothing; in each stretch; at its narrowest; with the pointer on a square of the map and on a transcript; and whole, toolbar included, kept off every display.
+- By the maintainer, for five minutes on their screen, in a test window built from the same code with their own dictations: the page, pointing at the year map, search and Copy. They liked it and found that rows jumped when Copy showed, which is fixed: drawn with and without the pointer on a row, no other row's pixels change.
+- Tests for what a step of the first tile's line says, for the toolbar holding Settings alone, and for the template the panel opens on: a chip chosen and nothing written, As written beside a default, a template's shortcut, no app, an app without a bundle identifier.
+- A copy of the maintainer's database, as 0.4.3 left it, opened with this version: every transcript was counted once, and both apps kept the template they were on. The copy was deleted.
+- The line's note drawn at the first, middle and last steps of a week, a month and all time, and the search field drawn empty and with words.
 - With the maintainer's yes, once on their screen in a test window built from the same code: the pill in both looks, listening and then holding words with Paste. Every round button's ring measured 68 by 68 pixels, and the Floating background faded out before the window's edges. The Lab was in that look too and has since been replaced.
 
 Not yet tried:
-- OmanAI's window on the screen: its toolbar as macOS draws it, the search field, the menu of how many to keep, pointing and clicking.
+- On the screen: the note that follows the pointer along the first tile's line, the search field where it is now, over the transcripts, and the menu of how many to keep. The line's note uses the same hover as the year map's, which the maintainer saw working.
+- The panel's microphone as a round button. Its glass can't be drawn off the screen, only its shape.
+- The template staying chosen, in the app itself.
 - Holding keys together on a real keyboard. A single key on its own, in 0.4.2 and 0.4.3, has only been run in tests too.
 - The pill and the window inside the app itself, rather than in a test window.
 - The menu bar icon's new menu, and opening OmanAI again.
@@ -57,6 +63,8 @@ Known limits:
 - An app's icon is found by its name. An app that was renamed, removed or lives outside the usual folders gets its first letter instead.
 - The year map always shows 53 weeks, and its shades are set by the busiest day shown, so one very long day makes the others pale.
 - Deleting every transcript leaves the numbers, and nothing in the window resets them.
+- The chip chosen is kept for each app. An app nothing was chosen in yet starts on the default from Settings, not on the chip chosen last anywhere else.
+- A template's shortcut rewrites once and leaves the chosen chip as it was. Someone who only ever uses the shortcut sees the default chip in the panel.
 - The glass draws its own one-pixel dark line on each side of a round button, just outside the ring. Counting those lines, a button is 70 by 68 pixels; the ring itself is round.
 
 ## 2026-11-12 — Spending's fixes: what has been tried, and what hasn't
@@ -223,12 +231,6 @@ Timed on 2026-11-12 in a debug build: summing up 1,000 requests takes 6 ms, 10,0
 
 ---
 
-## 2026-11-11 — As written isn't remembered for an app when a default template is set
-
-The last template used in an app is stored as a style's ID, and As written has none. Using As written clears what was stored for that app, so its next panel starts on the default template from Settings. Without a default that is As written again, which is what most people will see. Remembering As written beside a default needs a new column or table, because the stored ID must belong to a style.
-
----
-
 ## 2026-11-11 — The backdrop depends on Core Animation classes outside the public headers
 
 The slight blur behind the panel is a `CABackdropLayer` with a `CAFilter` of type `variableBlur`, neither of which Apple documents. `BackdropBlur` looks them up at run time. If a future macOS removes them, `PanelBackdrop.isAvailable` turns false and the panel shows frosted glass with no backdrop, as 0.3.2 did. If only `variableBlur` goes, it falls back to one even blur shown through a fading mask, which also has no line but blurs less just outside the tiles. If they stay but behave differently, the backdrop could look wrong: measure it again with the checkerboard method under Tooling gotchas.
@@ -371,6 +373,9 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 - Don't check permissions by reading the panel's text through System Events: most of it isn't exposed. Read the `AUTHREQ_RESULT` lines in the `tccd` log instead.
 - Liquid Glass can't be checked offscreen: `cacheDisplay` draws no glass, and any tinted glass blanks the whole bitmap. Real rendering needs a person looking at it, or Screen Recording permission.
 - A backdrop made from `NSVisualEffectView` or from glass always shows a tint: a gray veil or card over a white app, a light one over a dark app. The maintainer rejected three such versions. A `CABackdropLayer` with only a blur filter on it has no tint, and fading its window fades the blur.
+- A stroked `Capsule()` can draw a short stray line at each end: its corners are continuous by default, and they don't fit a shape that is all corner. `Capsule(style: .circular)` strokes cleanly. Filling is fine either way.
+- A window's first text field takes the keyboard when the window is first shown, and SwiftUI then draws its focus. `makeFirstResponder(nil)` after showing gives the keyboard back to the window.
+- `ImageRenderer` can't draw a `TextField` and shows a yellow box with a no-entry sign in its place. `cacheDisplay` on a hosting view draws it.
 - The computer-use tools can't see OmanAI because it is menu-bar-only. Drive it with System Events (`click menu bar item 1 of menu bar 1` of process "OmanAI"), and allow for scripted clicks lagging under heavy CPU load.
 
 ---

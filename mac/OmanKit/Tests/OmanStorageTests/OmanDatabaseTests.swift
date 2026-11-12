@@ -38,7 +38,7 @@ struct SchemaTests {
     @Test func createsExpectedTablesAndColumns() throws {
         let database = try makeDatabase()
         let columns = try database.writer.read { db in
-            try ["styles", "style_samples", "app_style_preferences", "settings"].map { table in
+            try ["styles", "style_samples", "app_style_choices", "settings"].map { table in
                 try db.columns(in: table).map(\.name)
             }
         }
@@ -46,7 +46,7 @@ struct SchemaTests {
         #expect(columns == [
             ["id", "name", "note", "created_at"],
             ["id", "style_id", "body", "position"],
-            ["bundle_id", "style_id"],
+            ["app_key", "style_id"],
             ["key", "value"],
         ])
     }
@@ -54,7 +54,7 @@ struct SchemaTests {
     @Test func foreignKeysAreEnforced() throws {
         let database = try makeDatabase()
         #expect(throws: (any Error).self) {
-            try database.setLastStyleID(UUID(), forBundleID: "com.example.app")
+            try database.setLastStyleChoice(.style(UUID()), forApp: "com.example.app")
         }
     }
 
@@ -195,16 +195,19 @@ struct StyleTests {
         let survivor = WritingStyle(name: "Survivor", samples: [StyleSample(text: "stays")])
         try database.save(doomed)
         try database.save(survivor)
-        try database.setLastStyleID(doomed.id, forBundleID: "com.example.doomed")
-        try database.setLastStyleID(survivor.id, forBundleID: "com.example.survivor")
+        try database.setLastStyleChoice(.style(doomed.id), forApp: "com.example.doomed")
+        try database.setLastStyleChoice(.style(survivor.id), forApp: "com.example.survivor")
+        try database.setLastStyleChoice(.asWritten, forApp: "com.example.plain")
 
         try database.deleteStyle(id: doomed.id)
 
         #expect(try database.loadStyles() == [survivor])
         #expect(try rowCount(in: "style_samples", of: database) == 1)
-        #expect(try rowCount(in: "app_style_preferences", of: database) == 1)
-        #expect(try database.lastStyleID(forBundleID: "com.example.doomed") == nil)
-        #expect(try database.lastStyleID(forBundleID: "com.example.survivor") == survivor.id)
+        // The app whose template is gone has no choice left. As written, which names no template, stays.
+        #expect(try rowCount(in: "app_style_choices", of: database) == 2)
+        #expect(try database.lastStyleChoice(forApp: "com.example.doomed") == nil)
+        #expect(try database.lastStyleChoice(forApp: "com.example.survivor") == .style(survivor.id))
+        #expect(try database.lastStyleChoice(forApp: "com.example.plain") == .asWritten)
     }
 
     @Test func deletingAnUnknownStyleDoesNothing() throws {
@@ -221,7 +224,7 @@ struct StyleTests {
 @Suite("Last style per app")
 struct LastStyleTests {
     @Test func isNilWhenAbsent() throws {
-        #expect(try makeDatabase().lastStyleID(forBundleID: "com.example.app") == nil)
+        #expect(try makeDatabase().lastStyleChoice(forApp: "com.example.app") == nil)
     }
 
     @Test func setsOverwritesAndClears() throws {
@@ -232,16 +235,33 @@ struct LastStyleTests {
         try database.save(second)
         let bundleID = "com.tinyspeck.slackmacgap"
 
-        try database.setLastStyleID(first.id, forBundleID: bundleID)
-        #expect(try database.lastStyleID(forBundleID: bundleID) == first.id)
+        try database.setLastStyleChoice(.style(first.id), forApp: bundleID)
+        #expect(try database.lastStyleChoice(forApp: bundleID) == .style(first.id))
 
-        try database.setLastStyleID(second.id, forBundleID: bundleID)
-        #expect(try database.lastStyleID(forBundleID: bundleID) == second.id)
-        #expect(try rowCount(in: "app_style_preferences", of: database) == 1)
+        try database.setLastStyleChoice(.style(second.id), forApp: bundleID)
+        #expect(try database.lastStyleChoice(forApp: bundleID) == .style(second.id))
+        #expect(try rowCount(in: "app_style_choices", of: database) == 1)
 
-        try database.setLastStyleID(nil, forBundleID: bundleID)
-        #expect(try database.lastStyleID(forBundleID: bundleID) == nil)
-        #expect(try rowCount(in: "app_style_preferences", of: database) == 0)
+        try database.setLastStyleChoice(nil, forApp: bundleID)
+        #expect(try database.lastStyleChoice(forApp: bundleID) == nil)
+        #expect(try rowCount(in: "app_style_choices", of: database) == 0)
+    }
+
+    @Test func asWrittenIsAChoiceOfItsOwn() throws {
+        let database = try makeDatabase()
+        let style = WritingStyle(name: "Slack")
+        try database.save(style)
+        let bundleID = "com.tinyspeck.slackmacgap"
+
+        try database.setLastStyleChoice(.style(style.id), forApp: bundleID)
+        try database.setLastStyleChoice(.asWritten, forApp: bundleID)
+
+        // Chosen, which is not the same as nothing chosen yet.
+        #expect(try database.lastStyleChoice(forApp: bundleID) == .asWritten)
+        #expect(try rowCount(in: "app_style_choices", of: database) == 1)
+
+        try database.setLastStyleChoice(.style(style.id), forApp: bundleID)
+        #expect(try database.lastStyleChoice(forApp: bundleID) == .style(style.id))
     }
 
     @Test func isTrackedSeparatelyForEachApp() throws {
@@ -251,15 +271,15 @@ struct LastStyleTests {
         try database.save(first)
         try database.save(second)
 
-        try database.setLastStyleID(first.id, forBundleID: "com.example.one")
-        try database.setLastStyleID(second.id, forBundleID: "com.example.two")
+        try database.setLastStyleChoice(.style(first.id), forApp: "com.example.one")
+        try database.setLastStyleChoice(.style(second.id), forApp: "com.example.two")
 
-        #expect(try database.lastStyleID(forBundleID: "com.example.one") == first.id)
-        #expect(try database.lastStyleID(forBundleID: "com.example.two") == second.id)
+        #expect(try database.lastStyleChoice(forApp: "com.example.one") == .style(first.id))
+        #expect(try database.lastStyleChoice(forApp: "com.example.two") == .style(second.id))
     }
 
     @Test func clearingAnAbsentPreferenceDoesNothing() throws {
-        try makeDatabase().setLastStyleID(nil, forBundleID: "com.example.absent")
+        try makeDatabase().setLastStyleChoice(nil, forApp: "com.example.absent")
     }
 }
 
@@ -323,14 +343,14 @@ struct FileBackedTests {
             do {
                 let database = try OmanDatabase.open(inDirectory: directory)
                 try database.save(style)
-                try database.setLastStyleID(style.id, forBundleID: "com.example.app")
+                try database.setLastStyleChoice(.style(style.id), forApp: "com.example.app")
                 try database.setSelectedModel(.opus)
             }
 
             let reopened = try OmanDatabase.open(inDirectory: directory)
 
             #expect(try reopened.loadStyles() == [style])
-            #expect(try reopened.lastStyleID(forBundleID: "com.example.app") == style.id)
+            #expect(try reopened.lastStyleChoice(forApp: "com.example.app") == .style(style.id))
             #expect(try reopened.selectedModel() == .opus)
         }
     }
@@ -399,6 +419,41 @@ struct UsageStorageTests {
             #expect(try upgraded.loadStyles().map(\.name) == ["Kept"])
             try upgraded.record(UsageEntry(date: Date(), model: "claude-haiku-5-5", tokens: TokenUsage(input: 1), cost: 0))
             #expect(try upgraded.usageEntries(since: Date(timeIntervalSince1970: 0)).count == 1)
+        }
+    }
+
+    @Test func theTemplateEachAppWasLeftOnSurvivesTheNewTable() throws {
+        try withTemporaryDirectory { directory in
+            let path = directory.appendingPathComponent("writing.sqlite").path
+            let style = WritingStyle(name: "Slack")
+            let earlier = try OmanDatabase.open(path: path)
+            try earlier.save(style)
+            // As 0.4.3 left it: one template remembered for each of two apps, in the table that could name
+            // nothing but a template.
+            try earlier.writer.write { db in
+                try db.execute(sql: """
+                    DROP TABLE app_style_choices;
+                    CREATE TABLE app_style_preferences (bundle_id TEXT PRIMARY KEY, style_id TEXT NOT NULL REFERENCES styles(id) ON DELETE CASCADE);
+                    DELETE FROM grdb_migrations WHERE identifier = 'v7';
+                    """)
+                try db.execute(
+                    sql: "INSERT INTO app_style_preferences VALUES ('com.example.one', ?), ('com.example.two', ?)",
+                    arguments: [style.id.uuidString, style.id.uuidString]
+                )
+            }
+
+            let upgraded = try OmanDatabase.open(path: path)
+
+            #expect(try upgraded.lastStyleChoice(forApp: "com.example.one") == .style(style.id))
+            #expect(try upgraded.lastStyleChoice(forApp: "com.example.two") == .style(style.id))
+            #expect(try upgraded.lastStyleChoice(forApp: "com.example.three") == nil)
+            let tables = try upgraded.writer.read { db in
+                try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'app_style%'")
+            }
+            #expect(tables == ["app_style_choices"])
+            // The new table still lets go of an app's choice when its template is deleted.
+            try upgraded.deleteStyle(id: style.id)
+            #expect(try upgraded.lastStyleChoice(forApp: "com.example.one") == nil)
         }
     }
 }

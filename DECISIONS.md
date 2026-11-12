@@ -527,3 +527,20 @@ The maintainer saw the Lab on their screen and turned it down: its name, what it
 - **Transcripts** are listed day by day under the map. Copy shows under the pointer, a click shows all of a long one, and a right-click deletes. How many to keep and Delete All are in the menu that says how many are kept. Search is in the window's toolbar, beside a button for Settings.
 - **Money is left out.** It has its own page in Settings.
 - **An app's icon** is found by the app's name, among running apps first and then in the usual folders, since only the name is kept with a dictation.
+
+## 2026-11-13 — After a first look at the window: the chip stays chosen, and the microphone shows
+
+The maintainer tried the window for five minutes in a test build with their own dictations and liked it. They asked for: rows that don't jump when Copy shows; the line of the first tile to follow the pointer, as the year map does; and search over the transcripts instead of in the toolbar. They also reported that the panel keeps going back to their Slack template instead of the chip they chose last, that the panel's microphone can hardly be seen and could be a round button, and that the shadow behind the Floating look's words draws too much attention, for which they want variants to choose from. They said to release once this was done. The rest is the assistant's.
+
+- **A row of transcripts keeps its height.** Copy and the app's icon lie over the row's corner. Laid out in the row, the taller Copy button made a row of one line 4 points taller under the pointer, and every row below it moved.
+- **The first tile's line follows the pointer.** The step under the pointer gets a mark, a thin line down from it, and a note beside it: when it was, and its words with the time saved, or its fixes. Days still to come say so. The note goes to the right of the mark where there is room and to its left otherwise, and never past the tile.
+- **Search is in the heading of the transcripts**, beside how many are kept, so that what is found shows right under what was typed. The toolbar keeps Settings alone. The field doesn't take the keyboard when the window opens.
+- **The chip chosen in the panel stays chosen.** This supersedes "The template an app was last written in is remembered when it is used, not when it is chosen" of 2026-11-11.
+  - A click on a chip is remembered for that app at once, whether or not anything is then written with it.
+  - As written is a choice like any template. It used to be stored as nothing, so an app went back to the default template, or to whichever template was used there before. The table that holds the choices can now name no template, migration v7, `app_style_choices`.
+  - Writing with the chip the panel opened on stores nothing. Only a choice is kept, so a default changed later in Settings still reaches every app nothing was chosen in.
+  - A template's shortcut is one rewrite and not a choice. It used to leave its template chosen for the app. The maintainer has a shortcut for their Slack template, and the two apps remembered on their Mac were both on Slack, so this may be what put their panel back on it; which of these causes it was could not be told from the data.
+  - An app nothing was chosen in still starts on the default from Settings, as Settings says, and not on the chip chosen last in another app.
+  - A choice is kept under the app's bundle identifier, under its name where it has none, and under one key for no app at all.
+- **The panel's microphone is a round button.** On its own beside Write it is glass with the even ring the pill's buttons have, as high as Write. At the end of a field it is a flat patch on the field's glass. Its symbol is filled and in the text's colour, where it was an outline in grey.
+- **The shadow behind the Floating look's words is not decided.** 0.4.4 has the lighter one from the entry of 2026-11-12, which the maintainer had only seen in pictures. Variants are to be shown on their screen before one is chosen.

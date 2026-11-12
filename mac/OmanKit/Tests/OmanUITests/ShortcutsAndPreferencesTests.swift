@@ -216,7 +216,7 @@ import Testing
     @Test func turningOffMemoryIgnoresTheLastStyle() throws {
         let harness = preparedHarness(styles: 1)
         let style = try #require(harness.styles.styles.first)
-        try harness.styles.setLastStyleID(style.id, forBundleID: "com.tinyspeck.slackmacgap")
+        try harness.styles.setLastStyleChoice(.style(style.id), forApp: "com.tinyspeck.slackmacgap")
         try setPreferences(harness) { $0.remembersStylePerApp = false }
         let panel = harness.makePanel()
         panel.begin(with: selection)

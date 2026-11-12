@@ -15,7 +15,7 @@ import Testing
         let harness = Harness()
         let saved = WritingStyle(name: "Slack", samples: [StyleSample(text: "yo")])
         harness.styles.seed([saved])
-        try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
+        try harness.styles.setLastStyleChoice(.style(saved.id), forApp: "com.tinyspeck.slackmacgap")
         let model = harness.makePanel()
         model.begin(with: selection)
         model.setIncludesMessages(true)

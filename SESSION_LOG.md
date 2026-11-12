@@ -4,6 +4,19 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-13 — 0.4.4: OmanAI's own window, the chip that stays chosen, keys held together
+
+- The maintainer ran the window for five minutes in a test build with their own dictations, liked it, and sent screenshots with what to change. They said to release once it was done
+- Rows of transcripts no longer jump under the pointer: Copy and the app's icon lie over the row's corner. Drawn with and without the pointer on a row, only that row's pixels differ
+- The first tile's line follows the pointer and says what each day, week or month held. Search moved from the toolbar into the heading of the transcripts, and no longer takes the keyboard when the window opens. A stroked capsule drew a stray line at each end of the search field; plain round ends don't (see KNOWN_ISSUES.md)
+- The Settings button did nothing in the test window because nothing stood behind it there. In the app it opens Settings, and a test now presses it
+- The panel went back to the maintainer's Slack template instead of the chip chosen last. A chip was only remembered once something was written with it, As written was stored as nothing, and a template's shortcut left its template chosen. A click on a chip is now remembered for the app at once, As written included, and a shortcut leaves the chip alone (see DECISIONS.md). Which of the three it was on their Mac couldn't be told from what is stored
+- The panel's microphone is a round button now: glass with a ring beside Write, a flat patch at the end of a field
+- The panel's Settings button, which they asked to have removed, was already gone on this branch; their screenshot was of 0.4.3
+- Opened a copy of the maintainer's database with this version before releasing: 32 transcripts, all counted once, and both apps still on the template they were left on. The copy is deleted and their own file was only read
+- They also asked for less of a shadow behind the Floating look's words, with variants to choose from. 0.4.4 has the lighter one this branch already had. The variants wait for a look on their screen
+- Every test passes and the app builds. Merged pull request #21 into `main` by fast-forward and tagged it v0.4.4
+
 ## 2026-11-12 — OmanAI's own window, keys held together, and a cleaner pill
 
 - The maintainer tried 0.4.2 at home and sent screenshots. They asked for round buttons in the pill, the Settings button gone from the panel, Right ⌘ with Right ⌥ as a dictation shortcut, a cleaner Floating background, and a Lab in place of Settings when OmanAI is opened. They also reported that waiting words didn't go into a field they clicked; the session that built waiting words answered that with Paste, released in 0.4.3. The choices are in DECISIONS.md

@@ -218,18 +218,7 @@ struct HomeMapCard: View {
                 let y = step * (CGFloat(hovered.day) + 0.5)
                 // To the left of the square in the right half of the year, and to its right in the left half.
                 let leftward = x > proxy.size.width / 2
-                Text(HomeFormat.mapDay(day, metric: metric, counted: isCounted(day), calendar: calendar))
-                    .font(.system(size: 11.5, weight: .medium))
-                    .foregroundStyle(HomePalette.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(HomePalette.card)
-                            .shadow(color: .black.opacity(0.22), radius: 8, y: 4)
-                    }
-                    .overlay { RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(HomePalette.edge, lineWidth: 1) }
-                    .fixedSize()
+                HomeTip(text: HomeFormat.mapDay(day, metric: metric, counted: isCounted(day), calendar: calendar))
                     .alignmentGuide(.leading) { size in leftward ? size.width + step : -step }
                     .frame(width: 0, height: 0, alignment: .leading)
                     .offset(x: x, y: y)

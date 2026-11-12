@@ -25,7 +25,13 @@ struct HomeSummary: Equatable {
         let start: Date
         var words = 0
         var fixes = 0
+        var seconds: TimeInterval = 0
         var id: Date { start }
+
+        /// Minutes typing the step's words would have taken beyond the time spent speaking them.
+        var minutesSaved: Int {
+            max(0, Int((Double(words) / HomeSummary.typingSpeed - seconds / 60).rounded()))
+        }
     }
 
     struct Streak: Equatable {
@@ -255,7 +261,9 @@ struct HomeSummary: Equatable {
         summary.stepLength = length
         summary.steps = starts.map { Step(start: $0) }
         for count in inSpan {
-            if let index = index(of: count.date, in: starts) { summary.steps[index].words += count.words }
+            guard let index = index(of: count.date, in: starts) else { continue }
+            summary.steps[index].words += count.words
+            summary.steps[index].seconds += count.duration
         }
         for action in fixed {
             if let index = index(of: action.date, in: starts) { summary.steps[index].fixes += 1 }
@@ -521,6 +529,33 @@ enum HomeFormat {
                 (steps.count - 1, "This week", true),
             ]
         }
+    }
+
+    /// What pointing at a step of the first tile's line says: when it was, and what it held.
+    static func lineStep(_ summary: HomeSummary, at index: Int, calendar: Calendar) -> (when: String, what: String) {
+        guard summary.steps.indices.contains(index) else { return ("", "") }
+        let step = summary.steps[index]
+        var style: Date.FormatStyle
+        switch summary.stepLength {
+        case .day: style = .dateTime.weekday(.abbreviated).day().month(.abbreviated)
+        case .week: style = .dateTime.day().month(.abbreviated)
+        case .month: style = .dateTime.month(.abbreviated).year()
+        }
+        style.calendar = calendar
+        style.timeZone = calendar.timeZone
+        let date = step.start.formatted(style)
+        let when = summary.stepLength == .week ? "Week of \(date)" : date
+        // Days of this week or month that haven't come yet have nothing to say.
+        if summary.stepLength == .day, let today = summary.todayStep, index > today {
+            return (when, "Still to come")
+        }
+        if summary.hero == .fixes {
+            guard step.fixes > 0 else { return (when, "No fixes") }
+            return (when, step.fixes == 1 ? "1 fix" : "\(step.fixes.formatted()) fixes")
+        }
+        guard step.words > 0 else { return (when, index == summary.todayStep ? "No words yet" : "No words") }
+        let words = step.words == 1 ? "1 word" : "\(step.words.formatted()) words"
+        return (when, step.minutesSaved >= 1 ? "\(words) · \(step.minutesSaved.formatted()) min saved" : words)
     }
 
     /// What pointing at a day of the year map says.

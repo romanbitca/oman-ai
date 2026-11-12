@@ -15,9 +15,10 @@ struct HomeTranscripts: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center) {
+            HStack(alignment: .center, spacing: 10) {
                 Text("Transcripts").font(.system(size: 19, weight: .bold))
                 Spacer(minLength: 8)
+                HomeSearchField(text: $model.search)
                 keepMenu
             }
             sheet
@@ -155,6 +156,13 @@ private struct HomeTranscriptRow: View {
     let toggle: () -> Void
     let delete: () -> Void
 
+    private static let verticalPadding: CGFloat = 11
+    private static let cornerWidth: CGFloat = 84
+    private static let copyHeight: CGFloat = 26
+    private static let iconSize: CGFloat = 20
+    /// Half the height of a line of the words, at 14 points.
+    private static let firstLineMiddle: CGFloat = 9
+
     private var detail: String {
         var parts: [String] = []
         if let app = dictation.appName, !app.isEmpty { parts.append(app) }
@@ -183,8 +191,17 @@ private struct HomeTranscriptRow: View {
                     Text(detail).font(.system(size: 12)).foregroundStyle(HomePalette.soft)
                 }
             }
-            // The same room whichever is shown, so the words don't move when the pointer comes.
-            ZStack(alignment: .topTrailing) {
+            // Room for Copy or the app's icon, which lie over this corner of the row. Laid out here, the taller
+            // Copy button made a row of one line taller under the pointer, and every row below it jumped.
+            Color.clear.frame(width: Self.cornerWidth, height: 1)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, Self.verticalPadding)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous).fill(isHovered ? HomePalette.hover : .clear)
+        }
+        .overlay(alignment: .topTrailing) {
+            Group {
                 if isHovered || isCopied {
                     Button(action: copy) {
                         HStack(spacing: 5) {
@@ -193,23 +210,20 @@ private struct HomeTranscriptRow: View {
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 11)
-                        .padding(.vertical, 5)
+                        .frame(height: Self.copyHeight)
                         .background(Capsule().fill(HomePalette.copy).shadow(color: HomePalette.copy.opacity(0.5), radius: 5, y: 3))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Copy")
+                    // Centred on the first line of the words.
+                    .padding(.top, Self.verticalPadding + Self.firstLineMiddle - Self.copyHeight / 2)
                 } else {
-                    HomeAppIcon(url: appURL, name: dictation.appName ?? "", size: 20)
+                    HomeAppIcon(url: appURL, name: dictation.appName ?? "", size: Self.iconSize)
                         .opacity(dictation.appName == nil ? 0 : 1)
-                        .padding(.top, 1)
+                        .padding(.top, Self.verticalPadding + Self.firstLineMiddle - Self.iconSize / 2)
                 }
             }
-            .frame(width: 84, alignment: .topTrailing)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .background {
-            RoundedRectangle(cornerRadius: 14, style: .continuous).fill(isHovered ? HomePalette.hover : .clear)
+            .padding(.trailing, 14)
         }
         .overlay(alignment: .top) {
             if showsLine {
@@ -227,5 +241,52 @@ private struct HomeTranscriptRow: View {
         .help(dictation.appName.map { "Dictated into \($0). Click to see all of it." } ?? "Click to see all of it.")
         .accessibilityElement(children: .combine)
         .accessibilityAction(named: "Copy", copy)
+    }
+}
+
+/// The search field over the transcripts: a capsule in the page's own look.
+struct HomeSearchField: View {
+    @Binding var text: String
+    @FocusState private var isFocused: Bool
+
+    private static let height: CGFloat = 28
+    /// With plain round ends. A capsule's usual continuous corners, stroked, drew a short stray line at each end.
+    private var shape: Capsule { Capsule(style: .circular) }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(HomePalette.soft)
+            TextField("Search", text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .focused($isFocused)
+                .focusEffectDisabled()
+                .onExitCommand {
+                    text = ""
+                    isFocused = false
+                }
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill").font(.system(size: 12)).foregroundStyle(HomePalette.soft)
+                }
+                .buttonStyle(.plain)
+                .help("Clear the search")
+                .accessibilityLabel("Clear the search")
+            }
+        }
+        .padding(.horizontal, 10)
+        .frame(width: 200, height: Self.height)
+        .background(shape.fill(HomePalette.card))
+        .overlay {
+            shape.strokeBorder(isFocused ? HomePalette.copy : HomePalette.edge, lineWidth: isFocused ? 1.5 : 1)
+        }
+        .contentShape(shape)
+        .onTapGesture { isFocused = true }
+        .animation(.easeOut(duration: 0.14), value: isFocused)
+        .help("Search your transcripts, by their words or the app they went into")
     }
 }

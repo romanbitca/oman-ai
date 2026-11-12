@@ -8,8 +8,10 @@ struct HomeView: View {
     @Bindable var model: HomeViewModel
     @State private var metric = HomeSummary.MapMetric.words
     var calendar = Calendar.current
-    /// For drawing the window as it looks with the pointer on today's square and on a transcript.
+    /// For drawing the window as it looks with the pointer on the line, on today's square and on a transcript.
     var showsPointer = false
+    /// The step of the line to draw the pointer on; the busiest one when nil.
+    var pointedStep: Int?
 
     private var summary: HomeSummary { model.summary }
 
@@ -29,7 +31,12 @@ struct HomeView: View {
                 HomeColumns(spans: [4, 2]) {
                     HomeHeroTile(
                         summary: summary, calendar: calendar,
-                        dictationKeys: model.dictationKeys, proofreadKeys: model.proofreadKeys
+                        dictationKeys: model.dictationKeys, proofreadKeys: model.proofreadKeys,
+                        // The busiest step, so the note has something to say.
+                        pointingAt: showsPointer
+                            ? pointedStep.map { min($0, summary.steps.count - 1) }
+                                ?? summary.steps.indices.max { summary.steps[$0].words < summary.steps[$1].words }
+                            : nil
                     )
                     VStack(spacing: HomeMetrics.gap) {
                         ForEach(Array(summary.smallTiles.enumerated()), id: \.offset) { _, tile in

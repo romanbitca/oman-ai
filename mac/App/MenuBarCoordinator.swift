@@ -170,8 +170,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         if homeWindow == nil {
             homeWindow = HomeWindowController(model: model)
         }
-        NSApp.activate()
-        homeWindow?.window?.makeKeyAndOrderFront(nil)
+        homeWindow?.show()
     }
 
     private func dismissPanel() {

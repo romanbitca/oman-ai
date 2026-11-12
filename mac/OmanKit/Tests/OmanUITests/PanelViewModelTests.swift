@@ -86,7 +86,7 @@ import Testing
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
-        try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
+        try harness.styles.setLastStyleChoice(.style(saved.id), forApp: "com.tinyspeck.slackmacgap")
         let model = harness.makePanel()
         model.begin(with: selection)
         #expect(model.selectedStyleID == saved.id)
@@ -117,7 +117,7 @@ import Testing
 
     @Test func preselectionIgnoresDeletedStyleAndOtherApps() throws {
         let harness = Harness()
-        try harness.styles.setLastStyleID(UUID(), forBundleID: "com.tinyspeck.slackmacgap")
+        try harness.styles.setLastStyleChoice(.style(UUID()), forApp: "com.tinyspeck.slackmacgap")
         harness.styles.seed([style()])
         let model = harness.makePanel()
         model.begin(with: selection)
@@ -151,7 +151,7 @@ import Testing
         try harness.settings.setSelectedModel(.opus)
         let saved = style()
         harness.styles.seed([saved])
-        try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
+        try harness.styles.setLastStyleChoice(.style(saved.id), forApp: "com.tinyspeck.slackmacgap")
         let model = harness.makePanel()
         model.begin(with: selection)
         model.instruction = "  shorter  "
@@ -187,16 +187,93 @@ import Testing
         model.begin(with: selection)
         #expect(model.selectedStyleID == nil)
 
+        // Nothing was chosen in this app yet.
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == nil)
+
         model.selectStyle(saved)
         #expect(model.selectedStyleID == saved.id)
         #expect(harness.writing.requests.isEmpty)
         #expect(model.screen == .home)
-        // Nothing is remembered for the app until the template is used.
-        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == nil)
+        // The choice is remembered for the app at once, though nothing was written with it.
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .style(saved.id))
 
         model.selectStyle(nil)
         #expect(model.selectedStyleID == nil)
         #expect(harness.writing.requests.isEmpty)
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .asWritten)
+    }
+
+    @Test func theChipChosenIsTheOneTheAppsNextPanelOpensOn() throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.selectStyle(saved)
+        model.panelDidClose()
+
+        // Nothing was written, and the panel was closed: the chip is chosen again all the same.
+        model.begin(with: selection)
+        #expect(model.selectedStyleID == saved.id)
+
+        // Another app has made no choice yet, and starts on the default, which is As written here.
+        let mail = SourceApp(name: "Mail", bundleID: "com.apple.mail", processID: 7)
+        model.begin(with: SelectionCapture(app: mail, text: "hello"))
+        #expect(model.selectedStyleID == nil)
+    }
+
+    @Test func asWrittenStaysChosenBesideADefaultTemplate() throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        var preferences = AppPreferences()
+        preferences.defaultStyleID = saved.id
+        try harness.settings.setPreferences(preferences)
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        #expect(model.selectedStyleID == saved.id)
+
+        model.selectStyle(nil)
+        model.begin(with: selection)
+        // As written was chosen here, so the default no longer takes its place.
+        #expect(model.selectedStyleID == nil)
+    }
+
+    @Test func writingWithTheChipTheAppStartedOnRemembersNothing() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        var preferences = AppPreferences()
+        preferences.defaultStyleID = saved.id
+        try harness.settings.setPreferences(preferences)
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.rewrite()
+        await finish(model)
+
+        #expect(try #require(harness.writing.requests.last).style == saved)
+        // Only a choice is kept, so a default changed later in Settings still reaches this app.
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == nil)
+    }
+
+    @Test func aChoiceIsRememberedWithNoAppAndForAnAppWithoutABundle() throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+
+        model.begin(with: SelectionCapture(app: nil, text: nil))
+        model.selectStyle(saved)
+        model.begin(with: SelectionCapture(app: nil, text: nil))
+        #expect(model.selectedStyleID == saved.id)
+
+        let tool = SourceApp(name: "Some Tool", bundleID: nil, processID: 9)
+        model.begin(with: SelectionCapture(app: tool, text: "hello"))
+        #expect(model.selectedStyleID == nil)
+        model.selectStyle(saved)
+        model.begin(with: SelectionCapture(app: tool, text: "hello"))
+        #expect(model.selectedStyleID == saved.id)
+        #expect(try harness.styles.lastStyleChoice(forApp: "name:Some Tool") == .style(saved.id))
     }
 
     @Test func rewriteUsesTheChosenTemplateAndRemembersItForTheApp() async throws {
@@ -209,7 +286,7 @@ import Testing
         model.rewrite()
         await finish(model)
 
-        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == saved.id)
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .style(saved.id))
         let request = try #require(harness.writing.requests.last)
         #expect(request.style == saved)
         #expect(request.task == .rewrite(text: "hey can u send it", instruction: nil))
@@ -231,14 +308,14 @@ import Testing
         #expect(request.task == .proofread(text: "hey can u send it"))
         #expect(request.style == saved)
         #expect(request.context == WritingContext())
-        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == saved.id)
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .style(saved.id))
     }
 
-    @Test func asWrittenSendsNoTemplateAndForgetsTheAppsLastOne() async throws {
+    @Test func asWrittenSendsNoTemplateAndIsRememberedForTheApp() async throws {
         let harness = Harness()
         let saved = style()
         harness.styles.seed([saved])
-        try harness.styles.setLastStyleID(saved.id, forBundleID: "com.tinyspeck.slackmacgap")
+        try harness.styles.setLastStyleChoice(.style(saved.id), forApp: "com.tinyspeck.slackmacgap")
         let model = harness.makePanel()
         model.begin(with: selection)
         #expect(model.selectedStyleID == saved.id)
@@ -248,7 +325,9 @@ import Testing
         await finish(model)
 
         #expect(try #require(harness.writing.requests.last).style == nil)
-        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == nil)
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .asWritten)
+        model.begin(with: selection)
+        #expect(model.selectedStyleID == nil)
     }
 
     @Test func explainNeverSendsATemplate() async throws {
@@ -262,7 +341,8 @@ import Testing
         await finish(model)
 
         #expect(try #require(harness.writing.requests.last).style == nil)
-        #expect(try harness.styles.lastStyleID(forBundleID: "com.tinyspeck.slackmacgap") == nil)
+        // The chip stays chosen for the app, though Explain makes no use of it.
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .style(saved.id))
     }
 
     @Test func aStylesShortcutStillRewritesAtOnce() async throws {
@@ -278,6 +358,26 @@ import Testing
         let request = try #require(harness.writing.requests.last)
         #expect(request.style == saved)
         #expect(request.task == .rewrite(text: "hey can u send it", instruction: nil))
+    }
+
+    @Test func aStylesShortcutLeavesTheChosenChipAlone() async throws {
+        let harness = Harness()
+        let saved = style()
+        harness.styles.seed([saved])
+        let model = harness.makePanel()
+        model.begin(with: selection)
+        model.selectStyle(nil)
+
+        // One rewrite in the template, by its shortcut.
+        model.begin(with: selection)
+        model.run(.style(saved.id))
+        await finish(model)
+        #expect(try #require(harness.writing.requests.last).style == saved)
+
+        // As written was the chip chosen here, and it still is.
+        #expect(try harness.styles.lastStyleChoice(forApp: "com.tinyspeck.slackmacgap") == .asWritten)
+        model.begin(with: selection)
+        #expect(model.selectedStyleID == nil)
     }
 
     @Test func composeWithoutSelection() async throws {

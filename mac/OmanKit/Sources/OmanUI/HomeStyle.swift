@@ -208,3 +208,28 @@ struct HomeFigure: View {
         .minimumScaleFactor(0.6)
     }
 }
+
+/// The small note beside whatever the pointer is on, in the line of the first tile and in the year map.
+struct HomeTip: View {
+    /// A line over the text, such as the day the text is about.
+    var title: String?
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            if let title {
+                Text(title).font(.system(size: 10.5, weight: .medium)).foregroundStyle(HomePalette.soft)
+            }
+            Text(text).font(.system(size: 11.5, weight: title == nil ? .medium : .semibold)).foregroundStyle(HomePalette.ink)
+        }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background {
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(HomePalette.card)
+                    .shadow(color: .black.opacity(0.22), radius: 8, y: 4)
+            }
+            .overlay { RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(HomePalette.edge, lineWidth: 1) }
+            .fixedSize()
+    }
+}

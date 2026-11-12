@@ -2,12 +2,11 @@ import AppKit
 import SwiftUI
 
 /// OmanAI's own window, opened from the menu bar icon's menu or by opening OmanAI again: a plain macOS window
-/// whose toolbar searches the transcripts and opens Settings.
+/// whose toolbar opens Settings. Search is in the page, over the transcripts it searches.
 @MainActor
-public final class HomeWindowController: NSWindowController, NSToolbarDelegate, NSSearchFieldDelegate {
+public final class HomeWindowController: NSWindowController, NSToolbarDelegate {
     private let model: HomeViewModel
-    private static let searchItem = NSToolbarItem.Identifier("OmanHomeSearch")
-    private static let settingsItem = NSToolbarItem.Identifier("OmanHomeSettings")
+    static let settingsItem = NSToolbarItem.Identifier("OmanHomeSettings")
 
     public init(model: HomeViewModel) {
         self.model = model
@@ -38,7 +37,7 @@ public final class HomeWindowController: NSWindowController, NSToolbarDelegate, 
     }
 
     public func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.flexibleSpace, Self.searchItem, Self.settingsItem]
+        [.flexibleSpace, Self.settingsItem]
     }
 
     public func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -48,34 +47,31 @@ public final class HomeWindowController: NSWindowController, NSToolbarDelegate, 
     public func toolbar(
         _ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
-        switch identifier {
-        case Self.searchItem:
-            let item = NSSearchToolbarItem(itemIdentifier: identifier)
-            item.preferredWidthForSearchField = 220
-            item.searchField.placeholderString = "Search transcripts"
-            item.searchField.delegate = self
-            item.searchField.stringValue = model.search
-            return item
-        case Self.settingsItem:
-            let item = NSToolbarItem(itemIdentifier: identifier)
-            item.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
-            item.label = "Settings"
-            item.toolTip = "OmanAI Settings"
-            item.isBordered = true
-            item.target = self
-            item.action = #selector(openSettings)
-            return item
-        default:
-            return nil
-        }
+        guard identifier == Self.settingsItem else { return nil }
+        let item = NSToolbarItem(itemIdentifier: identifier)
+        item.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
+        item.label = "Settings"
+        item.toolTip = "OmanAI Settings"
+        item.isBordered = true
+        item.target = self
+        item.action = #selector(openSettings)
+        return item
     }
 
-    public func controlTextDidChange(_ notification: Notification) {
-        guard let field = notification.object as? NSSearchField else { return }
-        model.search = field.stringValue
-    }
-
-    @objc private func openSettings() {
+    @objc func openSettings() {
         model.openSettings()
+    }
+
+    /// Brings the window to the front. Nothing in it starts with the keyboard: left to AppKit, the search field
+    /// would take it, and show its ring, every time the window opens.
+    public func show() {
+        NSApp.activate()
+        window?.makeKeyAndOrderFront(nil)
+        restFocus()
+    }
+
+    /// Hands the keyboard back to the window itself.
+    func restFocus() {
+        window?.makeFirstResponder(nil)
     }
 }

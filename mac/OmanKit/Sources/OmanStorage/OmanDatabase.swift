@@ -152,6 +152,19 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                 )
             }
         }
+        migrator.registerMigration("v7") { db in
+            // As written is a choice too. The table before could only name a template, so choosing As written
+            // meant forgetting the app, and its next panel fell back to the default template.
+            try db.execute(sql: """
+                CREATE TABLE app_style_choices (
+                    app_key TEXT PRIMARY KEY,
+                    style_id TEXT REFERENCES styles(id) ON DELETE CASCADE
+                );
+                INSERT INTO app_style_choices (app_key, style_id)
+                    SELECT bundle_id, style_id FROM app_style_preferences;
+                DROP TABLE app_style_preferences;
+                """)
+        }
         return migrator
     }
 
@@ -215,29 +228,29 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
         }
     }
 
-    public func lastStyleID(forBundleID bundleID: String) throws -> UUID? {
-        let text = try writer.read { db in
-            try String.fetchOne(
-                db,
-                sql: "SELECT style_id FROM app_style_preferences WHERE bundle_id = ?",
-                arguments: [bundleID]
-            )
+    public func lastStyleChoice(forApp key: String) throws -> StyleChoice? {
+        try writer.read { db in
+            guard let row = try Row.fetchOne(
+                db, sql: "SELECT style_id FROM app_style_choices WHERE app_key = ?", arguments: [key]
+            ) else { return nil }
+            // A row with no template is As written, chosen.
+            guard let text = row["style_id"] as String? else { return .asWritten }
+            return .style(try Self.uuid(from: text))
         }
-        return try text.map(Self.uuid(from:))
     }
 
-    public func setLastStyleID(_ id: UUID?, forBundleID bundleID: String) throws {
+    public func setLastStyleChoice(_ choice: StyleChoice?, forApp key: String) throws {
         try writer.write { db in
-            guard let id else {
-                try db.execute(sql: "DELETE FROM app_style_preferences WHERE bundle_id = ?", arguments: [bundleID])
+            guard let choice else {
+                try db.execute(sql: "DELETE FROM app_style_choices WHERE app_key = ?", arguments: [key])
                 return
             }
             try db.execute(
                 sql: """
-                    INSERT INTO app_style_preferences (bundle_id, style_id) VALUES (?, ?)
-                    ON CONFLICT(bundle_id) DO UPDATE SET style_id = excluded.style_id
+                    INSERT INTO app_style_choices (app_key, style_id) VALUES (?, ?)
+                    ON CONFLICT(app_key) DO UPDATE SET style_id = excluded.style_id
                     """,
-                arguments: [bundleID, id.uuidString]
+                arguments: [key, choice.styleID?.uuidString]
             )
         }
     }

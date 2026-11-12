@@ -39,16 +39,35 @@ struct HomeChips<Value: Hashable & Identifiable>: View {
 
 // MARK: The first tile
 
-/// The stretch's line: a smooth curve through what each step held, lit from below, with a mark on now.
+/// The stretch's line: a smooth curve through what each step held, lit from below, with a mark on now. Moving the
+/// pointer along it says what each step held.
 struct HomeVoice: View {
     let values: [Int]
     let nowIndex: Int?
     let labels: [(step: Int, text: String, isNow: Bool)]
+    /// What a step says while the pointer is on it: when it was, and what it held.
+    let tip: (Int) -> (when: String, what: String)
+    @State private var hovered: Int?
 
     static let lineHeight: CGFloat = 78
     static let height: CGFloat = 112
     private static let top: CGFloat = 13
     private static let base: CGFloat = 58
+    /// Between the mark under the pointer and its note, and between the note and the tile's edge.
+    private static let tipGap: CGFloat = 16
+    private static let tipEdge: CGFloat = 8
+
+    /// `pointingAt` starts with the pointer on a step, for drawing the line with its note showing.
+    init(
+        values: [Int], nowIndex: Int?, labels: [(step: Int, text: String, isNow: Bool)], pointingAt: Int? = nil,
+        tip: @escaping (Int) -> (when: String, what: String)
+    ) {
+        self.values = values
+        self.nowIndex = nowIndex
+        self.labels = labels
+        self.tip = tip
+        _hovered = State(initialValue: pointingAt)
+    }
 
     private func points(in width: CGFloat) -> [CGPoint] {
         guard !values.isEmpty else { return [] }
@@ -77,49 +96,88 @@ struct HomeVoice: View {
             let points = points(in: width)
             let line = curve(points, width: width)
             ZStack(alignment: .topLeading) {
-                Path { path in
-                    path.addPath(line)
-                    path.addLine(to: CGPoint(x: width, y: Self.lineHeight))
-                    path.addLine(to: CGPoint(x: 0, y: Self.lineHeight))
-                    path.closeSubpath()
-                }
-                .fill(LinearGradient(colors: [.white.opacity(0.30), .white.opacity(0)], startPoint: .top, endPoint: .bottom))
-                .frame(height: Self.lineHeight, alignment: .top)
-
-                line.stroke(.white.opacity(0.55), style: StrokeStyle(lineWidth: 7, lineCap: .round)).blur(radius: 5)
-                line.stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-
-                ForEach(Array(points.enumerated()), id: \.offset) { index, point in
-                    if index == nowIndex {
-                        Circle().fill(.white.opacity(0.22)).frame(width: 22, height: 22).position(point)
-                        Circle().fill(.white).frame(width: 11, height: 11).position(point)
-                    } else if points.count <= 8 {
-                        Circle().fill(.white.opacity(values[index] > 0 ? 0.75 : 0.4)).frame(width: 6, height: 6).position(point)
+                Group {
+                    Path { path in
+                        path.addPath(line)
+                        path.addLine(to: CGPoint(x: width, y: Self.lineHeight))
+                        path.addLine(to: CGPoint(x: 0, y: Self.lineHeight))
+                        path.closeSubpath()
                     }
-                }
+                    .fill(LinearGradient(colors: [.white.opacity(0.30), .white.opacity(0)], startPoint: .top, endPoint: .bottom))
+                    .frame(height: Self.lineHeight, alignment: .top)
 
-                ForEach(Array(labels.enumerated()), id: \.offset) { _, label in
-                    let x = width / CGFloat(max(values.count, 1)) * (CGFloat(label.step) + 0.5)
-                    Group {
-                        if label.isNow {
-                            Text(label.text)
-                                .foregroundStyle(Color(hex: 0x0C7F8E))
-                                .padding(.horizontal, 9)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(.white).shadow(color: Color(hex: 0x083A5E).opacity(0.25), radius: 4, y: 2))
-                        } else {
-                            Text(label.text).foregroundStyle(.white.opacity(0.62))
+                    line.stroke(.white.opacity(0.55), style: StrokeStyle(lineWidth: 7, lineCap: .round)).blur(radius: 5)
+                    line.stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+
+                    ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+                        if index == nowIndex {
+                            Circle().fill(.white.opacity(0.22)).frame(width: 22, height: 22).position(point)
+                            Circle().fill(.white).frame(width: 11, height: 11).position(point)
+                        } else if points.count <= 8 {
+                            Circle().fill(.white.opacity(values[index] > 0 ? 0.75 : 0.4)).frame(width: 6, height: 6).position(point)
                         }
                     }
-                    .font(.system(size: 11, weight: .semibold))
-                    .fixedSize()
-                    // Kept inside the tile at its two ends.
-                    .position(x: min(max(x, label.text.count > 4 ? 52 : 38), width - (label.text.count > 4 ? 52 : 38)), y: Self.height - 18)
+
+                    ForEach(Array(labels.enumerated()), id: \.offset) { _, label in
+                        let x = width / CGFloat(max(values.count, 1)) * (CGFloat(label.step) + 0.5)
+                        Group {
+                            if label.isNow {
+                                Text(label.text)
+                                    .foregroundStyle(Color(hex: 0x0C7F8E))
+                                    .padding(.horizontal, 9)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(.white).shadow(color: Color(hex: 0x083A5E).opacity(0.25), radius: 4, y: 2))
+                            } else {
+                                Text(label.text).foregroundStyle(.white.opacity(0.62))
+                            }
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .fixedSize()
+                        // Kept inside the tile at its two ends.
+                        .position(x: min(max(x, label.text.count > 4 ? 52 : 38), width - (label.text.count > 4 ? 52 : 38)), y: Self.height - 18)
+                    }
                 }
+                .accessibilityHidden(true)
+
+                if let hovered, points.indices.contains(hovered) {
+                    let point = points[hovered]
+                    // A thin line down from the step under the pointer, a mark on it, and what it held beside it.
+                    Path { path in
+                        path.move(to: point)
+                        path.addLine(to: CGPoint(x: point.x, y: Self.lineHeight))
+                    }
+                    .stroke(.white.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                    Circle().fill(.white.opacity(0.25)).frame(width: 22, height: 22).position(point)
+                    Circle().fill(.white).frame(width: 11, height: 11).position(point)
+                    let said = tip(hovered)
+                    HomeTip(title: said.when, text: said.what)
+                        // To the right of the mark where there is room, else to its left, and never past the tile.
+                        .alignmentGuide(.leading) { size in
+                            var left = point.x + Self.tipGap
+                            if left + size.width > width - Self.tipEdge { left = point.x - Self.tipGap - size.width }
+                            return -min(max(left, Self.tipEdge), max(width - Self.tipEdge - size.width, Self.tipEdge))
+                        }
+                        // Level with the mark, and never over the words above the line.
+                        .alignmentGuide(.top) { size in -max(point.y - size.height / 2, 0) }
+                        .allowsHitTesting(false)
+                }
+
+                // On top of everything, so the pointer is followed over the line, the marks and the labels alike.
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onContinuousHover { phase in
+                        switch phase {
+                        case let .active(location):
+                            guard !values.isEmpty, width > 0 else { return }
+                            let step = width / CGFloat(values.count)
+                            hovered = min(max(Int(location.x / step), 0), values.count - 1)
+                        case .ended:
+                            hovered = nil
+                        }
+                    }
             }
         }
         .frame(height: Self.height)
-        .accessibilityHidden(true)
     }
 }
 
@@ -128,6 +186,8 @@ struct HomeHeroTile: View {
     let calendar: Calendar
     let dictationKeys: String?
     let proofreadKeys: String?
+    /// A step to draw as if the pointer were on it.
+    var pointingAt: Int?
 
     private var values: [Int] {
         summary.steps.map { summary.hero == .fixes ? $0.fixes : $0.words }
@@ -149,66 +209,77 @@ struct HomeHeroTile: View {
         return "\(speak), or \(fix). What you do is counted here."
     }
 
-    var body: some View {
-        HomeTile(height: HomeMetrics.heroHeight, glow: Color(hex: 0x143CA0).opacity(0.32)) {
-            ZStack(alignment: .bottom) {
-                HomePalette.heroFill
-                HomeVoice(
-                    values: values, nowIndex: summary.todayStep,
-                    labels: HomeFormat.lineLabels(summary, calendar: calendar)
-                )
-                .padding(.bottom, 4)
-            }
-        } content: {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    DictationWave(amplitude: 1)
-                        .stroke(style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-                        .frame(width: 16, height: 16)
-                    Text(title).font(.system(size: 13, weight: .semibold))
-                }
-                .foregroundStyle(.white.opacity(0.9))
-                .padding(.top, 4)
-
-                if summary.hero == .welcome {
-                    Text("Speak or fix your first text")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .tracking(-0.8)
-                        .foregroundStyle(.white)
-                        .padding(.top, 10)
-                    Text(welcome)
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.86))
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.top, 6)
-                } else {
-                    Text((summary.hero == .fixes ? summary.fixes.total : summary.words).formatted())
-                        .font(.system(size: 84, weight: .bold, design: .rounded))
-                        .tracking(-3)
-                        .foregroundStyle(.white)
-                        .contentTransition(.numericText())
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.5)
-                        .frame(height: 88)
-                        .padding(.top, 2)
-                    Text(summary.hero == .fixes ? fixesDetail : HomeFormat.heroDetail(summary))
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.86))
-                        .lineLimit(1)
-                        .padding(.top, 2)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-        }
-    }
-
     private var title: String {
         switch summary.hero {
         case .words: "Words spoken"
         case .fixes: "Texts fixed"
         case .welcome: "Welcome"
         }
+    }
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: HomeMetrics.tileRadius, style: .continuous)
+        ZStack(alignment: .bottom) {
+            HomePalette.heroFill
+            words
+                .padding(.horizontal, 18)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            // Above the words, so nothing lies between the pointer and the line.
+            HomeVoice(
+                values: values, nowIndex: summary.todayStep,
+                labels: HomeFormat.lineLabels(summary, calendar: calendar),
+                pointingAt: pointingAt
+            ) { HomeFormat.lineStep(summary, at: $0, calendar: calendar) }
+            .padding(.bottom, 4)
+        }
+        .frame(maxWidth: .infinity, minHeight: HomeMetrics.heroHeight, maxHeight: HomeMetrics.heroHeight)
+        .clipShape(shape)
+        .overlay { shape.strokeBorder(HomePalette.edge, lineWidth: 1) }
+        .shadow(color: Color(hex: 0x143CA0).opacity(0.32), radius: 10, x: 0, y: 6)
+    }
+
+    private var words: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 6) {
+                DictationWave(amplitude: 1)
+                    .stroke(style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    .frame(width: 16, height: 16)
+                Text(title).font(.system(size: 13, weight: .semibold))
+            }
+            .foregroundStyle(.white.opacity(0.9))
+            .padding(.top, 4)
+
+            if summary.hero == .welcome {
+                Text("Speak or fix your first text")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .tracking(-0.8)
+                    .foregroundStyle(.white)
+                    .padding(.top, 10)
+                Text(welcome)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white.opacity(0.86))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 6)
+            } else {
+                Text((summary.hero == .fixes ? summary.fixes.total : summary.words).formatted())
+                    .font(.system(size: 84, weight: .bold, design: .rounded))
+                    .tracking(-3)
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(height: 88)
+                    .padding(.top, 2)
+                Text(summary.hero == .fixes ? fixesDetail : HomeFormat.heroDetail(summary))
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white.opacity(0.86))
+                    .lineLimit(1)
+                    .padding(.top, 2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -9,12 +9,29 @@ public protocol WritingService: Sendable {
     func unavailableReason(for model: WritingModel) -> String?
 }
 
+/// What was last chosen for writing in an app: one of the person's templates, or As written, which is none of
+/// them and a choice all the same.
+public enum StyleChoice: Equatable, Sendable {
+    case asWritten
+    case style(UUID)
+
+    public init(styleID: UUID?) {
+        self = styleID.map(StyleChoice.style) ?? .asWritten
+    }
+
+    public var styleID: UUID? {
+        if case let .style(id) = self { id } else { nil }
+    }
+}
+
 public protocol StyleStore: Sendable {
     func loadStyles() throws -> [WritingStyle]
     func save(_ style: WritingStyle) throws
     func deleteStyle(id: UUID) throws
-    func lastStyleID(forBundleID bundleID: String) throws -> UUID?
-    func setLastStyleID(_ id: UUID?, forBundleID bundleID: String) throws
+    /// What was last chosen in the app kept under that key, or nil when nothing was chosen there yet.
+    func lastStyleChoice(forApp key: String) throws -> StyleChoice?
+    /// Nil forgets the app's choice.
+    func setLastStyleChoice(_ choice: StyleChoice?, forApp key: String) throws
 }
 
 public protocol AppSettingsStore: Sendable {

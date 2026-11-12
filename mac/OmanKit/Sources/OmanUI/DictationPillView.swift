@@ -419,13 +419,18 @@ struct WordArrival: Transition {
     }
 }
 
-/// The microphone beside a field in the panel. While a dictation fills that field, it shows the moving wave and
+/// The microphone beside a field in the panel: a round button, on glass where it stands on its own and on a flat
+/// patch inside a field, which is glass already. While a dictation fills that field, it shows the moving wave and
 /// finishes the dictation when clicked.
 struct DictationMicButton: View {
     let controller: DictationController
     let field: PanelField
+    /// At the end of a field, where it is smaller and sits on the field's own glass.
+    var isInField = false
+    @Environment(\.isEnabled) private var isEnabled
 
     private var isDictatingHere: Bool { controller.isActive && controller.field == field }
+    private var side: CGFloat { isInField ? 28 : 36 }
 
     var body: some View {
         Button {
@@ -439,18 +444,47 @@ struct DictationMicButton: View {
                         .frame(width: 18, height: 18)
                         .animation(.easeOut(duration: 0.1), value: controller.level)
                 } else {
-                    Image(systemName: "mic")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: isInField ? 12 : 14, weight: .medium))
+                        .foregroundStyle(.primary)
                 }
             }
-            .frame(width: 26, height: 26)
+            // Only the symbol dims, as the panel's other buttons do.
+            .opacity(isEnabled ? 1 : 0.55)
+            .frame(width: side, height: side)
             .contentShape(Circle())
+            .modifier(MicSurface(isInField: isInField))
         }
-        .buttonStyle(LiquidPressStyle())
+        .buttonStyle(isInField ? AnyButtonStyle(LiquidPressStyle()) : AnyButtonStyle(GlassPressStyle()))
         .disabled(controller.isActive && !isDictatingHere)
         .help(isDictatingHere ? "Stop dictating" : "Dictate")
         .accessibilityLabel(isDictatingHere ? "Stop dictating" : "Dictate")
+    }
+}
+
+/// Glass with an even ring on its own, as the pill's round buttons have, or a flat patch on a field's glass.
+private struct MicSurface: ViewModifier {
+    let isInField: Bool
+
+    func body(content: Content) -> some View {
+        if isInField {
+            content.background(Circle().fill(Color.primary.opacity(0.12)))
+        } else {
+            content.pillCircle()
+        }
+    }
+}
+
+/// One of the panel's two ways of showing a press, chosen while the view is built.
+private struct AnyButtonStyle: ButtonStyle {
+    private let body: (Configuration) -> AnyView
+
+    init<Style: ButtonStyle>(_ style: Style) {
+        body = { AnyView(style.makeBody(configuration: $0)) }
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        body(configuration)
     }
 }
 

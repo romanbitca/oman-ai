@@ -77,7 +77,7 @@ final class FakeWriting: WritingService, @unchecked Sendable {
 final class FakeStyles: StyleStore, @unchecked Sendable {
     private let lock = NSLock()
     private var stored: [WritingStyle] = []
-    private var lastByBundle: [String: UUID] = [:]
+    private var lastByApp: [String: StyleChoice] = [:]
     private var saveCount = 0
 
     var styles: [WritingStyle] { lock.withLock { stored } }
@@ -106,12 +106,12 @@ final class FakeStyles: StyleStore, @unchecked Sendable {
         lock.withLock { stored.removeAll { $0.id == id } }
     }
 
-    func lastStyleID(forBundleID bundleID: String) throws -> UUID? {
-        lock.withLock { lastByBundle[bundleID] }
+    func lastStyleChoice(forApp key: String) throws -> StyleChoice? {
+        lock.withLock { lastByApp[key] }
     }
 
-    func setLastStyleID(_ id: UUID?, forBundleID bundleID: String) throws {
-        lock.withLock { lastByBundle[bundleID] = id }
+    func setLastStyleChoice(_ choice: StyleChoice?, forApp key: String) throws {
+        lock.withLock { lastByApp[key] = choice }
     }
 }
 

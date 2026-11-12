@@ -171,11 +171,11 @@ struct PanelInputField: View {
                 .focusEffectDisabled()
                 .onSubmit(onSubmit)
             if let dictation, let field {
-                DictationMicButton(controller: dictation, field: field)
+                DictationMicButton(controller: dictation, field: field, isInField: true)
             }
         }
         .padding(.leading, 15)
-        .padding(.trailing, dictation != nil && field != nil ? 8 : 15)
+        .padding(.trailing, dictation != nil && field != nil ? 7 : 15)
         .frame(height: 42)
         .contentShape(Capsule())
         .onTapGesture { isFocused = true }
