@@ -71,7 +71,7 @@ struct SpendingSettingsView: View {
     }
 }
 
-private struct SpendingChart: View {
+struct SpendingChart: View {
     let bars: [SpendingSummary.Bar]
     let period: SpendingSummary.Period
 
@@ -106,10 +106,11 @@ private struct SpendingChart: View {
             }
         }
         .chartXAxis {
-            // Each label is centred under its own bar. Centred between marks, as Charts offers, it would sit
-            // between one labelled bar and the next, days away from its own.
-            AxisMarks(values: SpendingSummary.labelledBars(bars, for: period).map(\.middle)) { _ in
-                AxisValueLabel(format: labelFormat, anchor: .top)
+            // Each label is centred under its own bar. Charts would otherwise start it at the bar, which runs the
+            // last one off the chart, or centre it between marks, days away from its bar. The aligned preset also
+            // moves a label at either end inwards far enough to stay on the chart.
+            AxisMarks(preset: .aligned, values: SpendingSummary.labelledBars(bars, for: period).map(\.middle)) { _ in
+                AxisValueLabel(format: labelFormat)
             }
         }
         .frame(height: 140)
