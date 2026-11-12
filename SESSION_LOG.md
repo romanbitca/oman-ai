@@ -31,6 +31,7 @@ Date-stamped log of what each work session accomplished.
 - Before a dictation is pasted into another app, OmanAI now asks what has the cursor. Where nothing takes text, the words wait in the pill, which says "Click where these words should go", with × and Copy. They go in as soon as a field gets the cursor, with the space after them and Return as Settings says, and after a minute they are copied
 - 27 new tests. The whole suite passes, 522 tests on top of 0.4.1, and the dictation tests passed 12 runs in a row. The pill's new row was drawn off the screen in both looks and fits. The app builds, and its build copy was unregistered and deleted
 - Not verified: anything on the screen, above all what apps answer while they are in front (see KNOWN_ISSUES.md). Not merged or released: the maintainer decides when it ships
+- After it was merged for 0.4.2: its pull request's test job had failed on GitHub. All 522 tests started at once in one process there, even trivial ones took up to 2.7 seconds, and eleven dictation tests, two of them new, ran out of their 2-second wait for a dictation to start. Neither heavy load nor a single thread for Swift's tasks made it happen on this Mac. The tests' wait now has 10 seconds; it ends as soon as its condition holds, so passing tests are no slower
 
 ## 2026-11-12 — Spending: fixes beside the money, by action and by app
 

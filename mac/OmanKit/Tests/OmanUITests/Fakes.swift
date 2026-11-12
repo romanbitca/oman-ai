@@ -643,8 +643,10 @@ final class Harness {
     }
 }
 
+/// True as soon as the condition holds. The limit is generous because on GitHub's runner every test starts at once
+/// in one process, and the main actor can be busy for seconds: at 2 seconds, eleven dictation tests ran out there.
 @MainActor
-func eventually(timeout: Duration = .seconds(2), _ condition: () -> Bool) async -> Bool {
+func eventually(timeout: Duration = .seconds(10), _ condition: () -> Bool) async -> Bool {
     let clock = ContinuousClock()
     let deadline = clock.now.advanced(by: timeout)
     while clock.now < deadline {

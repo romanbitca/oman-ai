@@ -312,6 +312,7 @@ On an Individual team, Xcode's Manage Certificates failed with "This operation c
 
 - Subagents launched with `isolation: "worktree"` start from `origin/main`, not the current branch. Have them run `git switch -c <branch> <commit>` first.
 - `swift test` builds every test target, so concurrent module work needs separate worktrees or one module's half-written code breaks the others.
+- On GitHub's runner `swift test` runs every test target in one process, much slower than on this Mac, and the main actor can be busy for seconds at the start. A test that waits for something must allow for that: `eventually` in the UI tests waits up to 10 seconds. At 2 seconds, eleven dictation tests failed there on 2026-11-12 and none here.
 - A SwiftUI shape drawn above a `WindowDragArea` takes the click and does nothing with it, so mark it `.allowsHitTesting(false)`.
 - Fully clear pixels in the panel pass clicks to the app behind. Liquid Glass in a custom `Shape` counts as clear, unlike glass in a capsule or rounded rectangle, and so did a dark bar drawn on it. A 2% white fill in the same shape, behind the drag area, makes it clickable. Unit tests can't see this: check with real mouse events.
 - `log` is a zsh builtin, so reading the system log needs `/usr/bin/log`.
