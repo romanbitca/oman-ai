@@ -165,7 +165,7 @@
       + "It sounds relaxed and friendly.\n\nCould be misread: \"in a sec\" promises minutes. Say a time if the check may take longer.";
     const answers = {
       proofread: {
-        written: ["hey yes, I'll send u the Q3 numbers in a sec, just need to double-check the churn figure first"],
+        written: ["hey yes, i'll send u the q3 numbers in a sec, just need to double check the churn figure first"],
         work: ["Hey, yes, I'll send you the Q3 numbers in a sec. I just need to double-check the churn figure first."],
         friends: ["hey yes, i'll send u the q3 numbers in a sec, just need to double check the churn figure first"],
       },

@@ -126,7 +126,7 @@
     <section id="actions">
       <h2>Proofread, Rewrite, Explain</h2>
       <dl class="controls">
-        <div><dt>Proofread</dt><dd>Corrects mistakes and nothing else. Your words, tone, line breaks and formatting stay. With a style chosen, it treats that style's habits with capital letters and punctuation as correct, so a message you write in lower case stays in lower case. It never uses context, and the rules you set in Settings don't apply to it.</dd></div>
+        <div><dt>Proofread</dt><dd>Corrects mistakes and nothing else. Your words, line breaks and formatting stay, and so does chat shorthand such as u or thx. With <strong>As written</strong>, a message typed in lower case stays in lower case, and in text that mostly has its capitals a missed one is put right. With a style chosen, that style's habits decide instead: its capital letters, apostrophes and full stops. Proofread checks the text before it writes, so with Claude Haiku it takes about a second longer than a rewrite. It never uses context, and the rules you set in Settings don't apply to it.</dd></div>
         <div><dt>Rewrite</dt><dd>Says the same thing better. With <strong>As written</strong> it keeps your own voice: your level of formality and your habits with capitals, punctuation and emoji. With a style it writes the way the messages in that style are written. It keeps names, numbers, dates and links exactly, and uses any context you switched on.</dd></div>
         <div><dt>Explain</dt><dd>Reads your text as the person it is written for, and tells you what they will understand, how it will sound and what could be misread. It answers in the language of your text. An explanation is only for you: it has no Replace button and can't be pasted by mistake.</dd></div>
       </dl>
@@ -254,7 +254,7 @@
       </figure>
       <dl class="controls">
         <div><dt>Model</dt><dd>Claude Haiku, Sonnet or Opus, or Apple's on-device model. See <a href="#models">Models</a>. A model that can't be used on this Mac says why.</dd></div>
-        <div><dt>How long Claude thinks</dt><dd>Fast, Balanced or Best. Fast suits everyday messages. Best thinks hardest, is slower and costs a little more.</dd></div>
+        <div><dt>How long Claude thinks</dt><dd>Fast, Balanced or Best. Fast suits everyday messages. Best thinks hardest, is slower and costs a little more. Proofread always takes the time to check, whatever is chosen here.</dd></div>
         <div><dt>Always write in</dt><dd>A language for every result. Leave it empty to keep the language of your text.</dd></div>
         <div><dt>Always follow these rules</dt><dd>Standing instructions, such as "use British spelling and never use exclamation marks". They apply to Rewrite and Compose. Proofread only fixes mistakes.</dd></div>
       </dl>
@@ -339,6 +339,7 @@
           </tbody>
         </table>
       </div>
+      <p>Proofread is the exception. It checks the text before it writes, so with Claude Haiku a short message takes about 1.7 seconds and costs about $0.0002.</p>
       <h3>Claude</h3>
       <p>Claude needs your own Anthropic API key, and Anthropic bills you for what you use. In our tests all three Claude models matched a style, followed instructions such as "polite but still firm", and handled languages other than English.</p>
       <h3>Apple's on-device model</h3>

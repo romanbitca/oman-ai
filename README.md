@@ -67,7 +67,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
   </tr>
 </table>
 
-- **Proofread** fixes spelling, grammar and punctuation and leaves your wording alone. With a style chosen it keeps that style's habits, so a message you write in lower case stays in lower case.
+- **Proofread** fixes spelling and grammar and leaves your wording alone. A message you type in lower case stays in lower case, and with a style chosen that style's habits with capital letters, apostrophes and full stops decide.
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
@@ -107,7 +107,7 @@ Use Claude with your own Anthropic API key, or Apple's on-device model for free.
 | Claude Opus | 1.1 s | 1.8 s | about $0.004 | The few messages you really care about |
 | Apple, on device | 0.8 s | 1 to 2.5 s | Free | Plain proofreading, offline and private |
 
-These are averages over 11 short writing tasks at the Fast setting, run through the app's own client on 12 November 2026, at Anthropic's list prices. Yours will vary with the length of the text and your connection.
+These are averages over 11 short writing tasks at the Fast setting, run through the app's own client on 12 November 2026, at Anthropic's list prices. Yours will vary with the length of the text and your connection. Proofread checks the text before it writes, so with Claude Haiku a short message takes about 1.7 seconds and costs about $0.0002.
 
 In the same tests every Claude model matched a style, followed instructions and handled Romanian. Apple's on-device model proofread plain English well, but often ignored a style when rewriting and could not handle Romanian. It takes text only and needs macOS 26 or later with Apple Intelligence turned on.
 
