@@ -26,6 +26,9 @@ public enum DictationPhase: Equatable, Sendable {
     case listening
     /// Listening has stopped, and the model is settling the last words before they go in.
     case finishing
+    /// The words are ready, but nothing that takes text had the cursor. They wait in the pill until a field gets it,
+    /// Copy, × or Escape is pressed, or a minute passes.
+    case holding
 }
 
 /// Runs one dictation at a time: from a shortcut, the menu bar icon or a microphone button in the panel, to the
@@ -38,6 +41,15 @@ public final class DictationController {
     static let noticeDuration = Duration.seconds(4)
     /// Between the paste and Return, so an app that pastes a moment late has the words before it sends.
     static let submitDelay = Duration.milliseconds(150)
+    static let copiedNotice = "There was nowhere to paste, so your words were copied."
+    static let waitedNotice = "No field was chosen, so your words were copied."
+
+    /// While words wait for a field: how often the app in front is asked what has the cursor, and how long the words
+    /// wait before they are copied instead.
+    struct HoldTiming {
+        var checkEvery = Duration.milliseconds(250)
+        var giveUpAfter = Duration.seconds(60)
+    }
 
     @ObservationIgnored private let services: AppServices
     @ObservationIgnored private weak var presenter: (any DictationPresenting)?
@@ -62,6 +74,10 @@ public final class DictationController {
     @ObservationIgnored private var unloadAfter: TimeInterval?
     @ObservationIgnored private var model: DictationModel = .default
     @ObservationIgnored private var language: DictationLanguage = .automatic
+    @ObservationIgnored var holdTiming = HoldTiming()
+    @ObservationIgnored private var holdTask: Task<Void, Never>?
+    /// The words waiting for a field, without the space Settings may add after them.
+    @ObservationIgnored private var heldText: String?
 
     public private(set) var phase: DictationPhase = .idle
     public private(set) var mode: DictationMode?
@@ -88,7 +104,9 @@ public final class DictationController {
         self.now = now
     }
 
-    public var isActive: Bool { phase != .idle }
+    /// Listening, or putting the words in. Words waiting for a field don't count: meanwhile the menu bar icon and the
+    /// shortcuts work as usual, and copy the words before they start anything.
+    public var isActive: Bool { phase != .idle && phase != .holding }
 
     /// The words of the last dictation: this one's since OmanAI started, or else the newest transcript kept.
     func lastTranscript() -> String? {
@@ -100,7 +118,7 @@ public final class DictationController {
 
     /// `field` is the panel's field when the panel has the keyboard, so the words go there instead of the app.
     public func holdPressed(into field: PanelField?) {
-        guard phase == .idle else { return }
+        guard !isActive else { return }
         start(.hold, into: field)
     }
 
@@ -111,7 +129,7 @@ public final class DictationController {
 
     public func longPressed(into field: PanelField?) {
         switch phase {
-        case .idle:
+        case .idle, .holding:
             start(.long, into: field)
         case .starting, .listening:
             if mode == .long { finish() }
@@ -141,7 +159,7 @@ public final class DictationController {
 
     /// The microphone button beside one of the panel's fields.
     public func toggle(into field: PanelField) {
-        if phase == .idle {
+        if !isActive {
             start(.long, into: field)
         } else if self.field == field {
             finishNow()
@@ -168,7 +186,29 @@ public final class DictationController {
         if field != nil { cancel() }
     }
 
+    /// The panel is opening. Words waiting for a field are copied, so they are at hand, and the pill goes: under the
+    /// menu bar icon it would hang where the panel does.
+    public func panelWillOpen() {
+        panelWasReset()
+        copyHeldWords()
+    }
+
+    /// The pill's Copy button, while the words wait for a field: copies them and closes the pill.
+    public func copyHeldWords() {
+        guard phase == .holding, let heldText else { return }
+        services.system.copyToClipboard(heldText)
+        end()
+    }
+
     private func start(_ mode: DictationMode, into field: PanelField?) {
+        // Words still waiting for a field are copied, so a new dictation never loses them.
+        let wasHolding = phase == .holding
+        if wasHolding, let heldText {
+            services.system.copyToClipboard(heldText)
+        }
+        holdTask?.cancel()
+        holdTask = nil
+        heldText = nil
         noticeTask?.cancel()
         notice = nil
         self.mode = mode
@@ -198,6 +238,8 @@ public final class DictationController {
         presenter?.setDictationActive(true)
         if field == nil {
             presenter?.showDictationPill(at: position)
+        } else if wasHolding {
+            presenter?.hideDictationPill()
         }
         startTask = Task { [weak self] in
             await self?.begin(preferences: preferences)
@@ -281,7 +323,7 @@ public final class DictationController {
             return
         case .listening:
             break
-        case .idle, .finishing:
+        case .idle, .finishing, .holding:
             return
         }
         guard let session else { return }
@@ -368,9 +410,23 @@ public final class DictationController {
             return
         }
 
+        // Where nothing takes text, such as on the desktop or in a list, the words wait in the pill for a field
+        // instead of being pasted into nowhere. An app that can't say is pasted into as before.
+        let focus = await services.system.textFocus()
+        // Escape meanwhile: nothing goes in and nothing is kept, as before the paste.
+        guard phase == .finishing else { return }
+        save(text, duration: duration, appName: targetApp?.name)
+        if focus == .cannotTakeText {
+            hold(text)
+        } else {
+            await paste(text)
+        }
+    }
+
+    /// Pastes the words at the cursor of the app in front, with a space after them and Return if Settings says so.
+    private func paste(_ text: String) async {
         let pasted = preferences.addsSpaceAfterDictation ? text + " " : text
         let outcome = await services.system.insertAtCursor(pasted, in: nil)
-        save(text, duration: duration, appName: targetApp?.name)
         guard phase == .finishing else { return }
         switch outcome {
         case .inserted:
@@ -386,8 +442,45 @@ public final class DictationController {
             end(notice: "OmanAI needs Accessibility to paste. Your words were copied instead.")
         case .selectionChanged, .focusMoved, .sourceUnavailable:
             services.system.copyToClipboard(text)
-            end(notice: "There was nowhere to paste, so your words were copied.")
+            end(notice: Self.copiedNotice)
         }
+    }
+
+    /// Keeps the words in the pill and watches for a field to take them. The dictation itself is over, so the menu
+    /// bar icon is still again and opens the panel when clicked.
+    private func hold(_ text: String) {
+        heldText = text
+        phase = .holding
+        listeningSince = nil
+        isLoadingModel = false
+        presenter?.setDictationActive(false)
+        updatesTask?.cancel()
+        updatesTask = nil
+        session = nil
+        holdTask = Task { [weak self] in
+            await self?.waitForField()
+        }
+    }
+
+    /// Asks the app in front what has the cursor, a few times a second, and pastes the words as soon as a field that
+    /// takes text has it, in that app or another. An app that can't say is never pasted into here, since nobody
+    /// chose it. After a minute the words are copied instead.
+    private func waitForField() async {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: holdTiming.giveUpAfter)
+        while clock.now < deadline {
+            try? await Task.sleep(for: holdTiming.checkEvery)
+            guard phase == .holding, !Task.isCancelled else { return }
+            if await services.system.textFocus() == .takesText {
+                guard phase == .holding, !Task.isCancelled, let heldText else { return }
+                phase = .finishing
+                await paste(heldText)
+                return
+            }
+        }
+        guard phase == .holding, !Task.isCancelled, let heldText else { return }
+        services.system.copyToClipboard(heldText)
+        end(notice: Self.waitedNotice)
     }
 
     private func save(_ text: String, duration: TimeInterval, appName: String?) {
@@ -430,6 +523,9 @@ public final class DictationController {
 
     /// Back to idle. With a notice, the sentence stays on screen for a moment.
     private func end(notice message: String? = nil) {
+        holdTask?.cancel()
+        holdTask = nil
+        heldText = nil
         restoreOutput()
         improvesAfter = false
         services.system.setTemporaryShortcut(nil, for: .cancelDictation)

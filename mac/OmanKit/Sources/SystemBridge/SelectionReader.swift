@@ -1,4 +1,5 @@
 import ApplicationServices
+import OmanCore
 
 enum AccessibilityReading: Equatable {
     case secure
@@ -51,6 +52,26 @@ enum SelectionReader {
             selectedText: string(of: focused, attribute: "AXSelectedText"),
             selectedRangeLength: rangeLength(of: focused, attribute: "AXSelectedTextRange")
         )
+    }
+
+    /// Whether what has keyboard focus in the app takes text. An app that answers that nothing has focus can't be
+    /// told from an Electron app, which answers the same while its own field has the cursor, so neither is sure.
+    static func textFocus(processID: pid_t) -> TextFocus {
+        guard let focused = focusedElement(processID: processID) else { return .unknown }
+        return TextFocusRules.classify(
+            role: string(of: focused, attribute: "AXRole"),
+            subrole: string(of: focused, attribute: "AXSubrole"),
+            valueIsSettable: isSettable(focused, attribute: "AXValue"),
+            hasTextRange: rangeLength(of: focused, attribute: "AXSelectedTextRange") != nil
+        )
+    }
+
+    private static func isSettable(_ element: AXUIElement, attribute: String) -> Bool {
+        var settable = DarwinBoolean(false)
+        guard AXUIElementIsAttributeSettable(element, attribute as CFString, &settable) == .success else {
+            return false
+        }
+        return settable.boolValue
     }
 
     private static func value(of element: AXUIElement, attribute: String) -> CFTypeRef? {

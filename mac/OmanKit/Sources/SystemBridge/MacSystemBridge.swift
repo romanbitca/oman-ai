@@ -204,6 +204,20 @@ public final class MacSystemBridge: SystemBridging {
         return .inserted
     }
 
+    public func textFocus() async -> TextFocus {
+        // OmanAI's own windows take no dictation, so with one of them in front there is nowhere to paste.
+        guard let app = frontmostApp else { return .cannotTakeText }
+        // Without the permission nothing can be read, and the paste then says what is missing.
+        guard AXIsProcessTrusted() else { return .unknown }
+        // Terminals, remote desktops and virtual machines take a paste whatever their focus looks like from here.
+        if SensitiveApps.isTerminal(bundleID: app.bundleID) || SensitiveApps.forwardsKeys(bundleID: app.bundleID) {
+            return .unknown
+        }
+        let processID = app.processID
+        // Away from the main thread, so an app that is slow to answer never holds up the pill or the menu bar.
+        return await Task.detached { SelectionReader.textFocus(processID: processID) }.value
+    }
+
     // MARK: Clipboard
 
     public func copyToClipboard(_ text: String) {

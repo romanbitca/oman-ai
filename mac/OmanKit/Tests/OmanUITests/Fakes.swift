@@ -216,6 +216,15 @@ final class FakeSystem: SystemBridging {
         return insertOutcome
     }
 
+    /// What has the cursor in the app in front. A field, unless a test says otherwise.
+    var focus: TextFocus = .takesText
+    var focusChecks = 0
+
+    func textFocus() async -> TextFocus {
+        focusChecks += 1
+        return focus
+    }
+
     var clipboardReads = 0
 
     func copyToClipboard(_ text: String) { copied.append(text) }

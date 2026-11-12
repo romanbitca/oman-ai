@@ -436,3 +436,19 @@ The maintainer found the list of plain words too simple, with nothing that stand
   - a count, and an empty state with examples.
   Several can still be added at once, with commas between them.
 - Capsules in Settings have circular ends. Drawn with continuous ends, a thin line stood off each end.
+
+## 2026-11-12 — Dictated words wait in the pill when nothing can take them
+
+The maintainer asked whether OmanAI could notice when a dictation finishes with nothing that takes text under the cursor, such as the desktop, a list or a web page with no field, offer to copy the words or let them click into a field, and then go. They said yes to the design below, and asked the assistant to decide the rest; the choices not named in it are the assistant's.
+
+- Right before dictated words are pasted into another app, OmanAI asks Accessibility what has the cursor in the app in front and sorts the answer three ways: it takes text, it clearly doesn't, or it can't be told. Words that can go in, or can't be told, are pasted as before. The rules are in `TextFocusRules.swift`
+- Takes text: a text field, text area, combo box or search field, by role or subrole; anything else whose value can be set, apart from controls such as sliders and checkboxes, which covers text views of an app's own making and pages made to be written in, such as a mail being composed; and anything not named below that has a text range. A terminal's text area takes a paste although its value can't be set
+- Clearly doesn't: the Finder's desktop, lists, outlines, tables, column browsers, rows and cells, a web page with no field in focus, the app itself when none of its windows has the keyboard, and buttons and other controls. OmanAI's own windows in front count too
+- Can't be told: everything else. That includes an app that answers that nothing has the cursor, which the design asked for counted as clearly not: read on this Mac, Slack and the other Electron apps answered exactly that, and dictations into them would have waited instead of going in. Terminals, remote desktops and virtual machines are never asked
+- A text range alone doesn't make a field: the Finder's desktop has one, for finding icons as their names are typed
+- A password field counts as can't be told. A dictation made while one has the cursor goes in as before, but words that wait never go into one, because a click into it is for typing a password and Return could follow the words
+- When nothing can take them, the words stay in the pill, which says "Click where these words should go", with × and Copy where the seconds and Done were. Copy copies them and closes the pill, × throws them away, and Escape cancels as before. The transcript is kept as usual, as soon as the words are ready
+- While they wait, the app in front is asked again four times a second. As soon as a field that takes text has the cursor, in the same app or another, the words are pasted there, with the space after them and Return or ⌘Return if Settings says so, and the pill fades. An app that can't be told is never pasted into this way, since nobody chose it
+- After a minute with no choice, the words are copied and the pill says "No field was chosen, so your words were copied." for a moment
+- Accessibility is asked away from the main thread, so an app slow to answer never holds up the pill or the menu bar. Each question has the 0.25-second limit that reading a selection has
+- While words wait, the dictation itself is over: the menu bar icon is still again and opens the panel, and the shortcuts start a new dictation. Either first copies the waiting words, so none are lost. Opening the panel also closes the pill, which under the menu bar icon would hang where the panel does
