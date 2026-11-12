@@ -283,6 +283,10 @@ private struct ModelRow: View {
     private var trailing: some View {
         if isDownloading, let progress = model.downloadProgress {
             HStack(spacing: 6) {
+                if progress >= 0.9 {
+                    // The files are in; the model is being prepared for the Neural Engine, which takes a while once.
+                    Text("Preparing…").font(.caption).foregroundStyle(.secondary)
+                }
                 ProgressView(value: progress).frame(width: 90)
                 Button {
                     model.cancelDownload()
@@ -362,55 +366,6 @@ private struct WordChip: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
         .background(Color.primary.opacity(0.08), in: Capsule())
-    }
-}
-
-/// Lays its children out in rows, starting a new row when the next one would not fit.
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = arrange(subviews, width: proposal.width ?? .infinity)
-        let height = rows.last.map { $0.y + $0.height } ?? 0
-        let width = rows.map(\.width).max() ?? 0
-        return CGSize(width: proposal.width ?? width, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = arrange(subviews, width: bounds.width)
-        for row in rows {
-            var x = bounds.minX
-            for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(at: CGPoint(x: x, y: bounds.minY + row.y), proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-        }
-    }
-
-    private struct Row {
-        var indices: [Int] = []
-        var y: CGFloat = 0
-        var width: CGFloat = 0
-        var height: CGFloat = 0
-    }
-
-    private func arrange(_ subviews: Subviews, width: CGFloat) -> [Row] {
-        var rows: [Row] = [Row()]
-        for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
-            var row = rows[rows.count - 1]
-            if !row.indices.isEmpty, row.width + spacing + size.width > width {
-                let next = Row(indices: [], y: row.y + row.height + spacing)
-                rows.append(next)
-                row = next
-            }
-            row.width += (row.indices.isEmpty ? 0 : spacing) + size.width
-            row.height = max(row.height, size.height)
-            row.indices.append(index)
-            rows[rows.count - 1] = row
-        }
-        return rows.filter { !$0.indices.isEmpty }
     }
 }
 

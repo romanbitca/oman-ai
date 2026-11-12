@@ -370,3 +370,13 @@ The maintainer tried a signed test copy with the microphone. It worked, but with
 - Remove filler words takes out um, uh and the like where they stand alone, and is on at first, as in Handy
 - A downloaded model stays loaded for the next dictation and is unloaded after 5 minutes without one, to free its memory; Settings offers right away, 1 minute, 15 minutes, an hour and never. macOS looks after Apple's model
 - Both looks get a cancel button beside Done for a long dictation; Escape still cancels either kind
+
+## 2026-11-12 — Dictation starts at once, and the words arrive smoothly
+
+The maintainer found the first dictation after launch slow, as if frozen, and asked for a loading sign, for the words to grow to about ten lines, and for words to arrive with an animation rather than pop in.
+
+- Measured: the first time a downloaded model loads in OmanAI, Core ML prepares it for the Neural Engine, which took 23 seconds for Parakeet Unified. macOS keeps the result in OmanAI's cache folder, so every load after that, in a new launch too, took about 0.2 seconds. That first preparation normally happens at the end of the download in Settings, which now says Preparing meanwhile; the test copy met it at its first dictation because its models were put in place by hand
+- The chosen model is loaded a few seconds after launch and whenever the model or its language changes, then unloaded after the time Settings gives, unless that is right away
+- The microphone starts the moment a dictation starts, before the model is ready, so nothing said while it loads is lost; its words follow once the model is ready. Meanwhile the pill shows a spinner and "Getting Parakeet Unified ready…", with the model's name
+- The words grow from one line to ten, and then scroll to keep the newest in view. This supersedes the three lines above
+- Each word fades in from a slight blur and a little below its place as it arrives, and the area grows smoothly with them. With Reduce Motion on, words only fade in

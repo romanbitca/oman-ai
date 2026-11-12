@@ -58,7 +58,7 @@ final class SoftBlurView: NSView {
     }
 
     /// White, opaque over the middle of the ellipse that fills `size` and clear at its edge, with a smooth fall.
-    static func feather(size: CGSize, pointsPerPixel: CGFloat = 2) -> CGImage? {
+    nonisolated static func feather(size: CGSize, pointsPerPixel: CGFloat = 2) -> CGImage? {
         let width = max(Int((size.width / pointsPerPixel).rounded(.up)), 1)
         let height = max(Int((size.height / pointsPerPixel).rounded(.up)), 1)
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -86,7 +86,7 @@ final class SoftBlurView: NSView {
 
     /// 1 out to half way from the middle, then easing down to 0 at the edge. `distance` is 0 at the middle and 1 at
     /// the ellipse's edge.
-    static func strength(atDistance distance: CGFloat) -> CGFloat {
+    nonisolated static func strength(atDistance distance: CGFloat) -> CGFloat {
         let fall = min(max((1 - distance) / 0.5, 0), 1)
         return fall * fall * (3 - 2 * fall)
     }

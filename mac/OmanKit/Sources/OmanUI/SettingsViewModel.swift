@@ -214,6 +214,7 @@ public final class SettingsViewModel {
         dictationLanguage = nil
         updatePreferences { $0.dictationModel = model }
         reloadDictation()
+        DictationController.prepareChosenModel(services: services)
     }
 
     func setDictationLanguage(_ language: DictationLanguage) {
@@ -222,6 +223,7 @@ public final class SettingsViewModel {
         updatePreferences { $0.setDictationLanguage(language, for: $0.dictationModel) }
         dictationLanguage = language
         reloadDictation()
+        DictationController.prepareChosenModel(services: services)
     }
 
     /// Downloads a model, or the chosen language of Apple's, and chooses it once it is in place.
@@ -259,6 +261,9 @@ public final class SettingsViewModel {
                 setDictationModel(model)
             } else {
                 reloadDictation()
+                if succeeded {
+                    DictationController.prepareChosenModel(services: services)
+                }
             }
         }
     }

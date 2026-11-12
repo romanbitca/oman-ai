@@ -52,10 +52,17 @@ actor ParakeetEngine {
 
     func startSession() async throws -> any DictationSession {
         guard isDownloaded else { throw DictationError.modelNotReady(.parakeet) }
-        _ = try await loaded()
-        return try RereadingDictationSession.start { samples in
-            try await self.transcribe(samples)
-        }
+        return try RereadingDictationSession.start(
+            needsLoading: manager == nil,
+            load: { _ = try await self.loaded() },
+            read: { samples in try await self.transcribe(samples) }
+        )
+    }
+
+    /// Loads the model ahead of a dictation.
+    func prepare() async {
+        guard isDownloaded else { return }
+        _ = try? await loaded()
     }
 
     /// The text of a whole recording.
@@ -93,6 +100,7 @@ final class RereadingDictationSession: DictationSession, @unchecked Sendable {
     private var samples: [Float] = []
     private var readSamples = 0
     private var heardSpeech = false
+    private var loadError: (any Error)?
     private var readTask: Task<Void, Never>?
 
     private init(read: @escaping @Sendable ([Float]) async throws -> String) {
@@ -100,7 +108,12 @@ final class RereadingDictationSession: DictationSession, @unchecked Sendable {
         (updates, updatesContinuation) = AsyncStream.makeStream(of: DictationUpdate.self)
     }
 
-    static func start(read: @escaping @Sendable ([Float]) async throws -> String) throws -> RereadingDictationSession {
+    /// The microphone starts at once, and the model loads meanwhile, so nothing said while it loads is lost.
+    static func start(
+        needsLoading: Bool = false,
+        load: @escaping @Sendable () async throws -> Void = {},
+        read: @escaping @Sendable ([Float]) async throws -> String
+    ) throws -> RereadingDictationSession {
         let session = RereadingDictationSession(read: read)
         let capture = MicrophoneCapture(
             targetFormat: SpeechAudio.format16k,
@@ -109,11 +122,22 @@ final class RereadingDictationSession: DictationSession, @unchecked Sendable {
         )
         session.capture = capture
         try capture.start()
+        if needsLoading {
+            session.updatesContinuation.yield(.loadingModel(true))
+        }
         session.readTask = Task { [weak session] in
+            do {
+                try await load()
+            } catch {
+                session?.lock.withLock { session?.loadError = error }
+            }
+            if needsLoading {
+                session?.updatesContinuation.yield(.loadingModel(false))
+            }
             while !Task.isCancelled {
-                try? await Task.sleep(for: readInterval)
-                guard !Task.isCancelled, let session else { return }
+                guard let session else { return }
                 await session.readAgain()
+                try? await Task.sleep(for: readInterval)
             }
         }
         return session
@@ -173,8 +197,9 @@ final class RereadingDictationSession: DictationSession, @unchecked Sendable {
         capture?.stop()
         readTask?.cancel()
         await readTask?.value
-        let (all, speech) = lock.withLock { (samples, heardSpeech) }
+        let (all, speech, loadError) = lock.withLock { (samples, heardSpeech, self.loadError) }
         updatesContinuation.finish()
+        if let loadError { throw loadError }
         guard speech, !all.isEmpty else { return "" }
         return try await read(all)
     }

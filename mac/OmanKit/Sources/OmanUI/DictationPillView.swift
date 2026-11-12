@@ -20,7 +20,7 @@ public struct DictationWave: Shape {
     }
 
     /// The stroke from MenuBarIcon.svg, drawn on an 18-point square with y growing downwards, centred in `rect`.
-    public static func cgPath(in rect: CGRect, amplitude: CGFloat) -> CGPath {
+    nonisolated public static func cgPath(in rect: CGRect, amplitude: CGFloat) -> CGPath {
         let scale = min(rect.width, rect.height) / 18
         let originX = rect.midX - 9 * scale
         let originY = rect.midY - 9 * scale
@@ -35,7 +35,7 @@ public struct DictationWave: Shape {
     }
 
     /// How tall the wave is for a microphone level, so even silence shows a little movement.
-    public static func amplitude(forLevel level: Float) -> CGFloat {
+    nonisolated public static func amplitude(forLevel level: Float) -> CGFloat {
         0.18 + 0.82 * CGFloat(min(max(level, 0), 1))
     }
 }
@@ -53,7 +53,7 @@ public final class DictationPillState {
 public enum DictationPillMetrics {
     public static let width: CGFloat = PanelMetrics.width
     public static let sideMargin: CGFloat = 24
-    static let maxHeight: CGFloat = 156
+    static let maxHeight: CGFloat = 262
     /// The window keeps one size; the pill sits at its top or bottom edge.
     public static let windowSize = CGSize(width: width + sideMargin * 2, height: PanelMetrics.menuBarGap + maxHeight)
     /// Where the window sits above the Dock when the pill is at the bottom of the screen. With `bottomRoom` inside
@@ -61,8 +61,10 @@ public enum DictationPillMetrics {
     public static let bottomGap: CGFloat = 6
     /// Below the pill inside its window, so the rim of the glass isn't cut off by the window's edge.
     static let bottomRoom: CGFloat = 12
-    /// The most characters of live words shown. Earlier words give way to the newest.
-    static let visibleCharacters = 150
+    /// The most words kept on show. Earlier ones scroll out of view anyway, past ten lines.
+    static let visibleWords = 400
+    /// The words grow from one line to ten, then scroll to keep the newest in view.
+    static let wordsMaxHeight: CGFloat = 10 * 18.5
     static let control: CGFloat = 34
     static let gap: CGFloat = 8
 }
@@ -129,11 +131,8 @@ public struct DictationPillView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
-            words(alignment: .leading)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .frame(width: DictationPillMetrics.width, alignment: .leading)
-                .frame(minHeight: 40)
+            wordsArea(alignment: .leading, padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
+                .frame(width: DictationPillMetrics.width)
                 .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), reading: true)
         }
     }
@@ -148,10 +147,8 @@ public struct DictationPillView: View {
 
     private var floating: some View {
         VStack(spacing: 6) {
-            words(alignment: .center)
+            wordsArea(alignment: .center, padding: EdgeInsets(top: 14, leading: 28, bottom: 14, trailing: 28))
                 .shadow(color: .black.opacity(0.45), radius: 6, y: 1)
-                .padding(.horizontal, 28)
-                .padding(.vertical, 14)
                 .frame(width: DictationPillMetrics.width)
                 .background {
                     SoftBlur(points: 14, dim: 0.34)
@@ -185,7 +182,11 @@ public struct DictationPillView: View {
 
     @ViewBuilder
     private var leadingSymbol: some View {
-        if showsNotice {
+        if controller.isLoadingModel {
+            ProgressView()
+                .controlSize(.small)
+                .frame(width: 20, height: 20)
+        } else if showsNotice {
             Image(systemName: "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.multicolor)
                 .font(.system(size: 14))
@@ -210,7 +211,7 @@ public struct DictationPillView: View {
         .accessibilityLabel("Time listening")
     }
 
-    static func elapsed(from start: Date?, to now: Date) -> String {
+    nonisolated static func elapsed(from start: Date?, to now: Date) -> String {
         guard let start else { return "0:00" }
         let total = max(Int(now.timeIntervalSince(start)), 0)
         return "\(total / 60):" + String(format: "%02d", total % 60)
@@ -246,53 +247,91 @@ public struct DictationPillView: View {
         .accessibilityLabel("Done")
     }
 
+    /// The words, in an area that grows with them up to ten lines and then scrolls to keep the newest in view.
+    private func wordsArea(alignment: HorizontalAlignment, padding: EdgeInsets) -> some View {
+        ScrollView(.vertical) {
+            words(alignment: alignment)
+                .padding(padding)
+                .frame(maxWidth: .infinity, alignment: alignment == .center ? .center : .leading)
+        }
+        .defaultScrollAnchor(.bottom)
+        .scrollIndicators(.never)
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(minHeight: 40, maxHeight: DictationPillMetrics.wordsMaxHeight + padding.top + padding.bottom)
+        .fixedSize(horizontal: false, vertical: true)
+        .animation(.easeOut(duration: 0.22), value: controller.transcript)
+    }
+
     @ViewBuilder
-    private func words(alignment: TextAlignment) -> some View {
+    private func words(alignment: HorizontalAlignment) -> some View {
         Group {
             if let notice = controller.notice, showsNotice {
                 Text(notice)
                     .lineLimit(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if controller.isLoadingModel, controller.transcript.isEmpty {
+                Text("Getting \(controller.modelName) ready…")
+                    .foregroundStyle(.secondary)
             } else if controller.transcript.isEmpty {
                 Text(controller.phase == .finishing ? "Finishing…" : "Listening…")
                     .foregroundStyle(.secondary)
             } else {
-                let parts = PillWords(controller.transcript, limit: DictationPillMetrics.visibleCharacters)
-                (Text(parts.settled) + Text(parts.tentative).foregroundStyle(.secondary))
-                    .lineSpacing(2)
-                    .lineLimit(3)
-                    .accessibilityLabel(controller.transcript.text)
+                LiveWords(transcript: controller.transcript, alignment: alignment)
             }
         }
         .font(.system(size: 13))
-        .multilineTextAlignment(alignment)
-        .fixedSize(horizontal: false, vertical: true)
+        .multilineTextAlignment(alignment == .center ? .center : .leading)
     }
 }
 
-/// The end of the live words, as much as fits, split into the settled words and the model's current guess.
-struct PillWords: Equatable {
-    let settled: String
-    let tentative: String
+/// The live words, laid out as text. Each new word fades in from a slight blur as it arrives, rather than appearing
+/// all at once, and the model's guess at the newest words stays dimmer until it settles.
+struct LiveWords: View {
+    let transcript: LiveTranscript
+    let alignment: HorizontalAlignment
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    init(_ transcript: LiveTranscript, limit: Int) {
-        let confirmed = transcript.confirmed.trimmingCharacters(in: .whitespacesAndNewlines)
-        let guess = transcript.tentative.trimmingCharacters(in: .whitespacesAndNewlines)
-        let joined = LiveTranscript.join(confirmed, guess)
-        guard joined.count > limit else {
-            settled = confirmed
-            tentative = confirmed.isEmpty || guess.isEmpty ? guess : " " + guess
-            return
+    struct Word: Identifiable, Equatable {
+        /// The word's place in the whole dictation, so a word keeps its identity while others arrive after it.
+        let id: Int
+        let text: String
+        let isGuess: Bool
+    }
+
+    nonisolated static func words(of transcript: LiveTranscript, limit: Int = DictationPillMetrics.visibleWords) -> [Word] {
+        let settled = transcript.confirmed.split(separator: " ").map(String.init)
+        let guess = transcript.tentative.split(separator: " ").map(String.init)
+        let all = settled.enumerated().map { Word(id: $0.offset, text: $0.element, isGuess: false) }
+            + guess.enumerated().map { Word(id: settled.count + $0.offset, text: $0.element, isGuess: true) }
+        return Array(all.suffix(limit))
+    }
+
+    var body: some View {
+        let words = Self.words(of: transcript)
+        FlowLayout(spacing: 3.6, lineSpacing: 3, alignment: alignment) {
+            ForEach(words) { word in
+                Text(word.text)
+                    .foregroundStyle(word.isGuess ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
+                    .contentTransition(.opacity)
+                    .transition(WordArrival(reduceMotion: reduceMotion))
+            }
         }
-        // Cut at a space, so the first word shown is whole.
-        var start = joined.index(joined.endIndex, offsetBy: -limit)
-        if let space = joined[start...].firstIndex(of: " ") {
-            start = joined.index(after: space)
-        }
-        let shown = String(joined[start...])
-        let guessLength = guess.isEmpty ? 0 : min(guess.count + 1, shown.count)
-        let settledPart = String(shown.dropLast(guessLength))
-        settled = "…" + settledPart
-        tentative = String(shown.suffix(guessLength))
+        .animation(.easeOut(duration: 0.3), value: words)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(transcript.text)
+    }
+}
+
+/// How a word arrives: from transparent, slightly blurred and a little low, to clear and in place. With Reduce
+/// Motion on it only fades.
+struct WordArrival: Transition {
+    var reduceMotion = false
+
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        content
+            .opacity(phase.isIdentity ? 1 : 0)
+            .blur(radius: phase.isIdentity || reduceMotion ? 0 : 3)
+            .offset(y: phase.isIdentity || reduceMotion ? 0 : 3)
     }
 }
 

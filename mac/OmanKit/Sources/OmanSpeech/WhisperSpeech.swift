@@ -65,9 +65,20 @@ actor WhisperEngine {
 
     func startSession(language: DictationLanguage, words: [String]) async throws -> any DictationSession {
         guard isDownloaded else { throw DictationError.modelNotReady(.whisper) }
-        let whisper = try await loaded()
-        promptTokens = words.isEmpty ? nil : whisper.tokenizer?.encode(text: " " + words.joined(separator: ", "))
-        return try WhisperDictationSession.start(engine: self, language: language)
+        return try WhisperDictationSession.start(engine: self, language: language, needsLoading: whisper == nil) {
+            let whisper = try await self.loaded()
+            await self.setPrompt(words.isEmpty ? nil : whisper.tokenizer?.encode(text: " " + words.joined(separator: ", ")))
+        }
+    }
+
+    private func setPrompt(_ tokens: [Int]?) {
+        promptTokens = tokens
+    }
+
+    /// Loads the model ahead of a dictation.
+    func prepare() async {
+        guard isDownloaded else { return }
+        _ = try? await loaded()
     }
 
     /// The text of each stretch of speech Whisper finds, with where it starts and ends in seconds.
@@ -148,6 +159,7 @@ final class WhisperDictationSession: DictationSession, @unchecked Sendable {
     private var settled = ""
     private var settledSamples = 0
     private var readSamples = 0
+    private var loadError: (any Error)?
     private var readTask: Task<Void, Never>?
 
     private init(engine: WhisperEngine, language: DictationLanguage) {
@@ -156,7 +168,13 @@ final class WhisperDictationSession: DictationSession, @unchecked Sendable {
         (updates, updatesContinuation) = AsyncStream.makeStream(of: DictationUpdate.self)
     }
 
-    static func start(engine: WhisperEngine, language: DictationLanguage) throws -> WhisperDictationSession {
+    /// The microphone starts at once, and the model loads meanwhile, so nothing said while it loads is lost.
+    static func start(
+        engine: WhisperEngine,
+        language: DictationLanguage,
+        needsLoading: Bool = false,
+        load: @escaping @Sendable () async throws -> Void = {}
+    ) throws -> WhisperDictationSession {
         let session = WhisperDictationSession(engine: engine, language: language)
         let capture = MicrophoneCapture(
             targetFormat: SpeechAudio.format16k,
@@ -165,7 +183,18 @@ final class WhisperDictationSession: DictationSession, @unchecked Sendable {
         )
         session.capture = capture
         try capture.start()
+        if needsLoading {
+            session.updatesContinuation.yield(.loadingModel(true))
+        }
         session.readTask = Task { [weak session] in
+            do {
+                try await load()
+            } catch {
+                session?.lock.withLock { session?.loadError = error }
+            }
+            if needsLoading {
+                session?.updatesContinuation.yield(.loadingModel(false))
+            }
             while !Task.isCancelled {
                 try? await Task.sleep(for: readInterval)
                 guard !Task.isCancelled, let session else { return }
@@ -222,6 +251,10 @@ final class WhisperDictationSession: DictationSession, @unchecked Sendable {
         capture?.stop()
         readTask?.cancel()
         await readTask?.value
+        if let loadError = lock.withLock({ self.loadError }) {
+            updatesContinuation.finish()
+            throw loadError
+        }
         let (window, quietSoFar) = lock.withLock {
             (Array(samples[settledSamples...]), settled.isEmpty)
         }

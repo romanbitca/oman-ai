@@ -450,6 +450,13 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
     func unloadModels(after seconds: TimeInterval?) async {
         lock.withLock { unloads.append(seconds) }
     }
+
+    private var prepared: [(DictationModel, DictationLanguage)] = []
+    var preparations: [(model: DictationModel, language: DictationLanguage)] { lock.withLock { prepared } }
+
+    func prepare(_ model: DictationModel, language: DictationLanguage) async {
+        lock.withLock { prepared.append((model, language)) }
+    }
 }
 
 final class FakeDictations: DictationStore, @unchecked Sendable {

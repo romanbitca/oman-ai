@@ -234,6 +234,9 @@ public enum DictationUpdate: Equatable, Sendable {
     case transcript(LiveTranscript)
     /// How loud the microphone is, from 0 to 1.
     case level(Float)
+    /// The model is being loaded into memory, or has finished. The microphone listens all the while, so nothing
+    /// said meanwhile is lost; its words appear once the model is ready.
+    case loadingModel(Bool)
 }
 
 /// One dictation in progress.
@@ -273,6 +276,9 @@ public protocol SpeechRecognizing: Sendable {
     ) async throws -> any DictationSession
     /// Frees the memory of loaded models after `seconds` without a dictation, or never with nil.
     func unloadModels(after seconds: TimeInterval?) async
+    /// Loads a downloaded model into memory ahead of a dictation, so it starts at once. Does nothing for a model
+    /// that isn't downloaded, or for Apple's, which macOS keeps ready itself.
+    func prepare(_ model: DictationModel, language: DictationLanguage) async
 }
 
 public enum DictationError: Error, Equatable, Sendable {

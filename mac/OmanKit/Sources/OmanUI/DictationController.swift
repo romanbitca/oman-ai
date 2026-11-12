@@ -70,6 +70,9 @@ public final class DictationController {
     public private(set) var pillStyle: DictationPillStyle = .card
     /// When the microphone started listening, for the seconds the pill counts.
     public private(set) var listeningSince: Date?
+    /// The model is still loading. The microphone already listens, and its words follow once the model is ready.
+    public private(set) var isLoadingModel = false
+    public private(set) var modelName = DictationModel.default.displayName
 
     public init(services: AppServices, presenter: any DictationPresenting, now: @escaping () -> Date = Date.init) {
         self.services = services
@@ -153,6 +156,8 @@ public final class DictationController {
         position = preferences.dictationPillPosition
         pillStyle = preferences.dictationPillStyle
         model = preferences.dictationModel
+        modelName = model.displayName
+        isLoadingModel = false
         keepsDictations = preferences.keepsDictations
         words = preferences.dictationWords
         removesFillers = preferences.removesFillerWords
@@ -265,6 +270,27 @@ public final class DictationController {
             }
         case .level(let value):
             level = value
+        case .loadingModel(let loading):
+            isLoadingModel = loading
+        }
+    }
+
+    /// Loads the chosen model into memory ahead of the next dictation, then lets it be unloaded after the time
+    /// Settings gives. Called when the app starts and when the model or its language changes.
+    public static func prepareChosenModel(services: AppServices) {
+        guard let speech = services.speech else { return }
+        let preferences = (try? services.settings.preferences()) ?? AppPreferences()
+        guard preferences.modelUnloadDelay != .immediately else { return }
+        let model = preferences.dictationModel
+        Task {
+            let language: DictationLanguage
+            if let saved = preferences.dictationLanguage(for: model) {
+                language = saved
+            } else {
+                language = await speech.defaultLanguage(for: model)
+            }
+            await speech.prepare(model, language: language)
+            await speech.unloadModels(after: preferences.modelUnloadDelay.seconds)
         }
     }
 
@@ -354,6 +380,7 @@ public final class DictationController {
         mode = nil
         level = 0
         listeningSince = nil
+        isLoadingModel = false
 
         guard let message else {
             presenter?.hideDictationPill()

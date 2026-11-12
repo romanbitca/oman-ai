@@ -62,7 +62,19 @@ actor StreamingEngine {
         guard isDownloaded else {
             throw DictationError.modelNotReady(kind == .parakeetEnglish ? .parakeetEnglish : .nemotron)
         }
-        return try await StreamingDictationSession.start(manager: try await loaded(language: language))
+        return try StreamingDictationSession.start(needsLoading: !isLoaded(language: language)) {
+            try await self.loaded(language: language)
+        }
+    }
+
+    /// Loads the model ahead of a dictation.
+    func prepare(language: DictationLanguage) async {
+        guard isDownloaded else { return }
+        _ = try? await loaded(language: language)
+    }
+
+    private func isLoaded(language: DictationLanguage) -> Bool {
+        manager != nil && (kind == .parakeetEnglish || loadedLanguage == language)
     }
 
     /// Plays a recording into the same live path the microphone uses, for the tests. Returns the live words seen
@@ -91,7 +103,7 @@ actor StreamingEngine {
 
     private func loaded(language: DictationLanguage) async throws -> StreamingUnifiedAsrManager {
         // Nemotron takes its language when it loads, so another language needs it loaded again.
-        if let manager, kind == .parakeetEnglish || loadedLanguage == language {
+        if let manager, isLoaded(language: language) {
             return manager
         }
         await manager?.cleanup()
@@ -132,38 +144,60 @@ actor StreamingEngine {
 }
 
 /// One dictation through a streaming model: the microphone's sound goes in as it comes, and each newly decoded
-/// stretch extends the words. Nothing already shown changes, so every word is settled.
+/// stretch extends the words. Nothing already shown changes, so every word is settled. The microphone starts at
+/// once; while the model loads, its sound waits, and is decoded as soon as the model is ready.
 final class StreamingDictationSession: DictationSession, @unchecked Sendable {
     let updates: AsyncStream<DictationUpdate>
     private let updatesContinuation: AsyncStream<DictationUpdate>.Continuation
-    private let manager: StreamingUnifiedAsrManager
     private let samplesContinuation: AsyncStream<[Float]>.Continuation
-    private let feedTask: Task<Void, Never>
+    private let lock = NSLock()
+    private var manager: StreamingUnifiedAsrManager?
+    private var loadError: (any Error)?
+    private var feedTask: Task<Void, Never>?
     private var capture: MicrophoneCapture?
 
     private init(
-        manager: StreamingUnifiedAsrManager,
         samplesContinuation: AsyncStream<[Float]>.Continuation,
-        feedTask: Task<Void, Never>,
         updates: AsyncStream<DictationUpdate>,
         updatesContinuation: AsyncStream<DictationUpdate>.Continuation
     ) {
-        self.manager = manager
         self.samplesContinuation = samplesContinuation
-        self.feedTask = feedTask
         self.updates = updates
         self.updatesContinuation = updatesContinuation
     }
 
-    static func start(manager: StreamingUnifiedAsrManager) async throws -> StreamingDictationSession {
-        try await manager.reset()
+    static func start(
+        needsLoading: Bool,
+        load: @escaping @Sendable () async throws -> StreamingUnifiedAsrManager
+    ) throws -> StreamingDictationSession {
         let (updates, updatesContinuation) = AsyncStream.makeStream(of: DictationUpdate.self)
-        await manager.setPartialTranscriptCallback { text in
-            updatesContinuation.yield(.transcript(LiveTranscript(confirmed: text)))
-        }
         let (samples, samplesContinuation) = AsyncStream.makeStream(of: [Float].self)
-        // One buffer after another, in order.
-        let feedTask = Task {
+        let session = StreamingDictationSession(
+            samplesContinuation: samplesContinuation,
+            updates: updates,
+            updatesContinuation: updatesContinuation
+        )
+        if needsLoading {
+            updatesContinuation.yield(.loadingModel(true))
+        }
+        session.feedTask = Task {
+            let manager: StreamingUnifiedAsrManager
+            do {
+                manager = try await load()
+                try await manager.reset()
+            } catch {
+                session.lock.withLock { session.loadError = error }
+                updatesContinuation.yield(.loadingModel(false))
+                return
+            }
+            await manager.setPartialTranscriptCallback { text in
+                updatesContinuation.yield(.transcript(LiveTranscript(confirmed: text)))
+            }
+            session.lock.withLock { session.manager = manager }
+            if needsLoading {
+                updatesContinuation.yield(.loadingModel(false))
+            }
+            // One buffer after another, in order, starting with any that waited for the model.
             for await chunk in samples {
                 guard let buffer = SpeechAudio.buffer(from: chunk) else { continue }
                 do {
@@ -174,13 +208,6 @@ final class StreamingDictationSession: DictationSession, @unchecked Sendable {
                 }
             }
         }
-        let session = StreamingDictationSession(
-            manager: manager,
-            samplesContinuation: samplesContinuation,
-            feedTask: feedTask,
-            updates: updates,
-            updatesContinuation: updatesContinuation
-        )
         let capture = MicrophoneCapture(
             targetFormat: SpeechAudio.format16k,
             onAudio: { buffer in samplesContinuation.yield(SpeechAudio.samples(of: buffer)) },
@@ -190,7 +217,9 @@ final class StreamingDictationSession: DictationSession, @unchecked Sendable {
         do {
             try capture.start()
         } catch {
-            await session.cancel()
+            session.feedTask?.cancel()
+            samplesContinuation.finish()
+            updatesContinuation.finish()
             throw error
         }
         return session
@@ -199,18 +228,22 @@ final class StreamingDictationSession: DictationSession, @unchecked Sendable {
     func finish() async throws -> String {
         capture?.stop()
         samplesContinuation.finish()
-        await feedTask.value
-        let text = try await manager.finish()
-        updatesContinuation.finish()
-        return text
+        await feedTask?.value
+        defer { updatesContinuation.finish() }
+        let (manager, loadError) = lock.withLock { (self.manager, self.loadError) }
+        if let loadError { throw loadError }
+        guard let manager else { return "" }
+        return try await manager.finish()
     }
 
     func cancel() async {
         capture?.stop()
         samplesContinuation.finish()
-        feedTask.cancel()
-        await feedTask.value
-        try? await manager.reset()
+        feedTask?.cancel()
+        await feedTask?.value
+        if let manager = lock.withLock({ self.manager }) {
+            try? await manager.reset()
+        }
         updatesContinuation.finish()
     }
 }

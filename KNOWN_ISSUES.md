@@ -22,7 +22,7 @@ Known limits:
 - Parakeet Ultra and Nemotron set to Automatic can't be told the language. Spoken in a language outside their 25, they write something wrong rather than nothing
 - Whisper reads the words not yet settled again every second, so its live words trail by a second or two and a long dictation keeps the Neural Engine busy
 - Nemotron takes its language when it loads, so changing the language loads it again
-- A downloaded model is prepared for the Neural Engine once, at the end of its download, so that the first dictation starts at once. Each download here took about 2 to 5 minutes
+- The first time a downloaded model loads, Core ML prepares it for the Neural Engine: 23 seconds for Parakeet Unified. That happens at the end of its download, and later loads take about 0.2 seconds. If macOS clears OmanAI's cache, the next load prepares it again; the model is loaded a few seconds after launch for that reason, and the pill shows it loading while the microphone already listens. Each download here took about 2 to 5 minutes
 - The Floating look blurs what is behind it with the same undocumented Core Animation layer as the panel's backdrop. If a macOS drops it, the words keep only the darkening and their shadow, which may be hard to read over a bright window
 
 ---

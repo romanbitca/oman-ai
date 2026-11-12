@@ -50,6 +50,11 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         services.system.onGlobalShortcutReleased = { [weak self] action in
             if action == .dictateHold { self?.dictation?.holdReleased() }
         }
+        // A while after launch, so starting the app stays quick, the chosen model is loaded for the first dictation.
+        Task { @MainActor [services] in
+            try? await Task.sleep(for: .seconds(3))
+            DictationController.prepareChosenModel(services: services)
+        }
         if let preferences = try? services.settings.preferences() {
             services.system.setAppearance(preferences.appearance)
             services.system.registerGlobalShortcuts(preferences.globalShortcuts)

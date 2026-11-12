@@ -168,6 +168,18 @@ public actor SpeechService: SpeechRecognizing {
         }
     }
 
+    public func prepare(_ model: DictationModel, language: DictationLanguage) async {
+        unloadTask?.cancel()
+        unloadTask = nil
+        switch model {
+        case .apple: break
+        case .parakeetEnglish: await parakeetEnglish.prepare(language: language)
+        case .nemotron: await nemotron.prepare(language: language)
+        case .parakeet: await parakeet.prepare()
+        case .whisper: await whisper.prepare()
+        }
+    }
+
     private func unloadAll() async {
         await parakeetEnglish.unload()
         await nemotron.unload()

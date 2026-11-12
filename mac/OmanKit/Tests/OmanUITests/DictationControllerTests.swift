@@ -325,3 +325,49 @@ import Testing
         #expect(await eventually { harness.speech.unloadRequests == [60] })
     }
 }
+
+@MainActor
+@Suite struct DictationLoadingTests {
+    @Test func whileTheModelLoadsThePillSaysSoAndThenListens() async throws {
+        let harness = Harness()
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        #expect(await eventually { controller.phase == .listening })
+        let session = try #require(harness.speech.sessions.last)
+        session.send(.loadingModel(true))
+        #expect(await eventually { controller.isLoadingModel })
+        #expect(controller.modelName == DictationModel.apple.displayName)
+        session.send(.loadingModel(false))
+        #expect(await eventually { !controller.isLoadingModel })
+        controller.cancel()
+        #expect(!controller.isLoadingModel)
+    }
+
+    @Test func theChosenModelIsLoadedAheadUnlessSettingsUnloadsAtOnce() async throws {
+        let harness = Harness()
+        var preferences = AppPreferences()
+        preferences.dictationModel = .parakeetEnglish
+        try harness.settings.setPreferences(preferences)
+
+        DictationController.prepareChosenModel(services: harness.services)
+        #expect(await eventually { harness.speech.preparations.count == 1 })
+        #expect(harness.speech.preparations.first?.model == .parakeetEnglish)
+        #expect(harness.speech.preparations.first?.language == DictationLanguage(id: "en"))
+        #expect(await eventually { harness.speech.unloadRequests == [300] })
+
+        preferences.modelUnloadDelay = .immediately
+        try harness.settings.setPreferences(preferences)
+        DictationController.prepareChosenModel(services: harness.services)
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(harness.speech.preparations.count == 1)
+    }
+
+    @Test func choosingAModelInSettingsLoadsIt() async {
+        let harness = Harness()
+        let settings = harness.makeSettings()
+        settings.reload()
+        settings.setDictationModel(.nemotron)
+        #expect(await eventually { harness.speech.preparations.last?.model == .nemotron })
+    }
+}

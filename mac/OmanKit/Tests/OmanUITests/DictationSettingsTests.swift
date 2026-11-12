@@ -217,27 +217,24 @@ import Testing
     }
 }
 
+@MainActor
 @Suite struct DictationPillTests {
-    @Test func shortWordsShowWhole() {
-        let words = PillWords(LiveTranscript(confirmed: "Hello there", tentative: "how are"), limit: 150)
-        #expect(words.settled == "Hello there")
-        #expect(words.tentative == " how are")
+    @Test func eachWordKeepsItsPlaceAsOthersArrive() {
+        let first = LiveWords.words(of: LiveTranscript(confirmed: "Hello there", tentative: "how are"))
+        #expect(first.map(\.text) == ["Hello", "there", "how", "are"])
+        #expect(first.map(\.id) == [0, 1, 2, 3])
+        #expect(first.map(\.isGuess) == [false, false, true, true])
+
+        let later = LiveWords.words(of: LiveTranscript(confirmed: "Hello there how are", tentative: "you"))
+        #expect(later.map(\.id) == [0, 1, 2, 3, 4])
+        #expect(later.map(\.isGuess) == [false, false, false, false, true])
     }
 
-    @Test func longWordsShowTheirEndFromAWholeWord() {
-        let confirmed = (1...60).map { "word\($0)" }.joined(separator: " ")
-        let words = PillWords(LiveTranscript(confirmed: confirmed, tentative: "last guess"), limit: 40)
-        let shown = words.settled + words.tentative
-        #expect(shown.hasPrefix("…word"))
-        #expect(shown.hasSuffix("word60 last guess"))
-        #expect(words.tentative == " last guess")
-        #expect(shown.count <= 41)
-    }
-
-    @Test func aGuessAloneIsAllTentative() {
-        let words = PillWords(LiveTranscript(confirmed: "", tentative: "maybe this"), limit: 150)
-        #expect(words.settled.isEmpty)
-        #expect(words.tentative == "maybe this")
+    @Test func onlyTheNewestWordsAreKept() {
+        let many = (1...30).map { "word\($0)" }.joined(separator: " ")
+        let words = LiveWords.words(of: LiveTranscript(confirmed: many, tentative: "last"), limit: 5)
+        #expect(words.map(\.text) == ["word27", "word28", "word29", "word30", "last"])
+        #expect(words.first?.id == 26)
     }
 
     @Test func theWaveFollowsTheVoiceButNeverGoesFlat() {

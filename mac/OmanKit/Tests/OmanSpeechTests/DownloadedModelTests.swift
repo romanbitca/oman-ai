@@ -143,3 +143,24 @@ import Testing
         #expect(text.lowercased().contains("friday"))
     }
 }
+
+/// How long a model takes to load, the first time in a process and again after unloading. Off unless
+/// OMAN_LOAD_TIMES points at a folder of downloaded models; it only reads them.
+@Suite(.serialized) struct ModelLoadTimeTests {
+    @Test func loadTimes() async throws {
+        guard let path = ProcessInfo.processInfo.environment["OMAN_LOAD_TIMES"] else { return }
+        let root = URL(fileURLWithPath: path, isDirectory: true)
+        let engine = StreamingEngine(kind: .parakeetEnglish, root: root.appendingPathComponent("parakeet-unified-en"))
+        guard await engine.isDownloaded else { return }
+        var started = Date()
+        await engine.prepare(language: DictationLanguage(id: "en"))
+        print("LOAD Parakeet Unified, first in this process: \(String(format: "%.2f", Date().timeIntervalSince(started))) s")
+        await engine.unload()
+        started = Date()
+        await engine.prepare(language: DictationLanguage(id: "en"))
+        print("LOAD Parakeet Unified, after unloading: \(String(format: "%.2f", Date().timeIntervalSince(started))) s")
+        started = Date()
+        await engine.prepare(language: DictationLanguage(id: "en"))
+        print("LOAD Parakeet Unified, already loaded: \(String(format: "%.3f", Date().timeIntervalSince(started))) s")
+    }
+}
