@@ -94,6 +94,9 @@ public protocol SystemBridging: AnyObject {
     /// Switches accessibility support back off in every app `switchOnFocusReporting()` switched it on in.
     func switchOffFocusReporting()
     func copyToClipboard(_ text: String)
+    /// Where the app with this name is on the Mac, so its icon can be shown beside what was dictated into it. Nil
+    /// when no such app is found.
+    func applicationURL(named name: String) -> URL?
     /// Whether the clipboard offers text, decided from its types alone so nothing is read until the person asks.
     var hasClipboardText: Bool { get }
     func clipboardText() -> String?

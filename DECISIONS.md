@@ -505,3 +505,25 @@ The Lab opens from a right-click on the menu bar icon, whose menu holds Open Lab
   - the fade starts a third of the way out and eases in and out, where it used to start halfway;
   - the blurred area reaches 30 points past the words' sides and 16 above and below;
   - the text's shadow is lighter.
+
+## 2026-11-12 — OmanAI's own window replaces the Lab
+
+The maintainer saw the Lab on their screen and turned it down: its name, what it said and how it looked. A page in Settings' grouped style and a dark glass one, both of the same layout, were turned down too, and they asked for research. The assistant looked at Apple's Journal on the Mac, Wispr Flow, Typeless, Paste and Flighty's Passport, and drew three directions. The maintainer chose the grid of bold tiles, then sent the home screen of another dictation app and asked for its map of the year, as GitHub draws contributions, without that app's sidebar. The rest is the assistant's.
+
+- **The name:** the window is called OmanAI, and the menu bar icon's menu says Open OmanAI. Nothing is called the Lab any more.
+- **The page** is light, with tiles in OmanAI's own colours, teal into blue with violet. It is not Settings' grouped form: plain grey rows were what was turned down. It has a dark form too.
+- **A stretch of time** is chosen at the top: This week, This month or All time. It sets every tile.
+- **The first tile** says how many words were spoken in the stretch, with dictations, minutes, and pages or time saved under the number. The stretch is drawn as OmanAI's wave: a day at each step of a week or month, and a week or month at each step of all time.
+- **Two small tiles:** the streak, with this week's days as dots, and the speed in words a minute against typing.
+- **The second row has three tiles, chosen by what there is to say.** In order of choice: fixes, by kind; Your English; where the person dictates, by app; time saved; and, until a proofread has been counted, an invitation to proofread. They are shown in one steady order, and one of them is in colour. When time saved has no tile it is said under the first tile's number.
+- **Tiles follow what was ever counted, not the stretch,** so they don't come and go with every quiet week. Someone who never dictated gets their fixes as the first tile, and someone new is told how to start.
+- **The year map** has a square for each day of the last 53 weeks, darker for more, in four shades set by the busiest day shown. It counts words or fixes. Pointing at a square says its words, the time saved and the date. Days before anything was counted are only outlined, and the card says since when it counts.
+- **What is measured and what is worked out:**
+  - measured: words, dictations, time, speed, the streak, the apps and the fixes;
+  - worked out: pages, at 275 words each; "times typing" and time saved, against typing at 40 words a minute, the usual figure for an adult. Both say so when pointed at.
+  - Your English is the count each proofread keeps of the places it changed, from this version on.
+- **Every dictation is counted without its words,** in a table of its own, `dictation_counts`, migration v6: when, how many words, how long, which app. The Lab counted the transcripts kept, so keeping the last 50, or none, made its numbers wrong. Deleting transcripts leaves the counts. The table is filled once from the transcripts already kept.
+- **A day counts for the streak** when anything was dictated or written on it. Until today is over, yesterday's run still stands.
+- **Transcripts** are listed day by day under the map. Copy shows under the pointer, a click shows all of a long one, and a right-click deletes. How many to keep and Delete All are in the menu that says how many are kept. Search is in the window's toolbar, beside a button for Settings.
+- **Money is left out.** It has its own page in Settings.
+- **An app's icon** is found by the app's name, among running apps first and then in the usual folders, since only the name is kept with a dictation.

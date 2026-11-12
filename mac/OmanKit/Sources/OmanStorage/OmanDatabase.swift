@@ -128,6 +128,30 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
         migrator.registerMigration("v5") { db in
             try db.execute(sql: "ALTER TABLE writing_actions ADD COLUMN changes INTEGER")
         }
+        migrator.registerMigration("v6") { db in
+            try db.execute(sql: """
+                CREATE TABLE dictation_counts (
+                    id TEXT PRIMARY KEY,
+                    created_at DOUBLE NOT NULL,
+                    words INTEGER NOT NULL,
+                    duration DOUBLE NOT NULL,
+                    app_name TEXT
+                );
+                CREATE INDEX dictation_counts_created_at ON dictation_counts(created_at);
+                """)
+            // The transcripts kept so far are counted once, so the numbers don't start from nothing.
+            let kept = try Row.fetchAll(db, sql: "SELECT id, created_at, body, duration, app_name FROM dictations")
+            for row in kept {
+                let body: String = row["body"]
+                try db.execute(
+                    sql: "INSERT INTO dictation_counts (id, created_at, words, duration, app_name) VALUES (?, ?, ?, ?, ?)",
+                    arguments: [
+                        row["id"] as String, row["created_at"] as Double, DictationCount.words(in: body),
+                        row["duration"] as Double, row["app_name"] as String?,
+                    ]
+                )
+            }
+        }
         return migrator
     }
 
@@ -361,6 +385,36 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
     }
 
     // MARK: DictationStore
+
+    public func recordDictationCount(_ count: DictationCount) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: "INSERT INTO dictation_counts (id, created_at, words, duration, app_name) VALUES (?, ?, ?, ?, ?)",
+                arguments: [count.id.uuidString, count.date.timeIntervalSince1970, count.words, count.duration, count.appName]
+            )
+        }
+    }
+
+    public func dictationCounts(since date: Date) throws -> [DictationCount] {
+        try writer.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT id, created_at, words, duration, app_name
+                    FROM dictation_counts WHERE created_at >= ? ORDER BY created_at, rowid
+                    """,
+                arguments: [date.timeIntervalSince1970]
+            ).map { row in
+                DictationCount(
+                    id: try Self.uuid(from: row["id"]),
+                    date: Date(timeIntervalSince1970: row["created_at"]),
+                    words: row["words"],
+                    duration: row["duration"],
+                    appName: row["app_name"]
+                )
+            }
+        }
+    }
 
     public func saveDictation(_ dictation: SavedDictation) throws {
         try writer.write { db in

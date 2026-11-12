@@ -234,6 +234,8 @@ import Testing
         #expect(harness.system.copied == ["Keep this"])
         #expect(controller.notice == "There was nowhere to paste, so your words were copied.")
         #expect(harness.dictations.saved.map(\.text) == ["Keep this"])
+        #expect(harness.dictations.counts.map(\.id) == harness.dictations.saved.map(\.id))
+        #expect(harness.dictations.counts.map(\.words) == [2])
     }
 
     @Test func transcriptsAreNotKeptWhenSettingsSaysNot() async throws {
@@ -251,6 +253,8 @@ import Testing
         #expect(await eventually { controller.phase == .idle })
         #expect(harness.system.insertCalls.map(\.text) == ["Private"])
         #expect(harness.dictations.saved.isEmpty)
+        // It is still counted, as one word and no more: the numbers in OmanAI's window need no transcript.
+        #expect(harness.dictations.counts.map(\.words) == [1])
     }
 
     @Test func aModelThatFailsToStartSaysWhy() async throws {

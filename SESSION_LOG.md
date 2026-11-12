@@ -4,7 +4,7 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
-## 2026-11-12 — The Lab, keys held together, and a cleaner pill
+## 2026-11-12 — OmanAI's own window, keys held together, and a cleaner pill
 
 - The maintainer tried 0.4.2 at home and sent screenshots. They asked for round buttons in the pill, the Settings button gone from the panel, Right ⌘ with Right ⌥ as a dictation shortcut, a cleaner Floating background, and a Lab in place of Settings when OmanAI is opened. They also reported that waiting words didn't go into a field they clicked; the session that built waiting words answered that with Paste, released in 0.4.3. The choices are in DECISIONS.md
 - Measured the pill's cancel button in their screenshot at 70 by 68 pixels: the glass's darker sides make it read wide. The round controls now have an even ring
@@ -16,6 +16,11 @@ Date-stamped log of what each work session accomplished.
 - With the maintainer's yes, a test window built from the same code ran once on their screen, for 24 seconds. It showed the pill in both looks, listening and then holding words with Paste, then the Lab drawn from a copy of their database. Nothing was clicked or typed, nothing took the keyboard, and the copy was deleted afterwards. Their own database was only read, so it stays on the old tables until the release opens it
 - Measured in the pictures: every round button's ring is 68 by 68 pixels in both looks, with the glass's own one-pixel dark line just outside it on each side. The Floating background darkens by up to about 9% beside the words and is gone before the window's edges: at its top, left and bottom edges the pixels match the Card look's picture
 - The Lab showed the maintainer's 23 transcripts and figures correctly, with two faults, now fixed. The tile whose note wrapped onto a second line stood about 13 points taller than the other three, and a note read "of 1 texts written", as the Spending page's did too. Every note now has room for two lines, and drawn off the screen the four tiles measure the same height
+- The maintainer then turned the Lab down as a whole: its name, what it said and how it looked. Two restylings of the same layout, one in Settings' grouped form and one in dark glass, were turned down too, and they asked for research. Looked at Apple's Journal on the Mac, Wispr Flow, Typeless, Paste and Flighty's Passport, and drew three directions as pictures. They chose the grid of bold tiles, then sent another app's home screen and asked for its map of the year, without that app's sidebar. The choices are in DECISIONS.md
+- Replaced the Lab with OmanAI's own window: a stretch of time at the top, a first tile with the words spoken and the stretch drawn as OmanAI's wave, the streak, the speed against typing, three tiles chosen by what there is to say, a map of the year with a square for each day, and the transcripts day by day with Copy under the pointer. The menu says Open OmanAI
+- Every dictation is now counted without its words, in `dictation_counts` (migration v6), so the numbers stay right when transcripts are deleted or not kept. The table is filled once from the transcripts already kept
+- Drew the window off the screen with the maintainer's own dictations and with made-up use, light and dark, in each stretch, at its narrowest and with the pointer on a square and on a transcript, and compared it with the chosen picture. It has not been on the screen
+- The maintainer asked why holding Right ⌥, Right ⌘ or both does nothing in 0.4.3. A single key is chosen there from a menu on the Shortcuts page, and both of their menus read None; two keys together come with this branch. Found no fault in the code that watches the keys, which has only been run in tests
 
 ## 2026-11-12 — 0.4.3: Paste for words that wait, and Electron apps asked where the cursor is
 

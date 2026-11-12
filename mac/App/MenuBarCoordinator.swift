@@ -18,8 +18,8 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
     private var panelModel: PanelViewModel?
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
-    private var labModel: LabViewModel?
-    private var labWindow: NSWindow?
+    private var homeModel: HomeViewModel?
+    private var homeWindow: HomeWindowController?
     private var outsideClickMonitor: Any?
     private var isPinned = false
     private var placedOrigin: NSPoint?
@@ -143,7 +143,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
 
     private func showStatusMenu() {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Open Lab", action: #selector(openLabFromMenu), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "Open OmanAI", action: #selector(openHomeFromMenu), keyEquivalent: "").target = self
         menu.addItem(withTitle: "OmanAI Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit OmanAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -156,21 +156,22 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         openSettings()
     }
 
-    @objc private func openLabFromMenu() {
-        openLab()
+    @objc private func openHomeFromMenu() {
+        openHome()
     }
 
-    /// What OmanAI did, how the person's writing goes, and their transcripts.
-    func openLab() {
+    /// OmanAI's own window: what it did, how the person's writing goes, and their transcripts.
+    func openHome() {
         dismissPanel()
-        let model = labModel ?? LabViewModel(services: services)
-        labModel = model
+        let model = homeModel ?? HomeViewModel(services: services)
+        model.openSettings = { [weak self] in self?.openSettings() }
+        homeModel = model
         model.reload()
-        if labWindow == nil {
-            labWindow = LabWindow.make(model: model)
+        if homeWindow == nil {
+            homeWindow = HomeWindowController(model: model)
         }
         NSApp.activate()
-        labWindow?.makeKeyAndOrderFront(nil)
+        homeWindow?.window?.makeKeyAndOrderFront(nil)
     }
 
     private func dismissPanel() {

@@ -244,6 +244,9 @@ final class FakeSystem: SystemBridging {
     var clipboardReads = 0
 
     func copyToClipboard(_ text: String) { copied.append(text) }
+
+    var applicationURLs: [String: URL] = [:]
+    func applicationURL(named name: String) -> URL? { applicationURLs[name] }
     var hasClipboardText: Bool { clipboard != nil }
 
     func clipboardText() -> String? {
@@ -546,6 +549,21 @@ final class FakeActions: ActionStore, @unchecked Sendable {
 final class FakeDictations: DictationStore, @unchecked Sendable {
     private let lock = NSLock()
     private var stored: [SavedDictation] = []
+    private var counted: [DictationCount] = []
+
+    var counts: [DictationCount] { lock.withLock { counted } }
+
+    func seedCounts(_ counts: [DictationCount]) {
+        lock.withLock { counted = counts }
+    }
+
+    func recordDictationCount(_ count: DictationCount) throws {
+        lock.withLock { counted.append(count) }
+    }
+
+    func dictationCounts(since date: Date) throws -> [DictationCount] {
+        lock.withLock { counted.filter { $0.date >= date }.sorted { $0.date < $1.date } }
+    }
 
     var saved: [SavedDictation] { lock.withLock { stored } }
 

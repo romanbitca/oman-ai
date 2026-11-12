@@ -509,7 +509,7 @@ public final class DictationController {
     }
 
     private func save(_ text: String, duration: TimeInterval, appName: String?) {
-        guard history != .off, let store = services.dictations else { return }
+        guard let store = services.dictations else { return }
         let dictation = SavedDictation(
             date: startedAt ?? now(),
             text: text,
@@ -519,6 +519,11 @@ public final class DictationController {
             appName: appName
         )
         do {
+            // Counted whatever is kept: the numbers in OmanAI's window need no words.
+            try store.recordDictationCount(DictationCount(
+                id: dictation.id, date: dictation.date, words: DictationCount.words(in: text), duration: duration, appName: appName
+            ))
+            guard history != .off else { return }
             try store.saveDictation(dictation)
             if let limit = history.limit {
                 try store.trimDictations(keepingNewest: limit)

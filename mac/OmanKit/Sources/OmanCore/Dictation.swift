@@ -111,7 +111,33 @@ public struct SavedDictation: Identifiable, Equatable, Sendable {
     }
 }
 
+/// What OmanAI counts about one dictation: when it was, how many words, how long it took and which app it went
+/// to. Never the words, so the numbers stay right when transcripts are deleted or not kept at all.
+public struct DictationCount: Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let date: Date
+    public let words: Int
+    public let duration: TimeInterval
+    public let appName: String?
+
+    public init(id: UUID = UUID(), date: Date, words: Int, duration: TimeInterval, appName: String?) {
+        self.id = id
+        self.date = date
+        self.words = words
+        self.duration = duration
+        self.appName = appName
+    }
+
+    public static func words(in text: String) -> Int {
+        text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+    }
+}
+
 public protocol DictationStore: Sendable {
+    /// Notes that something was dictated, whether or not its transcript is kept.
+    func recordDictationCount(_ count: DictationCount) throws
+    /// Oldest first.
+    func dictationCounts(since date: Date) throws -> [DictationCount]
     func saveDictation(_ dictation: SavedDictation) throws
     /// Newest first.
     func savedDictations() throws -> [SavedDictation]

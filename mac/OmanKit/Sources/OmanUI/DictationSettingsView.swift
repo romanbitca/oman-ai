@@ -109,7 +109,7 @@ struct DictationSettingsView: View {
                 }
             } footer: {
                 if group == DictationModel.Group.allCases.last {
-                    Text("Every model runs on this Mac, so what you say never leaves it. Your transcripts are in the Lab: right-click the wave in the menu bar and choose Open Lab.")
+                    Text("Every model runs on this Mac, so what you say never leaves it. Your transcripts are in OmanAI's window: right-click the wave in the menu bar and choose Open OmanAI.")
                 }
             }
         }

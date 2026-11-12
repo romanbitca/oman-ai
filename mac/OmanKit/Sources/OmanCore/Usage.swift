@@ -78,7 +78,7 @@ public struct WritingAction: Identifiable, Equatable, Sendable {
     public let model: String
     public let appName: String?
     public var applied: Bool
-    /// For a proofread, how many places it changed, which the Lab follows week by week. Nil for the rest, and for
+    /// For a proofread, how many places it changed, which OmanAI's window follows week by week. Nil for the rest, and for
     /// proofreads from before this was kept.
     public let changes: Int?
 

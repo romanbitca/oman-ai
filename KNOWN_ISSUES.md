@@ -33,23 +33,30 @@ Known limits:
 
 ---
 
-## 2026-11-12 — The Lab, keys held together and the pill's new look: what has been tried
+## 2026-11-12 — OmanAI's window, keys held together and the pill's new look: what has been tried
 
 Tried:
 - Tests for the chord tracker: one key, two keys in either order, a chord growing into another, other keys, Shift and Fn, and keys that can't make a chord.
 - Tests for recording and saving chords, single keys saved by 0.4.2 still loading, and dictating with two keys held.
-- Tests for the Lab's figures, weeks and days, its transcripts, and proofreads counting their changes.
-- The Lab drawn off the screen, light and dark.
-- With the maintainer's yes, once on their screen in a test window built from the same code: the pill in both looks, listening and then holding words with Paste, and the Lab drawn from a copy of their database, moved to the new tables first. Every round button's ring measured 68 by 68 pixels, and the Floating background faded out before the window's edges. The Lab's tiles were uneven and one note read "of 1 texts written"; both are fixed, and the tiles measure the same height when drawn off the screen.
+- Tests for the window's numbers: each stretch, speed, pages and time saved, the line's steps, the streak, fixes by kind, how the writing goes, the apps, the year map and its shades, and which tiles show for someone new, someone who only dictates, only writes, or does both.
+- Tests for counting a dictation without its words, with transcripts kept and not kept, for deleting transcripts leaving the counts, and for a database from 0.4.3 being counted once.
+- The window drawn off the screen, light and dark: with the maintainer's own dictations, with four months of made-up use, and with nothing; in each stretch; at its narrowest; with the pointer on a square of the map and on a transcript; and whole, toolbar included, kept off every display.
+- With the maintainer's yes, once on their screen in a test window built from the same code: the pill in both looks, listening and then holding words with Paste. Every round button's ring measured 68 by 68 pixels, and the Floating background faded out before the window's edges. The Lab was in that look too and has since been replaced.
 
 Not yet tried:
-- Holding keys together on a real keyboard.
-- The pill and the Lab inside the app itself, rather than in the test window.
+- OmanAI's window on the screen: its toolbar as macOS draws it, the search field, the menu of how many to keep, pointing and clicking.
+- Holding keys together on a real keyboard. A single key on its own, in 0.4.2 and 0.4.3, has only been run in tests too.
+- The pill and the window inside the app itself, rather than in a test window.
 - The menu bar icon's new menu, and opening OmanAI again.
 
 Known limits:
-- The Lab's dictation figures come from the transcripts kept, so with "Keep: the last 50" they cover only those.
-- Changes per proofread are counted from this version on, so earlier weeks show nothing.
+- The numbers start with the transcripts that were kept when this version first ran. What was dictated before with transcripts off, or deleted, was never counted.
+- Pages, "times typing" and time saved are worked out, not measured: 275 words a page, and typing at 40 words a minute, which nobody can change yet.
+- Speed is words over the whole time a dictation ran, pauses included, so it reads lower than the person speaks.
+- Your English counts from this version on, so earlier weeks show nothing.
+- An app's icon is found by its name. An app that was renamed, removed or lives outside the usual folders gets its first letter instead.
+- The year map always shows 53 weeks, and its shades are set by the busiest day shown, so one very long day makes the others pale.
+- Deleting every transcript leaves the numbers, and nothing in the window resets them.
 - The glass draws its own one-pixel dark line on each side of a round button, just outside the ring. Counting those lines, a button is 70 by 68 pixels; the ring itself is round.
 
 ## 2026-11-12 — Spending's fixes: what has been tried, and what hasn't

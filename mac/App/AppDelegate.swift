@@ -34,10 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Opening OmanAI while it runs shows the Lab. Without this, macOS would bring back the Settings window, which
+    /// Opening OmanAI while it runs shows its own window. Without this, macOS would bring back the Settings window, which
     /// is kept after it closes.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        coordinator?.openLab()
+        coordinator?.openHome()
         return false
     }
 

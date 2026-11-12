@@ -260,6 +260,25 @@ public final class MacSystemBridge: SystemBridging {
         clipboard.copy(text)
     }
 
+    /// A running app with that name first, since it is the one that was dictated into, then the usual folders.
+    public func applicationURL(named name: String) -> URL? {
+        if let running = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == name })?.bundleURL {
+            return running
+        }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let folders = [
+            "/Applications", "/System/Applications", "\(home)/Applications", "/System/Applications/Utilities",
+            "/Applications/Utilities", "/System/Library/CoreServices", "/System/Library/CoreServices/Applications",
+        ]
+        for folder in folders {
+            let path = "\(folder)/\(name).app"
+            if FileManager.default.fileExists(atPath: path) {
+                return URL(fileURLWithPath: path)
+            }
+        }
+        return nil
+    }
+
     public var hasClipboardText: Bool { clipboard.offersText }
 
     public func clipboardText() -> String? {
