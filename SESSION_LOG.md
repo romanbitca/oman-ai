@@ -9,6 +9,7 @@ Date-stamped log of what each work session accomplished.
 - The maintainer tried 0.4.2: words dictated with the Finder in front waited in the pill, and a click into an Electron app's message field didn't take them, so they copied and pasted by hand. The kept transcripts' app names, read without their text, show the dictation made in the Finder and the next one in that app. Electron apps answer that nothing has the cursor even in front, as a Chromium browser did with the Mac in use, so waiting words never went into them by themselves
 - Added Paste to the waiting pill, beside × and Copy: click in a field, then Paste. The pill now says "Click in a field, then Paste" (see DECISIONS.md)
 - 4 new tests, and the whole suite of 531 passes. The waiting row was drawn off the screen in both looks and fits. The app builds, and its build copy was unregistered and deleted
+- With the maintainer's yes, a reader that only notes roles ran for three minutes while they clicked into each app's field. Mail's message being written, its To and Subject, and Telegram's and WhatsApp's message fields take text; a mail being read takes none; Slack and other Electron apps can't be told. Neither Telegram nor WhatsApp named the app itself in front, which had been the worry. Messages was not in the run. The first run noted nothing, because the reader kept the app that was in front when it started; it was fixed and run once more
 - Not verified: Paste on the screen. Not merged or released
 
 ## 2026-11-12 — 0.4.2: the redrawn model list, and words that wait for a field

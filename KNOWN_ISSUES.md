@@ -10,10 +10,12 @@ Tried: tests for each answer, a paste when a field gets the cursor with the spac
 
 In 0.4.2 the maintainer met the first limit below: words dictated with the Finder in front waited, and a click into an Electron app's message field didn't take them. With the Mac in use, a Chromium browser in front also answered that nothing had focus. Paste in the pill came from that.
 
+Then, with the maintainer clicking into each app's field and a reader built from the app's own code noting only roles, what apps answer while they are in front: a mail being written in Mail is a page whose value can be set, and its To and Subject are text fields, so they take text; a mail being read is a page that can't be set, so it takes none; the message fields of Telegram and WhatsApp are text areas, so they take text; Slack and other Electron apps said nothing had focus, so they can't be told. Neither Telegram nor WhatsApp named the app itself in front. WhatsApp's window with no field in focus named a group of its own (subrole iOSContentGroup), which can't be told, and right after each switch WhatsApp and Telegram didn't answer for a moment, which can't be told either.
+
 Not yet tried:
 
 - Paste on the screen. Its click shouldn't move the keyboard, as Done's doesn't, but that has only been reasoned, not seen
-- Any of it on the screen. Above all, what apps answer while they are in front: a field in Slack or another Electron app, expected to be can't be told; a mail being composed in Mail, expected to be a page whose value can be set; Messages and WhatsApp, which named the app itself from the background and should name their field in front; a Finder window in icon view; a page in Safari with no field in focus
+- What Messages answers in front; it was not in the run above. A Finder window in icon view, and a page in Safari with no field in focus
 - macOS before 27, where the desktop may answer differently
 
 Known limits:
