@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — The website shows 0.3.6: new recordings and Settings pictures
+
+- The session that built the change view filmed the four flows again with 0.3.6, on the maintainer's screen and with their yes, and drew three Settings pages again. Nothing was put on the screen for the work below
+- Cut the header's recordings and the ones under Use cases from the new footage, under new file names. Proofread is in the header again, second of four. Checked on single frames that the chat drawn under the panel changes when a recording pastes
+- The filming of Proofread stopped early, so that recording ends on its result and shows no paste. The cut suggested for it froze the pointer on its way across the panel, so it ends a fifth of a second earlier, where the pointer rests on Replace (see KNOWN_ISSUES.md)
+- New pictures of the General, Writing and Spending pages on the site, in the documentation and in the README. The documentation shows the marks after a proofread in two pictures, and the writing state with its text at the top
+- On a phone the four names under the recording share its width. On the narrowest phones the pause button gives way to them, and a click or a tap on the recording pauses it, on any screen
+- Tried in the real container before it went out: nothing blocked, the recordings can be sought, and the pages were looked at 1512, 390 and 320 pixels wide
+- Not verified: Safari, Firefox and a real phone, as before
+
 ## 2026-11-12 — Proofread shows what it changed, and a short answer starts at the top
 
 - The maintainer asked for a way to see what Proofread changed, with ways to choose from. Drew four in the conversation; they chose two and asked for both, with a choice in Settings (see DECISIONS.md)

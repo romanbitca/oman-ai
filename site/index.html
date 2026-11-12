@@ -16,9 +16,9 @@
 <meta name="color-scheme" content="light">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="media/hero-desk.webp" type="image/webp">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 <!-- Without scripts no recording plays, so the first one shows its result and the controls that need scripts are left out. -->
-<noscript><style>#reel-rewrite { background: url("media/hero-rewrite-still.webp") center top / cover; } .reel-clip video, .reel-bar { display: none; } .reel-chat { bottom: 4.4%; }</style></noscript>
+<noscript><style>#reel-rewrite { background: url("media/hero-rewrite-still-2.webp") center top / cover; } .reel-clip video, .reel-bar { display: none; } .reel-chat { bottom: 4.4%; }</style></noscript>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -120,26 +120,34 @@
                  data-after="Hi Dana, yes. I'll send the Q3 numbers over shortly, I just want to double-check the churn figure first."
                  data-at="9.56">
               <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel rewriting a chat message in a work style">
-                <source src="media/hero-rewrite-2.webm" type="video/webm">
-                <source src="media/hero-rewrite-2.mp4" type="video/mp4">
+                <source src="media/hero-rewrite-3.webm" type="video/webm">
+                <source src="media/hero-rewrite-3.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="reel-clip" role="tabpanel" id="reel-proofread" aria-labelledby="reel-tab-proofread" aria-hidden="true"
+                 data-from="Marta" data-message="Hi! Did the October invoice go out?"
+                 data-before="sorry for the dealy, the invoice was send on monday and you should recieve it untill friday">
+              <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel proofreading a message and marking the four words it changed">
+                <source src="media/hero-proofread-3.webm" type="video/webm">
+                <source src="media/hero-proofread-3.mp4" type="video/mp4">
               </video>
             </div>
             <div class="reel-clip" role="tabpanel" id="reel-explain" aria-labelledby="reel-tab-explain" aria-hidden="true"
                  data-from="Alex" data-message="I moved the launch to next week. Hope that's ok?"
                  data-before="Fine. Do whatever you think is best, I guess.">
               <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel explaining how a short reply will be read">
-                <source src="media/hero-explain-2.webm" type="video/webm">
-                <source src="media/hero-explain-2.mp4" type="video/mp4">
+                <source src="media/hero-explain-3.webm" type="video/webm">
+                <source src="media/hero-explain-3.mp4" type="video/mp4">
               </video>
             </div>
             <div class="reel-clip" role="tabpanel" id="reel-compose" aria-labelledby="reel-tab-compose" aria-hidden="true"
                  data-from="Dan" data-message="Team sync at 3pm today. Can you make it?"
                  data-before=""
                  data-after="hey Dan, can't make the 3pm sync today. could you send me the notes after? i'll catch up tonight"
-                 data-at="12.7">
+                 data-at="12.63">
               <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel writing a short message from one line">
-                <source src="media/hero-compose-2.webm" type="video/webm">
-                <source src="media/hero-compose-2.mp4" type="video/mp4">
+                <source src="media/hero-compose-3.webm" type="video/webm">
+                <source src="media/hero-compose-3.mp4" type="video/mp4">
               </video>
             </div>
 
@@ -151,6 +159,7 @@
             <div class="reel-bar">
               <div class="reel-tabs" role="tablist" aria-label="What the recording shows">
                 <button role="tab" type="button" id="reel-tab-rewrite" aria-controls="reel-rewrite" aria-selected="true">Rewrite<i aria-hidden="true"></i></button>
+                <button role="tab" type="button" id="reel-tab-proofread" aria-controls="reel-proofread" aria-selected="false" tabindex="-1">Proofread<i aria-hidden="true"></i></button>
                 <button role="tab" type="button" id="reel-tab-explain" aria-controls="reel-explain" aria-selected="false" tabindex="-1">Explain<i aria-hidden="true"></i></button>
                 <button role="tab" type="button" id="reel-tab-compose" aria-controls="reel-compose" aria-selected="false" tabindex="-1">Compose<i aria-hidden="true"></i></button>
               </div>
@@ -216,7 +225,7 @@
           </button>
           <button role="tab" type="button" id="tab-proofread" aria-controls="case-proofread" aria-selected="false" tabindex="-1">
             <span class="num">02</span><span class="name">Proofread</span>
-            <span class="more">Fixes spelling, grammar and punctuation, and leaves your wording alone. With a style chosen it keeps that style's habits, so lower case stays lower case.</span>
+            <span class="more">Fixes spelling and grammar and leaves your wording alone. A message typed in lower case stays in lower case. The words it changed are marked, and one click shows what they replaced.</span>
             <i aria-hidden="true"></i>
           </button>
           <button role="tab" type="button" id="tab-explain" aria-controls="case-explain" aria-selected="false" tabindex="-1">
@@ -234,36 +243,36 @@
         <div class="player-screen">
           <div class="case" role="tabpanel" id="case-rewrite" aria-labelledby="tab-rewrite">
             <div class="clip framed" data-clip>
-              <video muted playsinline preload="none" poster="media/poster-rewrite.webp" width="1488" height="780" aria-label="A recording of Rewrite with a work style">
-                <source src="media/demo-rewrite-2.webm" type="video/webm">
-                <source src="media/demo-rewrite-2.mp4" type="video/mp4">
+              <video muted playsinline preload="none" poster="media/poster-rewrite-2.webp" width="1488" height="780" aria-label="A recording of Rewrite with a work style">
+                <source src="media/demo-rewrite-3.webm" type="video/webm">
+                <source src="media/demo-rewrite-3.mp4" type="video/mp4">
               </video>
               <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
             </div>
           </div>
           <div class="case" role="tabpanel" id="case-proofread" aria-labelledby="tab-proofread" hidden>
             <div class="clip framed" data-clip>
-              <video muted playsinline preload="none" poster="media/poster-proofread.webp" width="1488" height="780" aria-label="A recording of Proofread fixing a message">
-                <source src="media/demo-proofread-2.webm" type="video/webm">
-                <source src="media/demo-proofread-2.mp4" type="video/mp4">
+              <video muted playsinline preload="none" poster="media/poster-proofread-2.webp" width="1488" height="780" aria-label="A recording of Proofread fixing a message">
+                <source src="media/demo-proofread-3.webm" type="video/webm">
+                <source src="media/demo-proofread-3.mp4" type="video/mp4">
               </video>
               <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
             </div>
           </div>
           <div class="case" role="tabpanel" id="case-explain" aria-labelledby="tab-explain" hidden>
             <div class="clip framed" data-clip>
-              <video muted playsinline preload="none" poster="media/poster-explain.webp" width="1488" height="780" aria-label="A recording of Explain reading a short reply">
-                <source src="media/demo-explain-2.webm" type="video/webm">
-                <source src="media/demo-explain-2.mp4" type="video/mp4">
+              <video muted playsinline preload="none" poster="media/poster-explain-2.webp" width="1488" height="780" aria-label="A recording of Explain reading a short reply">
+                <source src="media/demo-explain-3.webm" type="video/webm">
+                <source src="media/demo-explain-3.mp4" type="video/mp4">
               </video>
               <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
             </div>
           </div>
           <div class="case" role="tabpanel" id="case-compose" aria-labelledby="tab-compose" hidden>
             <div class="clip framed" data-clip>
-              <video muted playsinline preload="none" poster="media/poster-compose.webp" width="1488" height="780" aria-label="A recording of Compose writing a short message">
-                <source src="media/demo-compose-2.webm" type="video/webm">
-                <source src="media/demo-compose-2.mp4" type="video/mp4">
+              <video muted playsinline preload="none" poster="media/poster-compose-2.webp" width="1488" height="780" aria-label="A recording of Compose writing a short message">
+                <source src="media/demo-compose-3.webm" type="video/webm">
+                <source src="media/demo-compose-3.mp4" type="video/mp4">
               </video>
               <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
             </div>
@@ -506,7 +515,7 @@
     <div class="gallery" data-gallery data-rise>
       <div class="rail" tabindex="0" role="group" aria-label="Screenshots of Settings">
         <figure class="shot">
-          <img src="media/settings-spending-light.webp" width="1200" height="1244" loading="lazy" alt="The Spending page: a total for last month, a bar for each day and a list by model">
+          <img src="media/settings-spending-light-2.webp" width="1200" height="1244" loading="lazy" alt="The Spending page: a total for last month, a bar for each day and a list by model">
           <figcaption><b>Spending</b> By period and by model.</figcaption>
         </figure>
         <figure class="shot">
@@ -514,7 +523,7 @@
           <figcaption><b>Styles</b> Paste real messages, then try it.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="media/settings-writing-light.webp" width="1200" height="910" loading="lazy" alt="The Writing page: the model, how long Claude thinks, a language and standing rules">
+          <img src="media/settings-writing-light-2.webp" width="1200" height="998" loading="lazy" alt="The Writing page: the model, how long Claude thinks, a language and standing rules">
           <figcaption><b>Writing</b> The model, and rules it always follows.</figcaption>
         </figure>
         <figure class="shot">
@@ -659,6 +668,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=3" defer></script>
+<script src="app.js?v=4" defer></script>
 </body>
 </html>

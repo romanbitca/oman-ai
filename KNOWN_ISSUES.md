@@ -4,23 +4,27 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
-## 2026-11-12 — The marks after a proofread have not been seen in the real panel
+## 2026-11-12 — The marks after a proofread have only been seen over dark glass
 
-Tests cover what is marked and how it is counted, and the marked text was drawn on its own, selectable and not, where it looks as intended. The whole result panel could not be drawn off the screen. ImageRenderer leaves out what AppKit draws, which is the scrolling text and the field to make a change, and drops the glass at random. A window placed off every display draws only its AppKit parts. Nothing was put on the maintainer's screen to look at it, so how the green and red read over the glass, in light and in dark, is unchecked.
+Tests cover what is marked and how it is counted, and the marked text was drawn on its own, selectable and not, where it looks as intended. The marks were then filmed on the real panel, in the harness that makes the website's recordings. Over dark glass the tint on the new words and the red, struck-through old words read well, both at once and after a click on the count. The two pictures are in the documentation, under The result. Over light glass they have not been seen.
+
+The whole result panel cannot be drawn off the screen. ImageRenderer leaves out what AppKit draws, which is the scrolling text and the field to make a change, and drops the glass at random. A window placed off every display draws only its AppKit parts. So seeing the panel means putting it on the screen.
 
 ---
 
-## 2026-11-12 — Three pictures on the website show the app before 0.3.5
+## 2026-11-12 — The website's recordings and pictures: what 0.3.6 replaced, and what it did not
 
-The Proofread recording under Use cases was made with 0.3.4. It shows a message typed in lower case getting capitals and a full stop, and "untill" becoming "by". Since 0.3.5, Proofread with As written keeps the lower case and only corrects the spelling. For that reason the header plays three recordings and leaves Proofread out. The picture of the Writing page lacks the line under the quality control, and the picture of Spending was taken before the dates were centred under the bars.
+All four recordings were filmed again with 0.3.6, for the header and for Use cases, and the pictures of the General, Writing and Spending pages are new. Proofread is in the header again: it keeps the lower case, says "4 changes" and tints the words it changed. A short answer starts at the top of its box while it is written.
 
-Taking them again puts the made-up desktop and the Settings window on the maintainer's screen for about half a minute, so it waits for their yes.
+What is still not as it should be:
 
-Each recording in the header carries `data-at` in `site/index.html`, the second at which it pastes, and the chat drawn under the panel changes then. A recording that is cut again needs that number checked again.
+- The Proofread recording ends on its result. The filming stopped by itself at 8.2 seconds, before the count and Replace were pressed, and why is not known. It is cut at 7.7 seconds, where the pointer rests on Replace, and that picture is held. It never shows the paste
+- The three new Settings pictures are each put together from two: the toolbar from the picture taken on the screen the night before, and the page under it drawn off the screen. A toolbar drawn off the screen has a box around every tab, where on the screen only the chosen one has one, so the toolbar could not be drawn that way
+- The pictures of Styles, the style editor, Shortcuts and Key & Permissions, and of the panel's first screen, a rewrite's result, Explain and Compose, are from 0.3.4. Those screens have not changed since
+
+Each recording in the header that ends with a paste carries `data-at` in `site/index.html`, the second at which it pastes, and the chat drawn under the panel changes then. A recording that is cut again needs that number measured again.
 
 The recordings under Use cases show a whole desktop, so on a phone their text is too small to read.
-
-The recordings were also made before a short answer started at the top of its box while it is written. In them it sits at the bottom of the box and moves to the top when the answer is done.
 
 The new look was checked in Chromium only, at five widths. Safari, Firefox and a real phone were not tried.
 

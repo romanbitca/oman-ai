@@ -201,10 +201,13 @@
       video.addEventListener("pause", showPause);
       watcher?.observe(video);
     });
-    pause.addEventListener("click", () => {
+    // The button pauses the recording that is showing, and so does a click or a tap on the recording itself.
+    function togglePause() {
       const video = videos[active];
       if (video.paused) { stopped.delete(video); video.play().catch(() => {}); } else { stopped.add(video); video.pause(); }
-    });
+    }
+    pause.addEventListener("click", togglePause);
+    videos.forEach((video) => video.addEventListener("click", togglePause));
     // The slab's own motion rests while it is off screen.
     if ("IntersectionObserver" in window) {
       new IntersectionObserver((entries) => {

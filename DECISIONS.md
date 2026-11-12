@@ -305,7 +305,7 @@ Asked for by the maintainer after seeing the dark page: no black theme, a header
 
 - The page is light. Soft colour stays fixed behind it, and the menu, the cards, the tiles and the second buttons are sheets of glass that blur it as they scroll past. This supersedes "The design is one dark page" above
 - The main button is the violet of the panel's own Replace button. Teal marks what is on or done
-- The header has the words on the left and recordings on the right: the real panel close up in a slab of glass, one recording after another, with names to choose one and a button to pause. There are three: Rewrite, Explain and Compose
+- The header has the words on the left and recordings on the right: the real panel close up in a slab of glass, one recording after another, with names to choose one and a button to pause. There are four, in the order of the list under Use cases: Rewrite, Proofread, Explain and Compose. Until 0.3.6 was filmed there were three, without Proofread
 - The header's recordings are cut from the same raw footage as those under Use cases, cropped to the panel, so they are sharp at that size. The chat under the panel is drawn by the page from each recording's own texts, and changes on the frame where the recording pastes. The line under the recordings says which part is which
 - With motion turned off, or without scripts, nothing plays and a still picture of the result is shown
 - Settings is shown in its light pictures on the site and in the documentation. The README keeps both

@@ -32,6 +32,9 @@ main.prose > section + section { padding-top: clamp(48px, 6vw, 72px); border-top
 .prose figure:not(.window) { padding: 8px; }
 .prose figure.window img { box-shadow: none; filter: drop-shadow(0 30px 40px rgba(22, 44, 90, 0.3)) drop-shadow(0 0 1px rgba(14, 17, 22, 0.4)); border-radius: 14px; }
 .prose figure.narrow { max-width: 540px; }
+/* Two pictures side by side where there is room. */
+.prose .pair { display: grid; gap: 4px 20px; }
+@media (min-width: 720px) { .prose .pair { grid-template-columns: 1fr 1fr; } }
 .prose figcaption { margin-top: 12px; font-size: 0.86rem; color: var(--mute); }
 
 /* One control and what it does */

@@ -129,8 +129,8 @@ Native macOS controls, in light and dark.
   <tr>
     <td width="50%" valign="top">
       <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="site/media/settings-spending-dark.webp">
-        <img src="site/media/settings-spending-light.webp" alt="The Spending page">
+        <source media="(prefers-color-scheme: dark)" srcset="site/media/settings-spending-dark-2.webp">
+        <img src="site/media/settings-spending-light-2.webp" alt="The Spending page">
       </picture>
       <b>Spending</b> for today, this week, this month, last month or all time, split by model.
     </td>
@@ -145,8 +145,8 @@ Native macOS controls, in light and dark.
   <tr>
     <td width="50%" valign="top">
       <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="site/media/settings-writing-dark.webp">
-        <img src="site/media/settings-writing-light.webp" alt="The Writing page">
+        <source media="(prefers-color-scheme: dark)" srcset="site/media/settings-writing-dark-2.webp">
+        <img src="site/media/settings-writing-light-2.webp" alt="The Writing page">
       </picture>
       <b>Writing</b>: the model, how long it thinks, a language and rules it always follows.
     </td>
