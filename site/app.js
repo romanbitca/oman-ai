@@ -205,6 +205,12 @@
       const video = videos[active];
       if (video.paused) { stopped.delete(video); video.play().catch(() => {}); } else { stopped.add(video); video.pause(); }
     });
+    // The slab's own motion rests while it is off screen.
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((entries) => {
+        for (const entry of entries) reel.classList.toggle("is-away", !entry.isIntersecting);
+      }).observe(reel);
+    }
     choose(0, false);
   }
 

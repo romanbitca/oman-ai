@@ -16,8 +16,8 @@
 .toc a.is-current { color: var(--ink); font-weight: 600; background: rgba(255, 255, 255, 0.8); box-shadow: 0 1px 2px rgba(22, 34, 66, 0.08), 0 6px 14px -8px rgba(22, 44, 90, 0.35); }
 
 .prose { max-width: 780px; min-width: 0; }
-.prose section { padding: 0 0 clamp(56px, 7vw, 88px); }
-.prose section + section { padding-top: clamp(48px, 6vw, 72px); border-top: 1px solid var(--line-2); }
+main.prose > section { padding: 0 0 clamp(52px, 6vw, 76px); }
+main.prose > section + section { padding-top: clamp(48px, 6vw, 72px); border-top: 1px solid var(--line-2); }
 .prose h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin-top: 0; max-width: none; }
 .prose h3 { font-size: 1.24rem; margin-top: 40px; }
 .prose p, .prose ul, .prose ol { margin-top: 16px; color: var(--dim); }
