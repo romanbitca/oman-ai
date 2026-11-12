@@ -18,7 +18,9 @@ Date-stamped log of what each work session accomplished.
 
 - The maintainer asked for a way to see what Proofread changed, with ways to choose from. Drew four in the conversation; they chose two and asked for both, with a choice in Settings (see DECISIONS.md)
 - Added `TextChanges`, which compares the person's text and the result word by word on the Mac, and the two ways the panel shows it: At once, the default, and When I ask. The choice is in Settings, under General. The documentation and the README describe both
-- 30 new tests. The whole suite of 399 tests passes and the app builds. Pull request 14, not merged or released
+- 30 new tests. The whole suite of 399 tests passes and the app builds
+- The maintainer said to merge and release. Brought `main` up to the branch by fast-forward, which closed pull request 14, and published 0.3.6 from a tag on `main`. All three release jobs passed, and the release checks out from the outside: notarized, signed by the same Developer ID team, version 0.3.6 with build 3006, the update key the installed copy carries, and a feed and download whose signatures match it
+- With the maintainer's yes, filmed the four flows again on their screen, in one run of about a minute, so the website shows 0.3.6. The recordings show the marks after a proofread, and the text at the top of its box while it is written, on the real panel. Its Proofread recording stopped after 8.2 seconds for a reason not found, and it was not filmed again
 - The maintainer noticed, in the app and in the site's recordings, that while Claude writes a short answer sits at the bottom of its box and jumps to the top when it is done. The box keeps the newest words in view, and lined a text shorter than itself up with its bottom. The text now fills the box from the top. Measured off the screen in the scroll view itself: one line used to start 37 points down an 84-point box and now starts at the top, and a text longer than the box still opens at its newest words
 - Not verified: the real panel with the marks, on screen (see KNOWN_ISSUES.md)
 
