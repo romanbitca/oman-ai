@@ -169,9 +169,54 @@ struct ClaudeClientTests {
             </samples-\(code)>
             </writing_style-\(code)>
 
-            Write the way the person writes in these samples: match their sentence length and rhythm, greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality. Take only the voice from the samples, never their content or facts.
+            The samples are messages the person wrote themselves. Take only the voice from them, never their content or facts. The name they sign with is part of the voice.
             """
         #expect(blocks[1]["text"] as? String == expected)
+    }
+
+    @Test func theStyleBlockIsTheSameForEveryTaskThatTakesOne() async throws {
+        let rewrite = try await capturedBody(of: WritingRequest(task: .rewrite(text: "hi", instruction: nil), style: style))
+        let proofread = try await capturedBody(of: WritingRequest(task: .proofread(text: "hi"), style: style))
+        #expect(try systemBlocks(rewrite.json)[1]["text"] as? String == systemBlocks(proofread.json)[1]["text"] as? String)
+    }
+
+    @Test func onlyProofreadIsNotAskedToAnswerAtOnce() async throws {
+        let line = "Latency-sensitive; begin your visible answer immediately."
+        let tasks: [(WritingTask, Bool)] = [
+            (.proofread(text: "hi"), false),
+            (.rewrite(text: "hi", instruction: nil), true),
+            (.compose(request: "say hi", selectedText: nil), true),
+            (.explain(text: "hi"), true),
+        ]
+        for (task, expected) in tasks {
+            let (json, _) = try await capturedBody(of: WritingRequest(task: task))
+            let rules = try #require(try systemBlocks(json)[0]["text"] as? String)
+            #expect(rules.contains(line) == expected)
+            #expect(!rules.contains("\n\n\n"))
+        }
+    }
+
+    @Test(arguments: [
+        (WritingModel.haiku, WritingQuality.fast, "high"),
+        (WritingModel.haiku, WritingQuality.best, "high"),
+        (WritingModel.sonnet, WritingQuality.balanced, "high"),
+        (WritingModel.opus, WritingQuality.fast, "low"),
+        (WritingModel.opus, WritingQuality.balanced, "medium"),
+    ])
+    func proofreadAsksTheSmallerModelsForTheirHighestEffort(model: WritingModel, quality: WritingQuality, effort: String) async throws {
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .proofread(text: "hi"), model: model, quality: quality))
+        #expect((json["output_config"] as? [String: Any])?["effort"] as? String == effort)
+    }
+
+    @Test(arguments: [
+        (WritingQuality.fast, "low"), (WritingQuality.balanced, "medium"), (WritingQuality.best, "high"),
+    ])
+    func everyOtherTaskUsesTheEffortOfItsQuality(quality: WritingQuality, effort: String) async throws {
+        let tasks: [WritingTask] = [.rewrite(text: "hi", instruction: nil), .compose(request: "say hi", selectedText: nil), .explain(text: "hi")]
+        for task in tasks {
+            let (json, _) = try await capturedBody(of: WritingRequest(task: task, quality: quality))
+            #expect((json["output_config"] as? [String: Any])?["effort"] as? String == effort)
+        }
     }
 
     @Test func blankNoteIsOmitted() async throws {
@@ -217,9 +262,23 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Correct spelling, grammar and punctuation only. Keep the wording, tone, line breaks and formatting as they are. If nothing needs correcting, return the text unchanged.</task-CODE>
+                <task-CODE>This task needs care more than speed: think it through before you write. Correct the spelling, grammar and apostrophes in the source text, and remove doubled words. The text is in lower case on purpose: keep the case of every letter and the sentence punctuation as they are. Keep chat shorthand such as u, thx or gonna. Change nothing else, and reply with the corrected text only.</task-CODE>
 
                 <source_text-CODE>teh text</source_text-CODE>
+                """
+        )
+    }
+
+    @Test func proofreadWithoutATemplateCorrectsCapitalsInTextThatMostlyHasThem() async throws {
+        let text = "Hi Anna, thanks for the udpate. I had a look. could we move it to Thursday?"
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .proofread(text: text)))
+        #expect(
+            try userText(json) == """
+                Tag code: CODE
+
+                <task-CODE>This task needs care more than speed: think it through before you write. Correct the spelling, grammar, capital letters and punctuation in the source text, and remove doubled words. Keep chat shorthand such as u, thx or gonna. Change nothing else, and reply with the corrected text only.</task-CODE>
+
+                <source_text-CODE>\(text)</source_text-CODE>
                 """
         )
     }
@@ -242,11 +301,47 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Correct spelling and grammar. For capital letters and punctuation, follow the habits of the writing style above instead of formal rules: add what its samples use and leave out what they leave out. Keep the wording, tone, line breaks and formatting as they are, and do not reword anything to sound like the samples. If nothing needs correcting, return the text unchanged.</task-CODE>
+                <task-CODE>This task needs care more than speed: think it through before you write. Correct the spelling and grammar in the source text, and remove doubled words. Keep chat shorthand such as u, thx or gonna. Add no greeting or sign-off, and change nothing else.
+
+                Write capital letters, apostrophes and full stops the way this person does:
+                - They start sentences in lower case and write i in lower case. Do the same, and leave the case of other words as it is.
+                - Add missing apostrophes.
+                - They leave out the full stop at the end of a message. Do not add one.
+
+                Reply with the corrected text only.</task-CODE>
 
                 <source_text-CODE>teh text</source_text-CODE>
                 """
         )
+    }
+
+    @Test func proofreadTakesCapitalsAndApostrophesFromATemplateThatUsesThem() async throws {
+        let formal = WritingStyle(
+            name: "Emails",
+            samples: [StyleSample(text: "Hi Anna,\n\nThanks for the update. I don't think we need another call.\n\nBest,\nSam")]
+        )
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .proofread(text: "teh text"), style: formal))
+        let text = try userText(json)
+        #expect(text.contains("- They start sentences with a capital letter and write I and names with capitals. Correct the text to that."))
+        #expect(text.contains("- They write apostrophes. Add any that are missing (cant → can't, youre → you're)."))
+        #expect(!text.contains("full stop at the end of a message"))
+    }
+
+    @Test func proofreadLeavesApostrophesOutForATemplateThatDoes() async throws {
+        let texting = WritingStyle(
+            name: "Texting",
+            samples: ["cant talk rn, call u later", "dont worry about it", "im on my way", "thats what i said lol"].map { StyleSample(text: $0) }
+        )
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .proofread(text: "teh text"), style: texting))
+        #expect(try userText(json).contains("- They leave apostrophes out (cant, youre). Leave them out too, and do not add any."))
+    }
+
+    @Test func proofreadWithATemplateThatHasNoMessagesGoesByTheTextItself() async throws {
+        let empty = WritingStyle(name: "Empty", note: "short", samples: [])
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .proofread(text: "Teh text. It is fine."), style: empty))
+        let text = try userText(json)
+        #expect(text.contains("Correct the spelling, grammar, capital letters and punctuation in the source text"))
+        #expect(!text.contains("the way this person does"))
     }
 
     @Test(arguments: [WritingModel.sonnet, WritingModel.opus])
@@ -304,7 +399,7 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Rewrite the source text in the writing style above. Keep its meaning and roughly its length.</task-CODE>
+                <task-CODE>Rewrite the source text in the writing style above: match the sentence length and rhythm of its samples, their greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality. Keep its meaning and roughly its length.</task-CODE>
 
                 <instruction-CODE>shorter please</instruction-CODE>
 
@@ -342,7 +437,7 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Write new text that fulfils the request, in the writing style above.</task-CODE>
+                <task-CODE>Write new text that fulfils the request, in the writing style above: match the sentence length and rhythm of its samples, their greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality.</task-CODE>
 
                 <request-CODE>say no politely</request-CODE>
 
@@ -378,7 +473,7 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Revise the current draft according to the adjustment. Change nothing else. Keep to the writing style above.</task-CODE>
+                <task-CODE>Revise the current draft according to the adjustment. Change nothing else. Keep it in the writing style above: match the sentence length and rhythm of its samples, their greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality.</task-CODE>
 
                 <source_text-CODE>original</source_text-CODE>
 
@@ -412,7 +507,7 @@ struct ClaudeClientTests {
             )
         )
         #expect(try systemBlocks(json).count == 2)
-        #expect(try userText(json).contains("Keep to the writing style above."))
+        #expect(try userText(json).contains("Keep it in the writing style above: match"))
     }
 
     @Test func explainNeverTakesATemplate() async throws {
@@ -826,6 +921,28 @@ struct ClaudeClientTests {
         #expect(!text.contains("preferences"))
         #expect(!text.contains("German"))
         #expect(!text.contains("Sign off"))
+    }
+
+    @Test func explainIsToldToWriteNothingButTheReading() async throws {
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .explain(text: "can we move it to next monday?")))
+        let rules = try #require(try systemBlocks(json)[0]["text"] as? String)
+        #expect(rules.contains("no notes to yourself, no restating or translating of their text"))
+        #expect(try userText(json).contains("\"You\" is always the writer you are answering, never the reader."))
+    }
+
+    @Test(arguments: [
+        ("can we move it to next monday? i have a dentist appointment", "English"),
+        ("Vezi că mâine nu mai pot veni la ședință, a apărut ceva.", "Romanian"),
+        ("Passt schon. Mach einfach, wie du denkst.", "German"),
+    ])
+    func explainNamesTheLanguageOfTheText(text: String, language: String) async throws {
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .explain(text: text)))
+        #expect(try userText(json).contains("Write your answer in \(language), the language of the source text. Use plain text"))
+    }
+
+    @Test func explainLeavesTheLanguageToTheModelWhenItCannotBeTold() async throws {
+        let (json, _) = try await capturedBody(of: WritingRequest(task: .explain(text: "ok")))
+        #expect(try userText(json).contains("Write your answer in the language the source text is written in. Use plain text"))
     }
 
     @Test func explainReadsTheTextWithItsContextAndScreenshot() async throws {

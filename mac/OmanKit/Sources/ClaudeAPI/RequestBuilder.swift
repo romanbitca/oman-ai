@@ -20,7 +20,7 @@ enum RequestBuilder {
             model: request.model.rawValue,
             maxTokens: 16000,
             stream: true,
-            outputConfig: OutputConfig(effort: request.quality.effort),
+            outputConfig: OutputConfig(effort: effort(for: request)),
             system: PromptBuilder.systemBlocks(for: request),
             messages: [UserMessage(content: PromptBuilder.userContent(for: request, code: PromptBuilder.makeTagCode()))],
             fallbacks: usesFallback ? "default" : nil
@@ -30,6 +30,17 @@ enum RequestBuilder {
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         urlRequest.httpBody = try encoder.encode(body)
         return urlRequest
+    }
+
+    /// Proofread asks Haiku and Sonnet for their highest effort whatever quality is set. At lower effort they
+    /// start writing without thinking, and tried on eight kinds of text Haiku then got about one proofread in
+    /// four wrong; thinking first it got none wrong, for about a second more. Opus thinks at every effort.
+    static func effort(for request: WritingRequest) -> String {
+        guard case .proofread = request.task else { return request.quality.effort }
+        switch request.model {
+        case .haiku, .sonnet: return WritingQuality.best.effort
+        case .opus, .appleOnDevice: return request.quality.effort
+        }
     }
 
     static func validationRequest(apiKey: String) throws -> URLRequest {
