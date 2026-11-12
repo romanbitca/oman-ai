@@ -5,8 +5,10 @@ import Testing
 
 /// Downloads the models and runs them on sentences spoken by macOS's `say`, through the same live path the
 /// microphone uses, a tenth of a second at a time. Off unless OMAN_LIVE_SPEECH=1 is set: the downloads come to
-/// about 2.5 GB. OMAN_SPEECH_MODELS sets where they go; by default a folder in the temporary directory, kept
-/// between runs. OMAN_LIVE_ONLY can name one of parakeetEnglish, nemotron, parakeet or whisper.
+/// about 4 GB. OMAN_SPEECH_MODELS sets where they go; by default a folder in the temporary directory, kept
+/// between runs. OMAN_LIVE_ONLY takes a comma-separated list of parakeetEnglish, nemotron, parakeet and whisper,
+/// and of the identifiers of the other models that read again: parakeet-tdt-v2, parakeet-redux, whisper-small and
+/// whisper-large-v3.
 @Suite(.serialized) struct DownloadedModelTests {
     static var environment: [String: String] { ProcessInfo.processInfo.environment }
     static func isOn(_ name: String) -> Bool {
@@ -132,7 +134,7 @@ import Testing
     }
 
     /// The models that read again: each must download, load and write the sentence, with its first words soon.
-    @Test(arguments: [DictationModel.parakeetEnglishV2, .parakeetSmall, .canary, .whisperSmall, .whisperLarge])
+    @Test(arguments: [DictationModel.parakeetEnglishV2, .parakeetSmall, .whisperSmall, .whisperLarge])
     func eachAccurateModelHearsTheSentence(model: DictationModel) async throws {
         guard Self.isOn(model.rawValue) else { return }
         let macOS = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
@@ -162,8 +164,6 @@ import Testing
             return try await ParakeetEngine(model: model, version: .v2, root: root.appendingPathComponent("parakeet-tdt-v2")).transcribe(samples)
         case .parakeetSmall:
             return try await ParakeetEngine(model: model, version: .redux, root: root.appendingPathComponent("parakeet-redux")).transcribe(samples)
-        case .canary:
-            return try await CanaryEngine(root: root.appendingPathComponent("canary")).transcribe(samples, language: language)
         case .whisperSmall:
             return try await WhisperEngine(model: model, root: root.appendingPathComponent("whisper-small"))
                 .transcribe(samples, language: language).map(\.text).joined(separator: " ")

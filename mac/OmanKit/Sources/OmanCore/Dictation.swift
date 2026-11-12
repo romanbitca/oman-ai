@@ -133,8 +133,6 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
     case nemotron = "nemotron-unified"
     /// Moondream's Parakeet Ultra: the most accurate Parakeet in its 25 European languages, which it works out.
     case parakeet = "parakeet-v3"
-    /// NVIDIA's Canary 1B v2, in the same 25 European languages, told which one is spoken.
-    case canary = "canary-1b-v2"
     /// NVIDIA's Parakeet TDT v2, English only, the most accurate Parakeet for English.
     case parakeetEnglishV2 = "parakeet-tdt-v2"
     /// OpenAI's Whisper large-v3: about a hundred languages, and the most accurate in many of them.
@@ -156,7 +154,6 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         case .parakeetEnglish: "Parakeet Unified"
         case .nemotron: "Nemotron Unified"
         case .parakeet: "Parakeet Ultra"
-        case .canary: "Canary 1B v2"
         case .parakeetEnglishV2: "Parakeet TDT v2"
         case .whisperLarge: "Whisper Large v3"
         case .whisper: "Whisper Large v3 Turbo"
@@ -172,7 +169,6 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         case .parakeetEnglish: "The fastest and most accurate for English."
         case .nemotron: "Live in 25 European languages. Choose yours, or let it work it out."
         case .parakeet: "Very accurate in 25 European languages, worked out as you speak."
-        case .canary: "Very accurate in 25 European languages. Choose yours."
         case .parakeetEnglishV2: "Very accurate English, with every word as it was said."
         case .whisperLarge: "The most languages, about a hundred, and the most accurate in many."
         case .whisper: "About a hundred languages, faster than Whisper Large v3."
@@ -194,7 +190,7 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
     public var group: Group {
         switch self {
         case .apple, .parakeetEnglish, .nemotron: .live
-        case .parakeet, .canary, .parakeetEnglishV2, .whisperLarge, .whisper: .accurate
+        case .parakeet, .parakeetEnglishV2, .whisperLarge, .whisper: .accurate
         case .parakeetSmall, .whisperSmall: .small
         }
     }
@@ -210,7 +206,7 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         switch self {
         case .apple, .parakeetEnglish: "Words as you speak"
         case .nemotron: "Words within a second"
-        case .parakeet, .parakeetEnglishV2, .parakeetSmall, .canary: "Words a moment later"
+        case .parakeet, .parakeetEnglishV2, .parakeetSmall: "Words a moment later"
         case .whisper, .whisperSmall: "Words a second or two later"
         case .whisperLarge: "Words a few seconds later"
         }
@@ -223,7 +219,6 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         case .parakeetEnglish: 609_000_000
         case .nemotron: 621_000_000
         case .parakeet: 632_000_000
-        case .canary: 637_000_000
         case .parakeetEnglishV2: 465_000_000
         case .whisperLarge: 950_000_000
         case .whisper: 629_000_000
@@ -236,6 +231,7 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
     public var minimumMacOS: Int {
         switch self {
         case .apple: 26
+        // Its weights are packed in a way Core ML reads from macOS 15 on.
         case .parakeetSmall: 15
         default: 14
         }

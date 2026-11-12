@@ -155,7 +155,8 @@ private struct LookPicture: View {
             .foregroundStyle(.white.opacity(0.8))
             .padding(.horizontal, 7)
             .frame(height: 20)
-            .background(glass(Capsule()))
+            .fixedSize()
+            .background(glass(RoundedRectangle(cornerRadius: 10, style: .continuous)))
     }
 
     private func glass(_ shape: some Shape) -> some View {

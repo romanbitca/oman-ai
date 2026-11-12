@@ -10,7 +10,6 @@ public actor SpeechService: SpeechRecognizing {
     private let nemotron: StreamingEngine
     private let parakeets: [DictationModel: ParakeetEngine]
     private let whispers: [DictationModel: WhisperEngine]
-    private let canary: CanaryEngine
     private var unloadTask: Task<Void, Never>?
 
     /// `modelsDirectory` holds the downloaded models, one folder each, so removing one deletes its folder.
@@ -28,7 +27,6 @@ public actor SpeechService: SpeechRecognizing {
             .whisperLarge: WhisperEngine(model: .whisperLarge, root: folder("whisper-large-v3")),
             .whisperSmall: WhisperEngine(model: .whisperSmall, root: folder("whisper-small")),
         ]
-        canary = CanaryEngine(root: folder("canary"))
     }
 
     /// Beside the database, in Application Support.
@@ -51,7 +49,6 @@ public actor SpeechService: SpeechRecognizing {
             return await AppleSpeech.status(of: language)
         case .parakeetEnglish: downloaded = await parakeetEnglish.isDownloaded
         case .nemotron: downloaded = await nemotron.isDownloaded
-        case .canary: downloaded = await canary.isDownloaded
         case .parakeet, .parakeetEnglishV2, .parakeetSmall: downloaded = await parakeets[model]?.isDownloaded ?? false
         case .whisper, .whisperLarge, .whisperSmall: downloaded = await whispers[model]?.isDownloaded ?? false
         }
@@ -67,8 +64,6 @@ public actor SpeechService: SpeechRecognizing {
             return [DictationLanguage(id: "en")]
         case .nemotron:
             return [.automatic] + Self.sorted(StreamingEngine.nemotronLanguages)
-        case .canary:
-            return Self.sorted(CanaryEngine.languageCodes)
         case .parakeet, .parakeetSmall:
             // Parakeet can't be told the language, so the only choice is to let it work it out.
             return [.automatic]
@@ -81,7 +76,6 @@ public actor SpeechService: SpeechRecognizing {
         switch model {
         case .parakeet, .parakeetSmall: ParakeetEngine.europeanLanguages
         case .nemotron: StreamingEngine.nemotronLanguages
-        case .canary: CanaryEngine.languageCodes
         default: await languages(for: model).filter { !$0.isAutomatic }.map(\.id)
         }
     }
@@ -93,10 +87,6 @@ public actor SpeechService: SpeechRecognizing {
             return await AppleSpeech.defaultLanguage()
         case .parakeetEnglish, .parakeetEnglishV2:
             return DictationLanguage(id: "en")
-        case .canary:
-            // The person's own language, when Canary knows it.
-            let code = Locale.preferredLanguages.first.map { Locale(identifier: $0).language.languageCode?.identifier ?? $0 }
-            return DictationLanguage(id: code.flatMap { CanaryEngine.languageCodes.contains($0) ? $0 : nil } ?? "en")
         case .nemotron, .parakeet, .parakeetSmall, .whisper, .whisperLarge, .whisperSmall:
             return .automatic
         }
@@ -116,7 +106,6 @@ public actor SpeechService: SpeechRecognizing {
                 try await AppleSpeech.download(language, progress: progress)
             case .parakeetEnglish: try await parakeetEnglish.download(progress: progress)
             case .nemotron: try await nemotron.download(progress: progress)
-            case .canary: try await canary.download(progress: progress)
             case .parakeet, .parakeetEnglishV2, .parakeetSmall: try await parakeets[model]?.download(progress: progress)
             case .whisper, .whisperLarge, .whisperSmall: try await whispers[model]?.download(progress: progress)
             }
@@ -134,7 +123,6 @@ public actor SpeechService: SpeechRecognizing {
         case .apple: break
         case .parakeetEnglish: try await parakeetEnglish.remove()
         case .nemotron: try await nemotron.remove()
-        case .canary: try await canary.remove()
         case .parakeet, .parakeetEnglishV2, .parakeetSmall: try await parakeets[model]?.remove()
         case .whisper, .whisperLarge, .whisperSmall: try await whispers[model]?.remove()
         }
@@ -155,7 +143,6 @@ public actor SpeechService: SpeechRecognizing {
             return try await AppleSpeech.startSession(language: language, words: words)
         case .parakeetEnglish: return try await parakeetEnglish.startSession(language: language)
         case .nemotron: return try await nemotron.startSession(language: language)
-        case .canary: return try await canary.startSession(language: language)
         case .parakeet, .parakeetEnglishV2, .parakeetSmall:
             guard let engine = parakeets[model] else { throw DictationError.modelNotReady(model) }
             return try await engine.startSession()
@@ -172,7 +159,6 @@ public actor SpeechService: SpeechRecognizing {
         case .apple: break
         case .parakeetEnglish: await parakeetEnglish.prepare(language: language)
         case .nemotron: await nemotron.prepare(language: language)
-        case .canary: await canary.prepare(language: language)
         case .parakeet, .parakeetEnglishV2, .parakeetSmall: await parakeets[model]?.prepare()
         case .whisper, .whisperLarge, .whisperSmall: await whispers[model]?.prepare()
         }
@@ -200,7 +186,6 @@ public actor SpeechService: SpeechRecognizing {
     private func unloadAll() async {
         await parakeetEnglish.unload()
         await nemotron.unload()
-        await canary.unload()
         for engine in parakeets.values { await engine.unload() }
         for engine in whispers.values { await engine.unload() }
     }

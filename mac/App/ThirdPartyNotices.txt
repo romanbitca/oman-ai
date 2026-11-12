@@ -232,6 +232,19 @@ Nemotron Unified by NVIDIA (https://huggingface.co/nvidia/nemotron-labs-unified-
 Core ML build (https://huggingface.co/FluidInference/nemotron-labs-unified-asr-0.6b-coreml). Licensed under the
 OpenMDW License, version 1.1.
 
+Parakeet TDT v2 by NVIDIA (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2), in FluidInference's Core ML build
+(https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v2-coreml). Licensed under Creative Commons Attribution
+4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+Parakeet Redux (https://huggingface.co/moondream/parakeet-redux) by Moondream, a re-training of NVIDIA's
+parakeet-tdt-0.6b-v3, in FluidInference's Core ML build (https://huggingface.co/FluidInference/parakeet-redux-coreml).
+Licensed under Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+Whisper large-v3 (https://huggingface.co/openai/whisper-large-v3) and Whisper small
+(https://huggingface.co/openai/whisper-small) by OpenAI, licensed under the Apache License, Version 2.0, whose
+full text is at the end of this file, in Argmax's Core ML build (https://huggingface.co/argmaxinc/whisperkit-coreml),
+MIT License.
+
 
 ================================================================
 Apache License, Version 2.0

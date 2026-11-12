@@ -209,7 +209,8 @@ struct DictationSettingsView: View {
         Section {
             LabeledContent {
                 HStack(spacing: 6) {
-                    TextField("Add a word", text: $model.newDictationWord)
+                    TextField("Add a word", text: $model.newDictationWord, prompt: Text("Add a word"))
+                        .labelsHidden()
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 180)
                         .onSubmit { model.addDictationWords() }
