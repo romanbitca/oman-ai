@@ -310,3 +310,4 @@ Asked for by the maintainer after seeing the dark page: no black theme, a header
 - With motion turned off, or without scripts, nothing plays and a still picture of the result is shown
 - Settings is shown in its light pictures on the site and in the documentation. The README keeps both
 - Style sheets and scripts are kept by browsers for an hour, so their addresses carry a number (`?v=3`) that goes up with each redesign
+- The server's proxy no longer compresses what the site sends. It had gzipped the recordings too, and a gzipped file cannot be asked for in parts, which Safari needs before it plays a video. The site's own nginx compresses the text, as its config says. The setting is "Enable gzip compression" on the app in Coolify, now off. The recordings' addresses carry `?v=2` so that Cloudflare fetched them again

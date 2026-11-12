@@ -12,6 +12,7 @@ Date-stamped log of what each work session accomplished.
 - Looked at every section at 1512, 1280, 1040, 768 and 390 pixels wide in a headless browser, and fixed what that showed: a hard edge where the gallery cut off its pictures' shadows, sections of the documentation spaced as widely as the home page's, columns of the speed table touching on a phone, and steps showing through the ring around the How it works picture
 - Tried both pages in the real container: its headers block nothing, and the recordings can be sought
 - With motion turned off, and without scripts, the header shows a still picture and nothing plays
+- Checking the live site showed that every recording came gzipped from the server's proxy, the old ones too, so a request for part of one was answered with the whole file. Safari asks for parts before it plays a video. Turned the proxy's compression off for this app and gave the recordings new addresses; a request for part of one is now answered with that part
 - Not verified: Safari, Firefox and a real phone, and how the glass performs on an older Mac. Three pictures still show the app before 0.3.5 (see KNOWN_ISSUES.md)
 
 ## 2026-11-12 — A night of checks: prompts measured and rewritten, the site's nginx, the chart labels
