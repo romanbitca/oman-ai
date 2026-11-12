@@ -29,7 +29,7 @@ Acceptance:
 
 ## W3: Styles [IN PROGRESS]
 
-Settings editor to create styles from pasted messages, with an optional note and a test sentence. Style buttons in the panel. The last style used in each app is preselected.
+Settings editor to create styles from pasted messages, with an optional note and a test sentence. Style buttons in the panel. The style chosen last in each app is preselected, As written included.
 
 Acceptance:
 - Styles persist across launches
@@ -149,14 +149,32 @@ Acceptance:
 - Settings lists the models with their languages, speed and size, and downloads, chooses and deletes them
 - The person's own words are written their way, filler words go if Settings says so, and a downloaded model is unloaded after the time Settings gives
 - Cancel and Done sit beside the words for a long dictation
-- Each kept dictation's text is listed in Settings, first among its parts, with Copy and Delete; Settings says how many to keep; the sound is never kept
+- Each kept dictation's text is listed in OmanAI's window (W13), with Copy and Delete, and that window says how many to keep; the sound is never kept
 - Without the microphone permission, or with a model still to download, the pill says what to do
-- Left or Right Option or Command, on its own, holds to dictate or starts a long dictation, chosen apart for each in the Shortcuts tab
+- Control, Option or Command keys, left or right, one or several held together on their own, hold to dictate or start a long dictation, recorded apart for each in the Shortcuts tab
 - The pill's ✨ opens the dictated words in the panel to proofread or rewrite them, and Insert puts the result at the cursor
 - Compose's Copy last transcript copies the last dictation
 - Settings chooses the microphone, sounds, muting the Mac while listening, a space after the words and Return or ⌘Return after them
 - The model list groups nine models as Live, Accurate and Small and says in words how soon each one's words show, which of the person's languages it knows and how big it is
 - Where nothing that takes text has the cursor, the words wait in the pill until a field gets it and they go in there, or until Paste, Copy, × or a minute
+
+---
+
+## W13: OmanAI's own window [IN PROGRESS]
+
+What OmanAI did for the person, in a window that opens when OmanAI is opened again or from the menu bar icon's menu.
+
+Acceptance:
+- Opening OmanAI while it runs shows the window, called OmanAI, and not Settings; a right-click on the menu bar icon offers Open OmanAI, OmanAI Settings and Quit
+- This week, This month or All time is chosen at the top and sets every tile
+- The first tile says the words spoken in the stretch and draws it as OmanAI's wave, which follows the pointer and says what each day, week or month held
+- Beside it are the streak, with this week's days as dots, and the speed in words a minute against typing
+- Three more tiles are chosen by what there is to say: fixes by kind, how many corrections a proofread needs, where the person dictates, the time saved, or an invitation to proofread
+- A map of the year has a square for each day, darker for more, for words or for fixes, and pointing at a square says what the day held
+- The transcripts are listed day by day with search, Copy under the pointer, the whole text on a click and Delete on a right-click; the heading says how many are kept and chooses how many to keep
+- The numbers are counted without the words, so they stay right when transcripts are deleted or not kept
+- Someone new is told how to start, and someone who only writes sees fixes where the words would be
+- The window has a light and a dark form
 
 ---
 

@@ -71,10 +71,11 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
-- **Dictation** turns what you say into text in any app, on your Mac. Hold Right ⌥ (or another Option or Command key, or a shortcut) while you speak, or tap it for a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. Press ✨ instead to proofread or rewrite them in the panel first. In the panel they go straight into the field you're typing in, and Compose can copy your last transcript.
+- **Dictation** turns what you say into text in any app, on your Mac. Hold Right ⌥ (or other Control, Option or Command keys, one or several together, or a shortcut) while you speak, or tap it for a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. Press ✨ instead to proofread or rewrite them in the panel first. In the panel they go straight into the field you're typing in, and Compose can copy your last transcript.
 - **Context** from the window you are writing in, pasted messages or the clipboard. Only what is switched on is sent, and you see it first.
 - **Shortcuts** for any action and for each of your styles, and a panel you can pin and drag anywhere.
 - **Spending and fixes** by day, week, month, action, app and model: what each Claude request cost beside how many of OmanAI's texts you put back, with the details of any day on hover.
+- **Your own numbers**, in OmanAI's window: the words you spoke this week, this month or in all, your streak, your speed against typing and the time it saved, where you dictate, how many corrections a proofread of yours needs week by week, and a map of your year with a square for each day. Under them are your transcripts, with search and Copy. Open OmanAI again, or right-click its menu bar icon and choose Open OmanAI.
 
 Everything is explained button by button in the [documentation](https://oman-ai.romanbitca.com/docs/).
 
@@ -88,7 +89,7 @@ Most AI writing sounds like AI. A style in OmanAI is a handful of messages you r
 | | **Friends**, from a group chat | yep! sending the q3 numbers in a sec, just double checking the churn figure 👀 |
 | | **As written**, your own voice | yes! sending you the Q3 numbers in a sec, just double-checking the churn figure first |
 
-OmanAI remembers the style you last used in each app, so Slack can keep one style and Mail another.
+OmanAI remembers the style you last chose in each app, As written included, so Slack can keep one style and Mail another.
 
 <p align="center">
   <picture>
@@ -184,7 +185,7 @@ Native macOS controls, in light and dark.
 - Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain. For the Spending page, the database also keeps each Claude request's date, model, token counts and kind, and for each text OmanAI writes its kind, model, app and whether it was put back, never the text itself.
 - With Claude, each request sends the selected text, the chosen style's messages and any context you switched on to Anthropic, using your own API key. There is no server of ours in between.
 - With Apple's on-device model, your writing stays on your Mac.
-- Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. The database keeps the text of each dictation so you can find it again under Dictation in Settings; choose there how many to keep, or none, and delete them.
+- Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. The database keeps the text of each dictation so you can find it again in OmanAI's window; choose there how many to keep, or none, and delete them. For that window's numbers it also keeps, for each dictation, when it was, how many words, how long it took and which app it went to, never the words. These counts stay when a transcript is deleted.
 - The screen is included only when you turn that on, and the panel shows the picture before it is sent.
 - There are no analytics and no account. Apart from your writing requests, OmanAI only contacts GitHub to check for updates, and Hugging Face when you download a dictation model.
 
