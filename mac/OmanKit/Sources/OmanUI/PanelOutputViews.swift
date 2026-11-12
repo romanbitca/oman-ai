@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PanelWorkingView: View {
     let model: PanelViewModel
+    private let minimumHeight: CGFloat = 84
 
     var body: some View {
         VStack(alignment: .leading, spacing: PanelMetrics.gap) {
@@ -11,11 +12,14 @@ struct PanelWorkingView: View {
                     .lineSpacing(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(15)
+                    // The scroll view keeps the newest words in view, so it lines up a text shorter than the box
+                    // with the box's bottom. Filling the box keeps a short text at the top.
+                    .frame(minHeight: minimumHeight, alignment: .top)
             }
             .defaultScrollAnchor(.bottom)
             .scrollIndicators(.never)
             .scrollBounceBehavior(.basedOnSize)
-            .frame(minHeight: 84, maxHeight: 340)
+            .frame(minHeight: minimumHeight, maxHeight: 340)
             .fixedSize(horizontal: false, vertical: true)
             .liquidGlass(in: PanelShape.tile, id: LiquidID.body, reading: true)
             .overlay { LiquidGlow(shape: PanelShape.tile) }

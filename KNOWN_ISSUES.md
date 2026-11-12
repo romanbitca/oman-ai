@@ -20,6 +20,8 @@ Each recording in the header carries `data-at` in `site/index.html`, the second 
 
 The recordings under Use cases show a whole desktop, so on a phone their text is too small to read.
 
+The recordings were also made before a short answer started at the top of its box while it is written. In them it sits at the bottom of the box and moves to the top when the answer is done.
+
 The new look was checked in Chromium only, at five widths. Safari, Firefox and a real phone were not tried.
 
 ---

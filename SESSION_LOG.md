@@ -4,11 +4,12 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
-## 2026-11-12 — Proofread shows what it changed
+## 2026-11-12 — Proofread shows what it changed, and a short answer starts at the top
 
 - The maintainer asked for a way to see what Proofread changed, with ways to choose from. Drew four in the conversation; they chose two and asked for both, with a choice in Settings (see DECISIONS.md)
 - Added `TextChanges`, which compares the person's text and the result word by word on the Mac, and the two ways the panel shows it: At once, the default, and When I ask. The choice is in Settings, under General. The documentation and the README describe both
 - 30 new tests. The whole suite of 399 tests passes and the app builds. Pull request 14, not merged or released
+- The maintainer noticed, in the app and in the site's recordings, that while Claude writes a short answer sits at the bottom of its box and jumps to the top when it is done. The box keeps the newest words in view, and lined a text shorter than itself up with its bottom. The text now fills the box from the top. Measured off the screen in the scroll view itself: one line used to start 37 points down an 84-point box and now starts at the top, and a text longer than the box still opens at its newest words
 - Not verified: the real panel with the marks, on screen (see KNOWN_ISSUES.md)
 
 ## 2026-11-12 — 0.3.5 released, and the website rebuilt in light and glass
