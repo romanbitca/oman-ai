@@ -661,7 +661,7 @@
         <a href="https://github.com/romanbitca/oman-ai/blob/main/LICENSE">MIT license</a>
         <a href="#support" data-donate>Donate</a>
       </nav>
-      <p>This page has no analytics and sets no cookies. It asks GitHub once for the number of the latest version.</p>
+      <p>This page has no analytics and sets no cookies. It asks GitHub once for the number of the latest version. The chat assistant comes from 9h Digital, and what you type into it is sent to them.</p>
       <p>OmanAI is an independent open-source project. Claude is a trademark of Anthropic, and macOS and Apple Intelligence are trademarks of Apple. Other names belong to their owners.</p>
     </div>
     <p class="wordmark" aria-hidden="true">OmanAI</p>
@@ -669,5 +669,7 @@
 </footer>
 
 <script src="app.js?v=4" defer></script>
+<!-- The chat assistant, from 9h Digital. Its address is allowed in the Content-Security-Policy in nginx.conf. -->
+<script src="https://ai-chatbot-staging.9hdigital.com/widget/v1/agent.js" data-site-key="sk_fafepqkugzril7gctkpokx3jrjxtscphsttqedoe" defer></script>
 </body>
 </html>

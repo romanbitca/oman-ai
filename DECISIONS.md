@@ -324,3 +324,12 @@ Asked for by the maintainer: a way to see what Proofread changed, with a few way
 - Replace and Copy deliver the corrected text, never the marks. While the old words are on show the text can't be selected, so a selection never mixes the two texts
 - New words are tinted green, and old words are red and struck through. With Differentiate without colour turned on, new words are underlined too. VoiceOver reads each change by name
 
+## 2026-11-12 — The website has 9h Digital's chat assistant
+
+Asked for by the maintainer, who gave the code to embed.
+
+- Both pages load the assistant from `ai-chatbot-staging.9hdigital.com`, with the site key the maintainer gave. The response headers in `site/nginx.conf` allow scripts and connections from that address, and still from nowhere else apart from the site itself and GitHub. This supersedes "nothing loaded from anywhere else" above
+- The assistant asks its server for its settings and sends each chat there. It sends no cookies, and keeps a little of its own data in the browser's local storage. The footers say that what a visitor types into it goes to 9h Digital
+- Its address is the assistant's staging server, which accepts requests from this site's address. A move to another server needs the new address in both pages and in `site/nginx.conf`
+- Cloudflare's analytics script stays blocked
+

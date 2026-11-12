@@ -4,6 +4,11 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — A chat assistant on the website
+
+- At the maintainer's request, added 9h Digital's chat assistant to both pages, and allowed its address for scripts and connections in the site's response headers (see DECISIONS.md). Read the assistant's script first to see what it loads and where it connects, and changed the footers to say where chats go
+- Tried it in the site's own container: both of its scripts load and the headers block nothing. Its server refuses the local test address and accepts the site's own, which was checked by asking it directly
+
 ## 2026-11-12 — The website shows 0.3.6: new recordings and Settings pictures
 
 - The session that built the change view filmed the four flows again with 0.3.6, on the maintainer's screen and with their yes, and drew three Settings pages again. Nothing was put on the screen for the work below
