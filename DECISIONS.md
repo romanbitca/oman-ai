@@ -283,7 +283,7 @@ Asked for by the maintainer: a richer site with recordings, examples and motion,
 
 ## 2026-11-12 — Proofread thinks first, and the app counts the habits itself
 
-Made overnight by the assistant, while the maintainer was away, after measuring real answers. The first two points change what a person sees, so they wait for the maintainer's yes before a release: Proofread is about a second slower on Haiku, and As written now keeps lower case.
+Made overnight by the assistant, while the maintainer was away, after measuring real answers. The first two points change what a person sees: Proofread is about a second slower on Haiku, and As written now keeps lower case. The maintainer read both the next morning and said to merge them and release them as 0.3.5.
 
 What was measured: 17 kinds of short text, each asked several times of Haiku, Sonnet and Opus at Fast, Balanced and Best through the app's own client, with every answer graded by checks on its text. With the prompts of 0.3.4, 90 of 432 answers failed a check. Haiku at Fast, the default, failed 32 of 80: it left out apostrophes a template uses, spelled out "u" and "gonna", added "Best, Roman" to a proofread, opened an explanation with "You wrote this in English, so I'll answer in English", and answered a Romanian text in English. With the prompts below, 4 of 459 failed. On ten further kinds of text that were never looked at while the wording was tuned, 31 of 80 answers failed before and 1 of 80 after.
 

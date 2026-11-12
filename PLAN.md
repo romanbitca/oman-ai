@@ -106,7 +106,7 @@ Everything below is parked until the writing tool ships. P1 and P2 produced an E
 
 ## W10: Answers that hold up [IN PROGRESS]
 
-The prompts are judged by what the real models answer, many times over, and not by one reply. Waiting for the maintainer's yes on the two changes a person can see: Proofread is about a second slower on Haiku, and As written keeps lower case.
+The prompts are judged by what the real models answer, many times over, and not by one reply. On 12 November 2026 the maintainer said yes to the two changes a person can see, Proofread about a second slower on Haiku and As written keeping lower case, and they ship in 0.3.5.
 
 Acceptance:
 - Proofread corrects spelling, grammar and apostrophes and keeps the person's wording and shorthand, on each Claude model at each quality
