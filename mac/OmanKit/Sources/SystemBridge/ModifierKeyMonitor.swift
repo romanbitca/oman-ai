@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import OmanCore
 
 /// Watches Option and Command pressed on their own, anywhere on the Mac, and any other key pressed while one of
@@ -11,17 +12,25 @@ final class ModifierKeyMonitor {
     private var down: Set<ModifierKey> = []
     private var globalMonitor: Any?
     private var localMonitor: Any?
+    /// Whether Accessibility was allowed when the monitors were added. Before it is, macOS gives them no keys.
+    private var startedTrusted = false
 
+    /// Called again whenever the keys may have changed, or the app becomes active, so monitors added before
+    /// Accessibility was allowed are added again once it is.
     func watch(_ keys: Set<ModifierKey>) {
         self.keys = keys
         if keys.isEmpty {
             stop()
         } else if globalMonitor == nil {
             start()
+        } else if !startedTrusted, AXIsProcessTrusted() {
+            stop()
+            start()
         }
     }
 
     private func start() {
+        startedTrusted = AXIsProcessTrusted()
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
             MainActor.assumeIsolated { self?.handle(event) }
         }

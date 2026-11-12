@@ -141,6 +141,33 @@ import Testing
         #expect(!kept.contains { $0.text == "Old 0" })
     }
 
+    @Test func keepingFewerTranscriptsDeletesTheOldestAtOnce() throws {
+        let harness = Harness()
+        harness.dictations.seed((0..<14).map { index in
+            SavedDictation(
+                date: Date(timeIntervalSince1970: TimeInterval(index)), text: "Said \(index)", duration: 1,
+                model: "apple", language: nil, appName: nil
+            )
+        })
+        let settings = harness.makeSettings()
+        settings.reload()
+        settings.reloadSavedDictations()
+
+        #expect(settings.transcriptsDeleted(by: .all) == 0)
+        #expect(settings.transcriptsDeleted(by: .last50) == 0)
+        #expect(settings.transcriptsDeleted(by: .last10) == 4)
+        // None stops keeping more, and leaves the ones there are.
+        #expect(settings.transcriptsDeleted(by: .off) == 0)
+
+        settings.setDictationHistory(.last10)
+        #expect(settings.savedDictations.count == 10)
+        #expect(settings.savedDictations.first?.text == "Said 13")
+        #expect((try? harness.settings.preferences())?.dictationHistory == .last10)
+
+        settings.setDictationHistory(.off)
+        #expect(settings.savedDictations.count == 10)
+    }
+
     // MARK: The ✨ button
 
     @Test func improveOpensThePanelWithTheWordsInsteadOfPastingThem() async throws {

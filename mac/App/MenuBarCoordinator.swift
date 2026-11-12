@@ -124,6 +124,10 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
 
     private func openPanel(then action: ShortcutAction?) {
         let keepPinned = isPinned && panel.isVisible
+        // Option or Command on their own start working once Accessibility is allowed, without a restart.
+        if let preferences = try? services.settings.preferences() {
+            services.system.watchModifierKeys(preferences.dictationModifierKeys)
+        }
         // The selection must be read before the panel takes keyboard focus.
         Task { @MainActor in
             let capture = await services.system.captureSelection()

@@ -4,6 +4,25 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-12 — Dictation's keys, models and buttons: what has been tried, and what hasn't
+
+Tried: tests for Option and Command on their own (holding, tapping, one key for both, a key used in a shortcut), ✨ opening the panel with the words and Insert putting the result at the cursor, Copy last transcript, how many transcripts are kept, sounds, muting, the chosen microphone, a space after and Return. The new models were downloaded and given the sentence spoken by `say`: Parakeet TDT v2, Parakeet Redux and Whisper Small wrote it word for word, Whisper Small with "ANA" for Anna. Every Settings page was drawn off the screen and looked at.
+
+Not yet tried:
+
+- Option and Command on a real keyboard, and the microphone, sounds and muting on real devices. The keys are watched through macOS's event monitors, which only run in the app
+- The ✨ button and Copy last transcript by hand
+- The pill's look in the website's films: the filming ran while the Mac was locked and recorded the lock screen
+
+Known limits:
+
+- With a key on its own for Hold to dictate, a dictation starts 0.15 seconds after the key goes down. Someone who holds Option while typing an accent, as the Romanian keyboard does for ș and ț, can start one for a moment before the letter cancels it. A Command key avoids that
+- Mute the Mac uses the output device's own mute. A device without one, such as some displays' speakers, stays as it is. If OmanAI quits during a dictation, the Mac stays muted
+- Return is pressed 0.15 seconds after the paste. An app that pastes later than that could send before the words are in
+- Canary 1B v2 was tried and left out: its first preparation for the Neural Engine ran past 15 minutes on an M1 Pro. Parakeet Redux took 26 seconds for the same step, about as long as Parakeet Unified
+
+---
+
 ## 2026-11-12 — Dictation: what has been tried, and what hasn't
 
 Tried: the maintainer dictated with the microphone in a signed test copy, with Parakeet Ultra. It worked, but its first words came about 10 seconds late, which led to the models that stream. Each model was then given a sentence spoken by macOS's `say`, a tenth of a second at a time as a microphone would give it. Apple's model, Parakeet Unified, Nemotron Unified, Parakeet Ultra and Whisper each wrote "Please send the report to Anna before Friday. Thank you." word for word. Parakeet Unified showed its first words 1.7 seconds after the sentence began, Nemotron 2.0 seconds and Parakeet Ultra 3.0 seconds, each growing word by word after that. Whisper wrote nothing for three seconds of silence. The pill was shown on the screen once in both looks and both places.

@@ -338,6 +338,24 @@ public final class SettingsViewModel {
         savedDictations = (try? services.dictations?.savedDictations()) ?? []
     }
 
+    /// How many transcripts the new choice would delete now. None keeps the old ones and only stops keeping more.
+    func transcriptsDeleted(by history: DictationHistory) -> Int {
+        guard history != .off, let limit = history.limit else { return 0 }
+        return max(savedDictations.count - limit, 0)
+    }
+
+    func setDictationHistory(_ history: DictationHistory) {
+        updatePreferences { $0.dictationHistory = history }
+        guard transcriptsDeleted(by: history) > 0, let limit = history.limit else { return }
+        do {
+            try services.dictations?.trimDictations(keepingNewest: limit)
+            dictationError = nil
+        } catch {
+            dictationError = error.localizedDescription
+        }
+        reloadSavedDictations()
+    }
+
     func copyDictation(_ dictation: SavedDictation) {
         services.system.copyToClipboard(dictation.text)
         copiedDictationID = dictation.id

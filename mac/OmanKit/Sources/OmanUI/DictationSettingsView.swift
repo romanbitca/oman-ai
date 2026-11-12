@@ -39,7 +39,12 @@ struct DictationSettingsView: View {
     @ViewBuilder
     private var transcriptsPage: some View {
         Section {
-            Picker(selection: model.preference(\.dictationHistory)) {
+            Picker(selection: Binding(
+                get: { model.preferences.dictationHistory },
+                set: { history in
+                    if confirmKeeping(history) { model.setDictationHistory(history) }
+                }
+            )) {
                 ForEach(DictationHistory.allCases) { history in
                     Text(history.displayName).tag(history)
                 }
@@ -101,6 +106,20 @@ struct DictationSettingsView: View {
                 .textSelection(.enabled)
             Text(dictation.detail)
         }
+    }
+
+    /// Keeping fewer transcripts deletes the older ones, so it asks first.
+    private func confirmKeeping(_ history: DictationHistory) -> Bool {
+        let count = model.transcriptsDeleted(by: history)
+        guard count > 0 else { return true }
+        let alert = NSAlert()
+        alert.messageText = "Keep only \(history.displayName.lowercased())?"
+        alert.informativeText = count == 1
+            ? "The oldest transcript is deleted. This can't be undone."
+            : "The \(count) oldest transcripts are deleted. This can't be undone."
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
+        return alert.runModal() == .alertSecondButtonReturn
     }
 
     private func confirmDeleteAll() {

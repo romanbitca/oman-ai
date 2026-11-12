@@ -149,8 +149,13 @@ Acceptance:
 - Settings lists the models with their languages, speed and size, and downloads, chooses and deletes them
 - The person's own words are written their way, filler words go if Settings says so, and a downloaded model is unloaded after the time Settings gives
 - Cancel and Done sit beside the words for a long dictation
-- With Keep transcripts on, each dictation's text is listed in Settings with Copy and Delete; the sound is never kept
+- Each kept dictation's text is listed in Settings, first among its parts, with Copy and Delete; Settings says how many to keep; the sound is never kept
 - Without the microphone permission, or with a model still to download, the pill says what to do
+- Left or Right Option or Command, on its own, holds to dictate or starts a long dictation, chosen apart for each in the Shortcuts tab
+- The pill's ✨ opens the dictated words in the panel to proofread or rewrite them, and Insert puts the result at the cursor
+- Compose's Copy last transcript copies the last dictation
+- Settings chooses the microphone, sounds, muting the Mac while listening, a space after the words and Return or ⌘Return after them
+- The model list groups nine models as Live, Accurate and Small and says in words how soon each one's words show, which of the person's languages it knows and how big it is
 
 ---
 

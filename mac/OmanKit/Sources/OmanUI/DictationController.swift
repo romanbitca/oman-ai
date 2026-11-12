@@ -36,6 +36,8 @@ public final class DictationController {
     static let escape = KeyCombo(keyCode: 53, modifiers: 0)
     /// How long a sentence about a problem stays on screen.
     static let noticeDuration = Duration.seconds(4)
+    /// Between the paste and Return, so an app that pastes a moment late has the words before it sends.
+    static let submitDelay = Duration.milliseconds(150)
 
     @ObservationIgnored private let services: AppServices
     @ObservationIgnored private weak var presenter: (any DictationPresenting)?
@@ -372,10 +374,11 @@ public final class DictationController {
         guard phase == .finishing else { return }
         switch outcome {
         case .inserted:
-            switch preferences.dictationSubmit {
-            case .off: break
-            case .returnKey: services.system.pressReturn(withCommand: false)
-            case .commandReturn: services.system.pressReturn(withCommand: true)
+            if preferences.dictationSubmit != .off {
+                try? await Task.sleep(for: Self.submitDelay)
+                // Escape meanwhile means nothing more is pressed.
+                guard phase == .finishing else { return }
+                services.system.pressReturn(withCommand: preferences.dictationSubmit == .commandReturn)
             }
             end()
         case .permissionMissing:

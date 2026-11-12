@@ -220,10 +220,10 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         case .nemotron: 621_000_000
         case .parakeet: 632_000_000
         case .parakeetEnglishV2: 465_000_000
-        case .whisperLarge: 950_000_000
+        case .whisperLarge: 948_000_000
         case .whisper: 629_000_000
         case .parakeetSmall: 220_000_000
-        case .whisperSmall: 219_000_000
+        case .whisperSmall: 220_000_000
         }
     }
 

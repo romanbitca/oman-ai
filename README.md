@@ -71,7 +71,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
-- **Dictation** turns what you say into text in any app, on your Mac. Hold a shortcut while you speak, or press another to start a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. In the panel they go straight into the field you're typing in, with a microphone button beside each one.
+- **Dictation** turns what you say into text in any app, on your Mac. Hold Right ⌥ (or another Option or Command key, or a shortcut) while you speak, or tap it for a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. Press ✨ instead to proofread or rewrite them in the panel first. In the panel they go straight into the field you're typing in, and Compose can copy your last transcript.
 - **Context** from the window you are writing in, pasted messages or the clipboard. Only what is switched on is sent, and you see it first.
 - **Shortcuts** for any action and for each of your styles, and a panel you can pin and drag anywhere.
 - **Spending** by day, week, month and model, estimated from what each Claude request used.
@@ -114,17 +114,21 @@ In the same tests every Claude model matched a style, followed instructions and 
 
 ### Dictation
 
-Every dictation model runs on your Mac and is free. Choose one, and its language, under Dictation in Settings. Live models show your words as you say them; the others read what you said again every second or so.
+Every dictation model runs on your Mac and is free. Choose one, and its language, under Dictation in Settings. Live models show your words as you say them; the others read what you said again about every second, so their words follow a moment later, often more accurately.
 
-| Model | Live | Download | Languages | Best for |
+| Model | Words show | Download | Languages | Best for |
 | --- | --- | --- | --- | --- |
-| Apple | Yes | None. macOS fetches each language once | 68, one at a time | Starting at once, on macOS 26 or later |
-| Parakeet Unified | Yes | About 610 MB | English | English, fastest |
-| Nemotron Unified | Yes | About 620 MB | 25 European ones, chosen or worked out | European languages, live |
-| Parakeet Ultra | | About 630 MB | 25 European ones, worked out as you speak | European languages, most accurate |
-| Whisper Large v3 Turbo | | About 630 MB | About 100, chosen or worked out | Any other language |
+| Apple | As you speak | None. macOS fetches each language once | 68, one at a time | Starting at once, on macOS 26 or later |
+| Parakeet Unified | As you speak | About 610 MB | English | English, fastest |
+| Nemotron Unified | Within a second | About 620 MB | 25 European ones, chosen or worked out | European languages, live |
+| Parakeet Ultra | A moment later | About 630 MB | 25 European ones, worked out as you speak | European languages, most accurate |
+| Parakeet TDT v2 | A moment later | About 465 MB | English | English, word for word |
+| Whisper Large v3 | A few seconds later | About 950 MB | About 100, chosen or worked out | The most languages, most accurate in many |
+| Whisper Large v3 Turbo | A second or two later | About 630 MB | About 100, chosen or worked out | Any other language, faster |
+| Parakeet Redux | A moment later | About 220 MB | 25 European ones, worked out as you speak | A small download, on macOS 15 or later |
+| Whisper Small | A second or two later | About 220 MB | About 100, chosen or worked out | A small download, less accurate |
 
-NVIDIA's Parakeet and Nemotron models, and [Moondream's Parakeet Ultra](https://huggingface.co/moondream/parakeet-ultra), run through [FluidAudio](https://github.com/FluidInference/FluidAudio). Whisper is OpenAI's large-v3 turbo, run by Argmax's [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift). Add your own words, such as names, under Dictation, Words, and they are written your way.
+NVIDIA's Parakeet and Nemotron models, and Moondream's [Parakeet Ultra](https://huggingface.co/moondream/parakeet-ultra) and [Parakeet Redux](https://huggingface.co/moondream/parakeet-redux), run through [FluidAudio](https://github.com/FluidInference/FluidAudio). Whisper is OpenAI's large-v3, large-v3 turbo and small, run by Argmax's [WhisperKit](https://github.com/argmaxinc/argmax-oss-swift). Add your own words, such as names, under Dictation, Words, and they are written your way.
 
 ## Install
 
@@ -180,9 +184,9 @@ Native macOS controls, in light and dark.
 - Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain. For the spending charts, the database also keeps each Claude request's date, model and token counts, never its text.
 - With Claude, each request sends the selected text, the chosen style's messages and any context you switched on to Anthropic, using your own API key. There is no server of ours in between.
 - With Apple's on-device model, your writing stays on your Mac.
-- Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. With Keep transcripts on, the database keeps the text of each dictation so you can find it again under Dictation in Settings; turn it off, or delete them there.
+- Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. The database keeps the text of each dictation so you can find it again under Dictation in Settings; choose there how many to keep, or none, and delete them.
 - The screen is included only when you turn that on, and the panel shows the picture before it is sent.
-- There are no analytics and no account. Apart from your writing requests, OmanAI only contacts GitHub to check for updates, and Hugging Face when you download Parakeet or Whisper.
+- There are no analytics and no account. Apart from your writing requests, OmanAI only contacts GitHub to check for updates, and Hugging Face when you download a dictation model.
 
 macOS asks for up to three permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you use the Screen switch, and the Microphone only if you dictate.
 
