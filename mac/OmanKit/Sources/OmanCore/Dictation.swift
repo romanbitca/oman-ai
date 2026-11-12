@@ -212,6 +212,58 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         }
     }
 
+    /// How soon the words show, from 1 for a few seconds later to 5 for as they are said.
+    public var speed: Int {
+        switch self {
+        case .apple, .parakeetEnglish: 5
+        case .nemotron: 4
+        case .parakeet, .parakeetEnglishV2, .parakeetSmall: 3
+        case .whisper, .whisperSmall: 2
+        case .whisperLarge: 1
+        }
+    }
+
+    /// How often it writes what was said, from 1 to 5. Judged from published benchmarks, where they exist, and
+    /// from OmanAI's own tests.
+    public var accuracy: Int {
+        switch self {
+        case .parakeet, .parakeetEnglishV2, .whisperLarge: 5
+        case .parakeetEnglish, .nemotron, .whisper: 4
+        case .apple, .parakeetSmall: 3
+        case .whisperSmall: 2
+        }
+    }
+
+    /// Who made it.
+    public var maker: String {
+        switch self {
+        case .apple: "Apple"
+        case .parakeetEnglish, .nemotron, .parakeetEnglishV2: "NVIDIA"
+        case .parakeet, .parakeetSmall: "Moondream, from NVIDIA's Parakeet"
+        case .whisperLarge, .whisper, .whisperSmall: "OpenAI"
+        }
+    }
+
+    public var license: String {
+        switch self {
+        case .apple: "Part of macOS"
+        case .parakeetEnglish, .parakeet, .parakeetEnglishV2, .parakeetSmall: "CC BY 4.0"
+        case .nemotron: "OpenMDW 1.1"
+        case .whisper: "MIT"
+        case .whisperLarge, .whisperSmall: "Apache 2.0"
+        }
+    }
+
+    /// How it knows which language is spoken.
+    public var languageChoice: String {
+        switch self {
+        case .apple: "You choose the language, one at a time"
+        case .parakeetEnglish, .parakeetEnglishV2: "English only"
+        case .parakeet, .parakeetSmall: "Works out the language as you speak"
+        case .nemotron, .whisperLarge, .whisper, .whisperSmall: "You choose the language, or it works it out"
+        }
+    }
+
     /// What its download comes to, measured from the files. Nil for Apple's, which macOS downloads per language.
     public var downloadSize: Int64? {
         switch self {

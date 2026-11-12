@@ -406,3 +406,33 @@ The maintainer asked for every bar on the Spending page to be split in two, the 
 - Pointing at a pair highlights it and shows a card beside it, on the side with more room: the date, the fixes and texts written, the kinds written, the money spent with the requests, the cost of each model and the tokens. The card is drawn over the chart and never takes the pointer
 - The two figures at the top, money spent and fixes put back, each with a square in its bar's colour, stand for the chart's legend. Below the chart come By action, By app (the six with the most fixes) and By model
 - Fixes are counted from the release that brings this, called 0.4.1 in the page's note and the documentation; the number has to match the release that ships it
+
+## 2026-11-12 — The model list says what Handy's says, in a look of its own, and Your words is redrawn
+
+The maintainer found the list of plain words too simple, with nothing that stands out and no languages or speed to see. They asked for every element of Handy's list, in a design with nothing in common with Handy's. They also found the row for adding their own words poor-looking.
+
+- Read from Handy's source, its list has per model:
+  - a mark for the one in use;
+  - the name with a Live icon;
+  - an accuracy grade for each of the person's languages;
+  - a speed level and the size;
+  - a status line while downloading or loading;
+  - stop and delete;
+  - a legend of the scales.
+- OmanAI's rows carry each of these:
+  - a tile in the colour of the model's family with its symbol (Apple's, Parakeet, Nemotron, Whisper);
+  - the name with Live and "Best for your languages" tags and an ⓘ;
+  - Speed and Accuracy as five steps with a word under them, such as "Very fast" or "Excellent", beside the download size;
+  - the person's languages as chips, ticked or crossed, and a globe button with how many languages it knows;
+  - a status line while downloading: "Downloading 45% of 609 MB, then in use", then "Preparing for this Mac's Neural Engine". When the model can't run, the line says why;
+  - "In use", or Use or Download, a stop button while downloading, and a ⋯ menu with its details and Delete Download.
+- A ? over the list explains every step of Speed and Accuracy, what Live means and where the languages come from.
+- The ⓘ opens everything about the model: who made it, its speed and how soon its words show, its accuracy, whether it is live, how it picks the language, the size, the macOS it needs, its licence, and every language it knows, with the person's tinted.
+- Handy grades accuracy for each language from its own benchmarks. OmanAI has no such figures, so it rates each model once, from 1 to 5, from published benchmarks and its own tests, and shows for each of the person's languages whether the model knows it. Speed is rated from how soon the words show, as measured for the live models. The ratings are `DictationModel.speed` and `DictationModel.accuracy`.
+- The suggestion is the fastest live model that knows every one of the person's languages and can run here: Parakeet Unified, then Nemotron Unified, then Apple's.
+- Your words:
+  - a field across the row with an Add button;
+  - the words as tokens, each with a button that takes it out;
+  - a count, and an empty state with examples.
+  Several can still be added at once, with commas between them.
+- Capsules in Settings have circular ends. Drawn with continuous ends, a thin line stood off each end.

@@ -95,7 +95,7 @@ private struct LookPicture: View {
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(8)
-                .background(glass(RoundedRectangle(cornerRadius: 10, style: .continuous)))
+                .background(glass(Capsule(style: .circular)))
         }
     }
 
@@ -156,7 +156,7 @@ private struct LookPicture: View {
             .padding(.horizontal, 7)
             .frame(height: 20)
             .fixedSize()
-            .background(glass(RoundedRectangle(cornerRadius: 10, style: .continuous)))
+            .background(glass(Capsule(style: .circular)))
     }
 
     private func glass(_ shape: some Shape) -> some View {
