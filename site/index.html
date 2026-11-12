@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>OmanAI: your words, in your own voice</title>
-<meta name="description" content="A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages. Free and open source.">
+<meta name="description" content="A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages, and types what you say. Free and open source.">
 <link rel="canonical" href="https://oman-ai.romanbitca.com/">
 <meta property="og:title" content="OmanAI: your words, in your own voice">
-<meta property="og:description" content="A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages. Free and open source.">
+<meta property="og:description" content="A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages, and types what you say. Free and open source.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://oman-ai.romanbitca.com/">
 <meta property="og:image" content="https://oman-ai.romanbitca.com/og.png">
@@ -16,7 +16,7 @@
 <meta name="color-scheme" content="light">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="media/hero-desk.webp" type="image/webp">
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=5">
 <!-- Without scripts no recording plays, so the first one shows its result and the controls that need scripts are left out. -->
 <noscript><style>#reel-rewrite { background: url("media/hero-rewrite-still-2.webp") center top / cover; } .reel-clip video, .reel-bar { display: none; } .reel-chat { bottom: 4.4%; }</style></noscript>
 <script type="application/ld+json">
@@ -26,7 +26,7 @@
   "name": "OmanAI",
   "operatingSystem": "macOS 14 or later",
   "applicationCategory": "ProductivityApplication",
-  "description": "A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages.",
+  "description": "A macOS menu bar app that proofreads and rewrites the text you select, in a style built from your own messages, and types what you say.",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "license": "https://github.com/romanbitca/oman-ai/blob/main/LICENSE",
   "url": "https://oman-ai.romanbitca.com/",
@@ -101,7 +101,7 @@
           <span class="dot" aria-hidden="true"></span><span data-version-pill>Free and open source for macOS</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>
         </a>
         <h1 data-rise style="--d: 80ms">Your words,<br><em>in your own voice.</em></h1>
-        <p class="lede" data-rise style="--d: 160ms">Select what you wrote in any app and click the wave in your menu bar. OmanAI proofreads or rewrites it in a style built from your own messages. One click puts it back.</p>
+        <p class="lede" data-rise style="--d: 160ms">Select what you wrote in any app and click the wave in your menu bar. OmanAI proofreads or rewrites it in a style built from your own messages. One click puts it back. Or hold a key and just say it.</p>
         <div class="cta" data-rise style="--d: 240ms">
           <a class="btn" href="https://github.com/romanbitca/oman-ai/releases/latest" data-download><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
           <a class="btn ghost" href="docs/"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Read the docs</a>
@@ -150,6 +150,16 @@
                 <source src="media/hero-compose-3.mp4" type="video/mp4">
               </video>
             </div>
+            <div class="reel-clip" role="tabpanel" id="reel-dictate" aria-labelledby="reel-tab-dictate" aria-hidden="true"
+                 data-from="Priya" data-message="Missed the call, sorry! What did we decide?"
+                 data-before=""
+                 data-after="We're shipping the beta on Monday. Sam will update the docs, and I'll send the pricing draft by Thursday."
+                 data-at="HERO_DICTATE_AT">
+              <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of dictation: the words appear under the menu bar while they are said, then go into the chat">
+                <source src="media/hero-dictate-1.webm" type="video/webm">
+                <source src="media/hero-dictate-1.mp4" type="video/mp4">
+              </video>
+            </div>
 
             <div class="reel-chat" aria-hidden="true">
               <p class="reel-msg"><small data-reel-from>Dana</small><span data-reel-message>Do you have the Q3 numbers?</span></p>
@@ -162,6 +172,7 @@
                 <button role="tab" type="button" id="reel-tab-proofread" aria-controls="reel-proofread" aria-selected="false" tabindex="-1">Proofread<i aria-hidden="true"></i></button>
                 <button role="tab" type="button" id="reel-tab-explain" aria-controls="reel-explain" aria-selected="false" tabindex="-1">Explain<i aria-hidden="true"></i></button>
                 <button role="tab" type="button" id="reel-tab-compose" aria-controls="reel-compose" aria-selected="false" tabindex="-1">Compose<i aria-hidden="true"></i></button>
+                <button role="tab" type="button" id="reel-tab-dictate" aria-controls="reel-dictate" aria-selected="false" tabindex="-1">Dictate<i aria-hidden="true"></i></button>
               </div>
               <button class="reel-pause" type="button" data-reel-pause aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
             </div>
@@ -214,7 +225,7 @@
   <section class="cases" id="use">
     <div class="wrap">
       <p class="label" data-rise>Use cases</p>
-      <h2 data-rise>Four things <span class="dim">you will use every day.</span></h2>
+      <h2 data-rise>Five things <span class="dim">you will use every day.</span></h2>
 
       <div class="player" data-rise>
         <div class="player-list" role="tablist" aria-orientation="vertical" aria-label="Use cases" data-tabs>
@@ -236,6 +247,11 @@
           <button role="tab" type="button" id="tab-compose" aria-controls="case-compose" aria-selected="false" tabindex="-1">
             <span class="num">04</span><span class="name">Compose</span>
             <span class="more">With nothing selected, describe the message in a line. Pick a style, and Insert puts the text at your cursor.</span>
+            <i aria-hidden="true"></i>
+          </button>
+          <button role="tab" type="button" id="tab-dictate" aria-controls="case-dictate" aria-selected="false" tabindex="-1">
+            <span class="num">05</span><span class="name">Dictate</span>
+            <span class="more">Hold a key and talk. Your words appear as you say them and go in at your cursor. Press ✨ to proofread them or rewrite them in your style first, as here.</span>
             <i aria-hidden="true"></i>
           </button>
         </div>
@@ -277,7 +293,60 @@
               <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
             </div>
           </div>
+          <div class="case" role="tabpanel" id="case-dictate" aria-labelledby="tab-dictate" hidden>
+            <div class="clip framed" data-clip>
+              <video muted playsinline preload="none" poster="media/poster-dictate-1.webp" width="1488" height="780" aria-label="A recording of a dictation opened in the panel with the sparkle button and rewritten in a work style">
+                <source src="media/demo-dictate-1.webm" type="video/webm">
+                <source src="media/demo-dictate-1.mp4" type="video/mp4">
+              </video>
+              <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+            </div>
+          </div>
           <p class="caption">Recordings of the app itself. No sound.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dictation" id="dictation">
+    <div class="wrap">
+      <p class="label" data-rise>Dictation</p>
+      <h2 data-rise>Say it, <span class="dim">and it is typed where you are.</span></h2>
+      <p class="lede" data-rise>Hold a key and talk. Your words appear as you say them and go in at your cursor, in any app. Nine free speech models run on your Mac, so what you say never leaves it.</p>
+      <div class="looks" data-rise>
+        <figure>
+          <img src="media/dictate-card-look-1.webp" width="LOOKC_W" height="LOOKC_H" loading="lazy" alt="The Card look under the menu bar: the wave, the seconds, Cancel, a sparkle and Done above the words in a glass card">
+          <figcaption><b>Card</b> Under the wave in your menu bar.</figcaption>
+        </figure>
+        <figure>
+          <img src="media/dictate-floating-1.webp" width="FLOAT_W" height="FLOAT_H" loading="lazy" alt="The Floating look at the bottom of the screen: the words on a soft blur above the wave and the seconds">
+          <figcaption><b>Floating</b> At the bottom of the screen.</figcaption>
+        </figure>
+      </div>
+      <div class="columns">
+        <div data-rise>
+          <h3>Start it your way</h3>
+          <ul>
+            <li>Hold Right ⌥, or another Option or Command key, and talk</li>
+            <li>Tap it for a long dictation, and tap again when you are done</li>
+            <li>Or use a shortcut, or the microphone in the panel</li>
+          </ul>
+        </div>
+        <div data-rise style="--d: 80ms">
+          <h3>Polish it first</h3>
+          <ul>
+            <li>✨ opens what you said in the panel</li>
+            <li>Proofread it, or rewrite it in your own style</li>
+            <li>Insert puts the result at your cursor</li>
+          </ul>
+        </div>
+        <div data-rise style="--d: 160ms">
+          <h3>Free, on your Mac</h3>
+          <ul>
+            <li>Apple's model, NVIDIA's Parakeet and Nemotron, and OpenAI's Whisper</li>
+            <li>English, 25 European languages, or about a hundred</li>
+            <li>The sound is never sent or kept</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -519,6 +588,10 @@
           <figcaption><b>Spending</b> By period and by model.</figcaption>
         </figure>
         <figure class="shot">
+          <img src="media/settings-dictation-model-light.webp" width="1200" height="1385" loading="lazy" alt="The Dictation page: the language, when to free the memory, and the models in groups, each described in words">
+          <figcaption><b>Dictation</b> Nine models, described in plain words.</figcaption>
+        </figure>
+        <figure class="shot">
           <img src="media/settings-editor-light.webp" width="1200" height="1376" loading="lazy" alt="The style editor: a name, a note, a list of real messages and a box to try the style">
           <figcaption><b>Styles</b> Paste real messages, then try it.</figcaption>
         </figure>
@@ -527,7 +600,7 @@
           <figcaption><b>Writing</b> The model, and rules it always follows.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="media/settings-shortcuts-light.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page: a shortcut for each action anywhere on the Mac and for each button on a result">
+          <img src="media/settings-shortcuts-light-2.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page: a shortcut for each action anywhere on the Mac and for each button on a result">
           <figcaption><b>Shortcuts</b> One for every action and style.</figcaption>
         </figure>
         <figure class="shot">
@@ -565,6 +638,7 @@
             <li>Your styles and settings, in a local database</li>
             <li>Your API key, in the macOS Keychain</li>
             <li>Everything, when you use Apple's on-device model</li>
+            <li>What you say: every dictation model runs here</li>
           </ul>
         </div>
         <div data-rise style="--d: 80ms">
@@ -584,7 +658,7 @@
           </ul>
         </div>
       </div>
-      <p class="after" data-rise>macOS asks for two permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you include the screen, and the panel shows the picture before it is sent. Apart from your requests, OmanAI only contacts GitHub to check for updates. The code is open, so <a href="https://github.com/romanbitca/oman-ai">you can read exactly what it does</a>.</p>
+      <p class="after" data-rise>macOS asks for up to three permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you include the screen, and the panel shows the picture before it is sent. The Microphone is only needed if you dictate. Apart from your requests, OmanAI only contacts GitHub to check for updates, and Hugging Face when you download a dictation model. The code is open, so <a href="https://github.com/romanbitca/oman-ai">you can read exactly what it does</a>.</p>
     </div>
   </section>
 
@@ -643,6 +717,8 @@
         <details><summary>Does it work in other languages?</summary><p>With Claude, yes. It keeps the language of your text unless you ask for another one, and you can set a language it always writes in. Apple's on-device model covers the languages Apple Intelligence supports.</p></details>
         <details><summary>What happens to my clipboard?</summary><p>Pasting borrows the clipboard for a moment and then puts back what was there. The pasted text is marked as passing through, so clipboard history apps can leave it out.</p></details>
         <details><summary>How do updates work?</summary><p>OmanAI checks this project's GitHub releases once a day and installs a new version when you quit. Every update is signed, and the app checks the signature before installing. You can turn automatic updates off in Settings.</p></details>
+        <details><summary>Does dictation send my voice anywhere?</summary><p>No. Every dictation model runs on your Mac, and the sound is never sent or kept. Transcripts are kept as text on your Mac, so you can find them again under Dictation in Settings, and you choose how many to keep, or none.</p></details>
+        <details><summary>Which dictation model should I pick?</summary><p>For English, Parakeet Unified: your words appear as you say them. For other European languages, Nemotron Unified, or Parakeet Ultra when accuracy matters more than speed. For any other language, Whisper Large v3 Turbo. On macOS 26 or later, Apple's model needs no download at all.</p></details>
         <details><summary>Who makes it?</summary><p>OmanAI is an independent open-source project. It is not made by, or affiliated with, Anthropic or Apple.</p></details>
       </div>
     </div>
