@@ -144,6 +144,7 @@ import Testing
         var preferences = AppPreferences()
         preferences.dictationModel = .parakeet
         preferences.dictationPillPosition = .bottom
+        preferences.dictationPillStyle = .floating
         preferences.keepsDictations = false
         preferences.setDictationLanguage(DictationLanguage(id: "ro"), for: .whisper)
         let data = try JSONEncoder().encode(preferences)
@@ -152,6 +153,7 @@ import Testing
         let old = try JSONDecoder().decode(AppPreferences.self, from: Data(#"{"keepsPanelOpen":true}"#.utf8))
         #expect(old.dictationModel == .apple)
         #expect(old.dictationPillPosition == .menuBar)
+        #expect(old.dictationPillStyle == .card)
         #expect(old.keepsDictations)
         #expect(old.dictationLanguages.isEmpty)
     }
@@ -194,6 +196,25 @@ import Testing
         #expect(DictationWave.amplitude(forLevel: 1) == 1)
         #expect(DictationWave.amplitude(forLevel: 2) == 1)
         #expect(DictationWave.amplitude(forLevel: 0.5) > DictationWave.amplitude(forLevel: 0.2))
+    }
+
+    @Test func theSecondsCountMinutesAndSeconds() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        #expect(DictationPillView.elapsed(from: nil, to: start) == "0:00")
+        #expect(DictationPillView.elapsed(from: start, to: start.addingTimeInterval(7.9)) == "0:07")
+        #expect(DictationPillView.elapsed(from: start, to: start.addingTimeInterval(65)) == "1:05")
+        #expect(DictationPillView.elapsed(from: start, to: start.addingTimeInterval(-3)) == "0:00")
+    }
+
+    @Test func theFloatingBlurIsFullInTheMiddleAndGoneAtTheEdge() {
+        #expect(SoftBlurView.strength(atDistance: 0) == 1)
+        #expect(SoftBlurView.strength(atDistance: 0.5) == 1)
+        #expect(SoftBlurView.strength(atDistance: 1) == 0)
+        #expect(SoftBlurView.strength(atDistance: 0.75) > 0.3)
+        #expect(SoftBlurView.strength(atDistance: 0.75) < 0.7)
+        let image = SoftBlurView.feather(size: CGSize(width: 100, height: 40))
+        #expect(image?.width == 50)
+        #expect(image?.height == 20)
     }
 
     @Test func joiningSpeechLeavesOneSpace() {

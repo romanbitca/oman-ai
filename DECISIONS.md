@@ -348,3 +348,12 @@ Asked for by the maintainer, after the free dictation app Handy: light, words sh
 - Kept transcripts are text only, in a `dictations` table: the words, when, how long, the model, the language and the app they went to. This supersedes "never its text" in the privacy decision above, for dictations alone, and Keep transcripts turns it off
 - The app asks for the microphone with `NSMicrophoneUsageDescription`, and release builds carry `com.apple.security.device.audio-input`, which the hardened runtime needs. Apple's speech model needs no speech recognition permission
 - FluidAudio 0.18.3 (Apache 2.0) and WhisperKit 1.1.1 (MIT, from `argmax-oss-swift`) are pinned to their release commits. FluidAudio is used with no package traits, so its voices, speaker separation and prebuilt text normaliser are not built in. That needs Swift tools 6.2, so OmanKit's manifest moves to 6.2
+
+## 2026-11-12 — The dictation pill has two looks, chosen in Settings
+
+Nine looks were drawn as moving mockups. The maintainer turned down the first four, asked for Done to sit outside the box with the words, then chose two of the next five, with Card changed as they described.
+
+- Card: a row with the moving wave in a glass circle, the seconds in a glass capsule and, for a long dictation, Done in a glass circle at the far end; the words below it in a glass card. This supersedes the pill described in the dictation entry above, with its wave and check button inside the box
+- Floating: the words float on a soft blur and darkening of what is behind, fading out at the edges, with no box; below them a glass capsule with the wave and the seconds, and Done beside it. The blur is the panel backdrop's tint-free one; on a Mac without it, only the darkening shows
+- Done is only there for a long dictation; letting go of the keys finishes a held one. Escape still cancels, so neither look has a cancel button
+- Settings, under Dictation, has Look with Card and Floating. Card is the default, being the one the maintainer liked first

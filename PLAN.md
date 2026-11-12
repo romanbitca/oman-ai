@@ -141,6 +141,7 @@ Acceptance:
 - Start or stop a long dictation starts listening on one press and pastes on the next; the pill's check button and the menu bar icon finish it too
 - Escape cancels and pastes nothing
 - The pill hangs under the menu bar icon, or sits at the bottom of the screen when Settings says so, and never takes the keyboard
+- Settings chooses its look: Card, with the seconds and Done above the words in a glass card, or Floating, with the words on a soft blur above them
 - In the panel, the microphone buttons and the shortcuts put the words into the field being typed in, live
 - Apple's model works on macOS 26 and later with no download from OmanAI; Parakeet and Whisper download from Settings with progress, and can be removed
 - The language list follows the model, with Automatic first where the model can work the language out

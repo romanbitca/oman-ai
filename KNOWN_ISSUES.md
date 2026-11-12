@@ -19,6 +19,7 @@ Known limits:
 
 - Parakeet can't be told the language. Spoken in a language outside its 25, it writes something wrong rather than nothing
 - Whisper reads the words not yet settled again every second, so its live words trail by a second or two and a long dictation keeps the Neural Engine busy
+- The Floating look blurs what is behind it with the same undocumented Core Animation layer as the panel's backdrop. If a macOS drops it, the words keep only the darkening and their shadow, which may be hard to read over a bright window
 - A downloaded model is prepared for the Neural Engine once, at the end of its download, so that the first dictation starts at once. With the download, that took 2 min 42 s for Parakeet and 5 min for Whisper here
 
 One full test run, just after those downloads, had ten panel tests that wait 2 seconds for a result time out. They passed alone, and in the full runs since.

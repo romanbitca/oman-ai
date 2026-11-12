@@ -59,6 +59,14 @@ struct DictationSettingsView: View {
             }
 
             Section {
+                Picker(selection: model.preference(\.dictationPillStyle)) {
+                    ForEach(DictationPillStyle.allCases) { style in
+                        Text(style.displayName).tag(style)
+                    }
+                } label: {
+                    Text("Look")
+                    Text(model.preferences.dictationPillStyle.explanation)
+                }
                 Picker("Show the words", selection: model.preference(\.dictationPillPosition)) {
                     ForEach(DictationPillPosition.allCases) { position in
                         Text(position.displayName).tag(position)
@@ -229,6 +237,17 @@ extension DictationModel {
             "Fast and accurate in 25 European languages, and works out which one you speak."
         case .whisper:
             "Knows about a hundred languages and can work out which one you speak. Slower than Parakeet."
+        }
+    }
+}
+
+extension DictationPillStyle {
+    fileprivate var explanation: String {
+        switch self {
+        case .card:
+            "The seconds and Done above, and your words below in a glass card."
+        case .floating:
+            "Your words float on a soft blur with no box around them, above the seconds and Done."
         }
     }
 }

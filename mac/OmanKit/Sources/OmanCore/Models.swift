@@ -339,6 +339,7 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     /// so each keeps its own choice. A model without one listens for its default language.
     public var dictationLanguages: [String: DictationLanguage] = [:]
     public var dictationPillPosition: DictationPillPosition = .menuBar
+    public var dictationPillStyle: DictationPillStyle = .card
     public var keepsDictations = true
     /// Global shortcuts start empty so OmanAI never takes a combination another app is using.
     public var shortcuts: [String: KeyCombo] = [
@@ -375,6 +376,9 @@ public struct AppPreferences: Codable, Equatable, Sendable {
         dictationPillPosition =
             (try? values.decodeIfPresent(DictationPillPosition.self, forKey: .dictationPillPosition))
             ?? defaults.dictationPillPosition
+        dictationPillStyle =
+            (try? values.decodeIfPresent(DictationPillStyle.self, forKey: .dictationPillStyle))
+            ?? defaults.dictationPillStyle
         keepsDictations = (try? values.decodeIfPresent(Bool.self, forKey: .keepsDictations)) ?? defaults.keepsDictations
         shortcuts = (try? values.decodeIfPresent([String: KeyCombo].self, forKey: .shortcuts)) ?? defaults.shortcuts
     }

@@ -53,13 +53,15 @@ public final class DictationPillState {
 public enum DictationPillMetrics {
     public static let width: CGFloat = PanelMetrics.width
     public static let sideMargin: CGFloat = 24
-    static let maxHeight: CGFloat = 120
+    static let maxHeight: CGFloat = 156
     /// The window keeps one size; the pill sits at its top or bottom edge.
     public static let windowSize = CGSize(width: width + sideMargin * 2, height: PanelMetrics.menuBarGap + maxHeight)
     /// Room above the Dock when the pill sits at the bottom of the screen.
     public static let bottomGap: CGFloat = 16
     /// The most characters of live words shown. Earlier words give way to the newest.
     static let visibleCharacters = 150
+    static let control: CGFloat = 34
+    static let gap: CGFloat = 8
 }
 
 public struct DictationPillView: View {
@@ -72,7 +74,6 @@ public struct DictationPillView: View {
     }
 
     private var atTop: Bool { state.position == .menuBar }
-    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 22, style: .continuous) }
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -89,27 +90,90 @@ public struct DictationPillView: View {
         .environment(\.colorScheme, .dark)
     }
 
+    @ViewBuilder
     private var pill: some View {
-        HStack(alignment: .center, spacing: 11) {
-            leading
-            words
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if controller.mode == .long, controller.phase == .listening {
-                PanelIconButton(symbol: "checkmark", label: "Put the words in") { controller.finishNow() }
+        Group {
+            switch controller.pillStyle {
+            case .card: card
+            case .floating: floating
             }
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 10)
-        .padding(.vertical, 11)
         .frame(width: DictationPillMetrics.width)
-        .frame(minHeight: 44)
-        .liquidGlass(in: shape, reading: true)
         .animation(.easeOut(duration: 0.16), value: controller.phase)
+        .animation(.easeOut(duration: 0.16), value: controller.notice)
     }
 
+    // MARK: Card: the wave, the seconds and Done on top, the words below in a glass card
+
+    private var card: some View {
+        VStack(spacing: DictationPillMetrics.gap) {
+            HStack(spacing: DictationPillMetrics.gap) {
+                waveCircle
+                if showsSeconds {
+                    seconds
+                        .padding(.horizontal, 12)
+                        .frame(height: DictationPillMetrics.control)
+                        .liquidGlass(in: Capsule())
+                        .transition(.opacity)
+                }
+                Spacer(minLength: 0)
+                if showsDone {
+                    doneButton.transition(.opacity.combined(with: .scale(scale: 0.8)))
+                }
+            }
+            words(alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .frame(width: DictationPillMetrics.width, alignment: .leading)
+                .frame(minHeight: 40)
+                .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), reading: true)
+        }
+    }
+
+    private var waveCircle: some View {
+        leadingSymbol
+            .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
+            .liquidGlass(in: Circle())
+    }
+
+    // MARK: Floating: the words on a soft blur with no box, the wave, the seconds and Done below
+
+    private var floating: some View {
+        VStack(spacing: 6) {
+            words(alignment: .center)
+                .shadow(color: .black.opacity(0.45), radius: 6, y: 1)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 14)
+                .frame(width: DictationPillMetrics.width)
+                .background {
+                    SoftBlur(points: 14, dim: 0.34)
+                        .padding(.horizontal, -12)
+                        .padding(.vertical, -4)
+                }
+            HStack(spacing: DictationPillMetrics.gap) {
+                HStack(spacing: 8) {
+                    leadingSymbol
+                    if showsSeconds { seconds }
+                }
+                .padding(.horizontal, 12)
+                .frame(height: DictationPillMetrics.control)
+                .liquidGlass(in: Capsule())
+                if showsDone {
+                    doneButton.transition(.opacity.combined(with: .scale(scale: 0.8)))
+                }
+            }
+        }
+    }
+
+    // MARK: Pieces
+
+    private var showsNotice: Bool { controller.notice != nil && controller.phase == .idle }
+    private var showsSeconds: Bool { controller.listeningSince != nil && !showsNotice }
+    private var showsDone: Bool { controller.mode == .long && controller.phase == .listening }
+
     @ViewBuilder
-    private var leading: some View {
-        if controller.notice != nil, controller.phase == .idle {
+    private var leadingSymbol: some View {
+        if showsNotice {
             Image(systemName: "exclamationmark.triangle.fill")
                 .symbolRenderingMode(.multicolor)
                 .font(.system(size: 14))
@@ -124,26 +188,57 @@ public struct DictationPillView: View {
         }
     }
 
-    @ViewBuilder
-    private var words: some View {
-        if let notice = controller.notice, controller.phase == .idle {
-            Text(notice)
-                .font(.system(size: 13))
-                .fixedSize(horizontal: false, vertical: true)
-                .lineLimit(4)
-        } else if controller.transcript.isEmpty {
-            Text(controller.phase == .finishing ? "Finishing…" : "Listening…")
-                .font(.system(size: 13))
+    /// How long the microphone has been listening, as minutes and seconds.
+    private var seconds: some View {
+        TimelineView(.periodic(from: controller.listeningSince ?? .now, by: 1)) { context in
+            Text(Self.elapsed(from: controller.listeningSince, to: context.date))
+                .font(.system(size: 12, weight: .medium).monospacedDigit())
                 .foregroundStyle(.secondary)
-        } else {
-            let parts = PillWords(controller.transcript, limit: DictationPillMetrics.visibleCharacters)
-            (Text(parts.settled) + Text(parts.tentative).foregroundStyle(.secondary))
-                .font(.system(size: 13))
-                .lineSpacing(2)
-                .lineLimit(3)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityLabel(controller.transcript.text)
         }
+        .accessibilityLabel("Time listening")
+    }
+
+    static func elapsed(from start: Date?, to now: Date) -> String {
+        guard let start else { return "0:00" }
+        let total = max(Int(now.timeIntervalSince(start)), 0)
+        return "\(total / 60):" + String(format: "%02d", total % 60)
+    }
+
+    private var doneButton: some View {
+        Button {
+            controller.finishNow()
+        } label: {
+            Image(systemName: "checkmark")
+                .font(.system(size: 14, weight: .semibold))
+                .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
+                .contentShape(Circle())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .liquidGlass(in: Circle(), interactive: true)
+        .help("Put the words in")
+        .accessibilityLabel("Done")
+    }
+
+    @ViewBuilder
+    private func words(alignment: TextAlignment) -> some View {
+        Group {
+            if let notice = controller.notice, showsNotice {
+                Text(notice)
+                    .lineLimit(4)
+            } else if controller.transcript.isEmpty {
+                Text(controller.phase == .finishing ? "Finishing…" : "Listening…")
+                    .foregroundStyle(.secondary)
+            } else {
+                let parts = PillWords(controller.transcript, limit: DictationPillMetrics.visibleCharacters)
+                (Text(parts.settled) + Text(parts.tentative).foregroundStyle(.secondary))
+                    .lineSpacing(2)
+                    .lineLimit(3)
+                    .accessibilityLabel(controller.transcript.text)
+            }
+        }
+        .font(.system(size: 13))
+        .multilineTextAlignment(alignment)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 

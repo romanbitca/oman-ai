@@ -17,6 +17,23 @@ public enum DictationPillPosition: String, Codable, CaseIterable, Sendable, Iden
     }
 }
 
+/// How the pill shows the live words. Both put the seconds and Done in a row of their own, outside the words.
+public enum DictationPillStyle: String, Codable, CaseIterable, Sendable, Identifiable {
+    /// The moving wave, the seconds and Done on top, and the words below them in a glass card.
+    case card
+    /// The words float on a soft blur with no box around them, above the wave, the seconds and Done.
+    case floating
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .card: "Card"
+        case .floating: "Floating"
+        }
+    }
+}
+
 /// A language to listen for, or `automatic` for a model that works the language out itself.
 public struct DictationLanguage: Hashable, Codable, Sendable, Identifiable {
     public static let automatic = DictationLanguage(id: "auto")

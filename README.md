@@ -71,7 +71,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
-- **Dictation** turns what you say into text in any app, on your Mac. Hold a shortcut while you speak, or press another to start a longer dictation. Your words appear live in a small glass pill and are pasted at your cursor. In the panel they go straight into the field you're typing in, with a microphone button beside each one.
+- **Dictation** turns what you say into text in any app, on your Mac. Hold a shortcut while you speak, or press another to start a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. In the panel they go straight into the field you're typing in, with a microphone button beside each one.
 - **Context** from the window you are writing in, pasted messages or the clipboard. Only what is switched on is sent, and you see it first.
 - **Shortcuts** for any action and for each of your styles, and a panel you can pin and drag anywhere.
 - **Spending** by day, week, month and model, estimated from what each Claude request used.

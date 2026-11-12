@@ -64,6 +64,9 @@ public final class DictationController {
     /// A sentence about a dictation that could not start or finish.
     public private(set) var notice: String?
     public private(set) var position: DictationPillPosition = .menuBar
+    public private(set) var pillStyle: DictationPillStyle = .card
+    /// When the microphone started listening, for the seconds the pill counts.
+    public private(set) var listeningSince: Date?
 
     public init(services: AppServices, presenter: any DictationPresenting, now: @escaping () -> Date = Date.init) {
         self.services = services
@@ -145,6 +148,7 @@ public final class DictationController {
 
         let preferences = (try? services.settings.preferences()) ?? AppPreferences()
         position = preferences.dictationPillPosition
+        pillStyle = preferences.dictationPillStyle
         model = preferences.dictationModel
         keepsDictations = preferences.keepsDictations
         targetApp = field == nil ? services.system.frontmostApp : nil
@@ -206,6 +210,7 @@ public final class DictationController {
             }
             self.session = session
             startedAt = now()
+            listeningSince = startedAt
             phase = .listening
             updatesTask = Task { [weak self] in
                 for await update in session.updates {
@@ -331,6 +336,7 @@ public final class DictationController {
         phase = .idle
         mode = nil
         level = 0
+        listeningSince = nil
 
         guard let message else {
             presenter?.hideDictationPill()

@@ -13,7 +13,8 @@ Date-stamped log of what each work session accomplished.
 - Settings has a Dictation tab, and kept transcripts go in a new `dictations` table, text only
 - The app asks for the microphone, and release builds carry the audio-input entitlement. The Debug build was checked for both, and Parakeet's unused parts, such as its 87 MB prebuilt text normaliser, are not in it
 - 458 tests pass, the temporary harness's included. The app builds, and its build copy was unregistered and deleted
-- Four looks for the pill were drawn as moving mockups for the maintainer to choose from. The one built is the first. Not yet done: a real microphone, the pill on the screen, the documentation page and pictures
+- Nine looks for the pill were drawn as moving mockups. The maintainer chose two, Card with the seconds and Done above the words and Floating with the words on a soft blur, and Settings chooses between them; Card is the default. Done now sits outside the words in both
+- Not yet done: a real microphone, the pill on the screen, the documentation page and pictures
 
 ## 2026-11-12 — A sitemap for crawlers
 

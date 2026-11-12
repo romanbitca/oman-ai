@@ -88,17 +88,31 @@ import Testing
         #expect(harness.system.temporary[.cancelDictation] == nil)
     }
 
-    @Test func thePillShowsWhereSettingsPutsIt() async throws {
+    @Test func thePillShowsWhereAndHowSettingsSays() async throws {
         let harness = Harness()
         var preferences = AppPreferences()
         preferences.dictationPillPosition = .bottom
+        preferences.dictationPillStyle = .floating
         try harness.settings.setPreferences(preferences)
         let controller = harness.makeDictation()
 
         controller.longPressed(into: nil)
         #expect(harness.dictationPresenter.shownAt == [.bottom])
         #expect(controller.position == .bottom)
+        #expect(controller.pillStyle == .floating)
         controller.cancel()
+    }
+
+    @Test func theSecondsStartWhenTheMicrophoneListens() async throws {
+        let harness = Harness()
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        #expect(controller.listeningSince == nil)
+        _ = try await listening(harness, controller)
+        #expect(controller.listeningSince != nil)
+        controller.cancel()
+        #expect(controller.listeningSince == nil)
     }
 
     @Test func wordsForThePanelAppearInItsFieldAsTheyAreSaid() async throws {
