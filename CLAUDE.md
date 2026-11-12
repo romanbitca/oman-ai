@@ -21,6 +21,7 @@ Always read PLAN.md, DECISIONS.md, KNOWN_ISSUES.md, and SESSION_LOG.md at the st
 ## Commands
 
 - Tests: `cd mac/OmanKit && swift test`
+- Real answers from Claude, graded: `cd mac/OmanKit && OMAN_LIVE_KEY=<key> swift test --filter LiveWritingTests`. Run it after any change to a prompt. It costs about a cent on Haiku; the file's header lists the other settings
 - Generate the Xcode project: `cd mac && xcodegen generate`
 - Build the app: `cd mac && xcodebuild -project Oman.xcodeproj -scheme Oman -configuration Debug build`
 - Publish a release: push a tag such as `v0.2.0`, and GitHub Actions does the rest. See docs/RELEASING.md
