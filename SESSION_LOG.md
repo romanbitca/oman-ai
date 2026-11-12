@@ -4,6 +4,11 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — 0.4.3: Paste for words that wait, and Electron apps asked where the cursor is
+
+- At the maintainer's word ("merge it and release so I can try"), merged pull request #20 and released it as 0.4.3. It adds Paste to the waiting pill, and while words wait it switches on the accessibility support of an Electron app in front, so that a click into its field takes them. `main` came to it by fast-forward from c2ac9a3, where #19's test fix had landed. #21 is not in it. 535 tests pass and the app builds
+- The screen check that 0.4.2 shipped without has run since: no app named itself in front, Mail, Messages, Notes, Telegram, WhatsApp and Safari name their fields, and Electron apps do once switched on (see KNOWN_ISSUES.md). Paste and the switch inside the app itself have not been tried on the screen; the maintainer is trying them in this release
+
 ## 2026-11-12 — Paste for words that wait, and Electron apps asked where the cursor is
 
 - The maintainer tried 0.4.2: words dictated with the Finder in front waited in the pill, and a click into an Electron app's message field didn't take them, so they copied and pasted by hand. The kept transcripts' app names, read without their text, show the dictation made in the Finder and the next one in that app. Electron apps answer that nothing has the cursor even in front, as a Chromium browser did with the Mac in use, so waiting words never went into them by themselves
