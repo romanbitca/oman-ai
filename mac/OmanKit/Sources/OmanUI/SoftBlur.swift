@@ -84,10 +84,11 @@ final class SoftBlurView: NSView {
         )
     }
 
-    /// 1 out to half way from the middle, then easing down to 0 at the edge. `distance` is 0 at the middle and 1 at
-    /// the ellipse's edge.
+    /// 1 out to a third of the way from the middle, then easing down to 0 at the edge, slowly at first and last, so
+    /// no line shows where the blur ends. `distance` is 0 at the middle and 1 at the ellipse's edge.
     nonisolated static func strength(atDistance distance: CGFloat) -> CGFloat {
-        let fall = min(max((1 - distance) / 0.5, 0), 1)
-        return fall * fall * (3 - 2 * fall)
+        let fall = min(max((1 - distance) / 0.67, 0), 1)
+        // Rounding can lift the curve a hair above 1 just inside full strength.
+        return min(fall * fall * fall * (fall * (fall * 6 - 15) + 10), 1)
     }
 }

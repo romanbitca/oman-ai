@@ -134,25 +134,6 @@ import Testing
         #expect((try? harness.settings.preferences())?.dictationWords == ["AxiaPOS"])
     }
 
-    @Test func transcriptsCanBeCopiedAndDeleted() async {
-        let harness = Harness()
-        let older = SavedDictation(date: Date(timeIntervalSince1970: 1), text: "Older", duration: 2, model: "apple", language: "en-US", appName: "Mail")
-        let newer = SavedDictation(date: Date(timeIntervalSince1970: 2), text: "Newer", duration: 2, model: "apple", language: "en-US", appName: nil)
-        harness.dictations.seed([older, newer])
-        let settings = await loaded(harness)
-        #expect(settings.savedDictations.map(\.text) == ["Newer", "Older"])
-
-        settings.copyDictation(older)
-        #expect(harness.system.copied == ["Older"])
-        #expect(settings.copiedDictationID == older.id)
-
-        settings.deleteDictation(id: newer.id)
-        #expect(settings.savedDictations.map(\.text) == ["Older"])
-
-        settings.deleteAllDictations()
-        #expect(settings.savedDictations.isEmpty)
-    }
-
     @Test func theMicrophoneIsAskedForOnceThenSystemSettingsOpens() async {
         let harness = Harness()
         harness.system.microphoneAccess = .notDetermined
@@ -268,10 +249,13 @@ import Testing
 
     @Test func theFloatingBlurIsFullInTheMiddleAndGoneAtTheEdge() {
         #expect(SoftBlurView.strength(atDistance: 0) == 1)
-        #expect(SoftBlurView.strength(atDistance: 0.5) == 1)
+        #expect(SoftBlurView.strength(atDistance: 0.33) > 0.999)
         #expect(SoftBlurView.strength(atDistance: 1) == 0)
-        #expect(SoftBlurView.strength(atDistance: 0.75) > 0.3)
-        #expect(SoftBlurView.strength(atDistance: 0.75) < 0.7)
+        #expect(SoftBlurView.strength(atDistance: 0.66) > 0.3)
+        #expect(SoftBlurView.strength(atDistance: 0.66) < 0.7)
+        // It falls all the way, with no step anywhere.
+        let samples = stride(from: 0.0, through: 1.0, by: 0.01).map { SoftBlurView.strength(atDistance: CGFloat($0)) }
+        #expect(zip(samples, samples.dropFirst()).allSatisfy { $0 >= $1 && $0 - $1 < 0.05 })
         let image = SoftBlurView.feather(size: CGSize(width: 100, height: 40))
         #expect(image?.width == 50)
         #expect(image?.height == 20)

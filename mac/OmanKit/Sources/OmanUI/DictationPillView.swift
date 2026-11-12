@@ -143,7 +143,7 @@ public struct DictationPillView: View {
     private var waveCircle: some View {
         leadingSymbol
             .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
-            .liquidGlass(in: Circle())
+            .pillCircle(interactive: false)
     }
 
     // MARK: Floating: the words on a soft blur with no box, the wave, the seconds and Done below
@@ -151,12 +151,13 @@ public struct DictationPillView: View {
     private var floating: some View {
         VStack(spacing: 6) {
             wordsArea(alignment: .center, padding: EdgeInsets(top: 14, leading: 28, bottom: 14, trailing: 28))
-                .shadow(color: .black.opacity(0.45), radius: 6, y: 1)
+                .shadow(color: .black.opacity(0.3), radius: 3, y: 0.5)
                 .frame(width: DictationPillMetrics.width)
                 .background {
-                    SoftBlur(points: 14, dim: 0.34)
-                        .padding(.horizontal, -12)
-                        .padding(.vertical, -4)
+                    // Wider than the words, so the blur has faded away before its edge, with no rim to see.
+                    SoftBlur(points: 28, dim: 0.24)
+                        .padding(.horizontal, -30)
+                        .padding(.vertical, -16)
                 }
             HStack(spacing: DictationPillMetrics.gap) {
                 HStack(spacing: 8) {
@@ -262,7 +263,7 @@ public struct DictationPillView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(LiquidPressStyle())
-        .liquidGlass(in: Circle(), tint: DictationPillMetrics.cancelTint, interactive: true)
+        .pillCircle(tint: DictationPillMetrics.cancelTint)
         .help("Throw the words away")
         .accessibilityLabel("Cancel")
     }
@@ -277,7 +278,7 @@ public struct DictationPillView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(LiquidPressStyle())
-        .liquidGlass(in: Circle(), interactive: true)
+        .pillCircle()
         .help("Open the words in OmanAI, to proofread or rewrite them before they go in")
         .accessibilityLabel("Proofread or rewrite first")
     }
@@ -292,7 +293,7 @@ public struct DictationPillView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(LiquidPressStyle())
-        .liquidGlass(in: Circle(), interactive: true)
+        .pillCircle()
         .help("Copy the words")
         .accessibilityLabel("Copy")
     }
@@ -307,7 +308,7 @@ public struct DictationPillView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(LiquidPressStyle())
-        .liquidGlass(in: Circle(), interactive: true)
+        .pillCircle()
         .help("Put the words in")
         .accessibilityLabel("Done")
     }
@@ -432,5 +433,18 @@ struct DictationMicButton: View {
         .disabled(controller.isActive && !isDictatingHere)
         .help(isDictatingHere ? "Stop dictating" : "Dictate")
         .accessibilityLabel(isDictatingHere ? "Stop dictating" : "Dictate")
+    }
+}
+
+private extension View {
+    /// A round glass control. The glass alone is lit from above, so its sides look darker than its top and bottom
+    /// and the circle reads a little wide; an even ring around it keeps it round.
+    func pillCircle(tint: Color? = nil, interactive: Bool = true) -> some View {
+        liquidGlass(in: Circle(), tint: tint, interactive: interactive)
+            .overlay {
+                Circle()
+                    .strokeBorder(Color.white.opacity(0.22), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
     }
 }
