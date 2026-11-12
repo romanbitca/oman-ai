@@ -324,6 +324,11 @@ enum SpendingFormat {
         "\(count.formatted()) written"
     }
 
+    /// Under the number of fixes: how many texts they were put back from.
+    static func ofTextsWritten(_ count: Int) -> String {
+        count == 1 ? "of 1 text written" : "of \(count.formatted()) texts written"
+    }
+
     /// What one bar covers, as the details of a bar title it.
     static func title(of bar: SpendingSummary.Bar, in period: SpendingSummary.Period) -> String {
         switch period {

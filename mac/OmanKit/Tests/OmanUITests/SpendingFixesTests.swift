@@ -131,6 +131,8 @@ import Testing
         #expect(SpendingFormat.fixes(1) == "1 fix put back")
         #expect(SpendingFormat.fixes(6) == "6 fixes put back")
         #expect(SpendingFormat.written(3) == "3 written")
+        #expect(SpendingFormat.ofTextsWritten(1) == "of 1 text written")
+        #expect(SpendingFormat.ofTextsWritten(4) == "of 4 texts written")
         #expect(SpendingFormat.kinds(bar.kinds) == "Proofread 2 · Rewrite 1")
         #expect(SpendingFormat.models(bar.models).contains("Claude Haiku"))
         #expect(SpendingFormat.precise(0.0021).filter(\.isNumber) == "00021")

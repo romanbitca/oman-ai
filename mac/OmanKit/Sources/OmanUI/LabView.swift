@@ -69,7 +69,7 @@ struct LabView: View {
             )
             LabTile(
                 symbol: "checkmark.circle.fill", tint: .green, value: summary.fixes.formatted(), title: "Fixes put back",
-                detail: "of \(summary.written.formatted()) texts written"
+                detail: SpendingFormat.ofTextsWritten(summary.written)
             )
             LabTile(
                 symbol: "text.badge.checkmark", tint: .purple,
@@ -250,7 +250,14 @@ private struct LabTile: View {
                 .minimumScaleFactor(0.7)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.callout.weight(.medium))
-                Text(detail).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                // Every note gets the room of two real lines, so one that wraps doesn't make its tile taller than the
+                // rest. Reserving the lines with lineLimit left the wrapped tile a point taller.
+                ZStack(alignment: .topLeading) {
+                    Text(" \n ").hidden().accessibilityHidden(true)
+                    Text(detail).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
         }
         .padding(14)

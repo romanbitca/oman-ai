@@ -13,6 +13,9 @@ Date-stamped log of what each work session accomplished.
 - The Lab shows dictations, fixes put back, changes per proofread week by week, money spent, the last two weeks, and the transcripts, which moved there from Settings. Proofreads now note how many places they changed, never the words
 - On this branch every test passes and the app builds. The Lab was drawn off the screen and looked at; the pill's new look hasn't been seen on the screen yet
 - Merged `main`, with 0.4.3's Paste and its Electron change, into this branch, keeping both sets of entries here and in DECISIONS.md. Paste got the ring like the other round buttons. Every test passes with both
+- With the maintainer's yes, a test window built from the same code ran once on their screen, for 24 seconds. It showed the pill in both looks, listening and then holding words with Paste, then the Lab drawn from a copy of their database. Nothing was clicked or typed, nothing took the keyboard, and the copy was deleted afterwards. Their own database was only read, so it stays on the old tables until the release opens it
+- Measured in the pictures: every round button's ring is 68 by 68 pixels in both looks, with the glass's own one-pixel dark line just outside it on each side. The Floating background darkens by up to about 9% beside the words and is gone before the window's edges: at its top, left and bottom edges the pixels match the Card look's picture
+- The Lab showed the maintainer's 23 transcripts and figures correctly, with two faults, now fixed. The tile whose note wrapped onto a second line stood about 13 points taller than the other three, and a note read "of 1 texts written", as the Spending page's did too. Every note now has room for two lines, and drawn off the screen the four tiles measure the same height
 
 ## 2026-11-12 — 0.4.3: Paste for words that wait, and Electron apps asked where the cursor is
 

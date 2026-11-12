@@ -23,7 +23,7 @@ struct SpendingSettingsView: View {
 
     private var writtenDetail: String {
         guard summary.written > 0 else { return "Nothing written yet" }
-        return "of \(summary.written.formatted()) texts written"
+        return SpendingFormat.ofTextsWritten(summary.written)
     }
 
     private var note: String {

@@ -40,16 +40,17 @@ Tried:
 - Tests for recording and saving chords, single keys saved by 0.4.2 still loading, and dictating with two keys held.
 - Tests for the Lab's figures, weeks and days, its transcripts, and proofreads counting their changes.
 - The Lab drawn off the screen, light and dark.
+- With the maintainer's yes, once on their screen in a test window built from the same code: the pill in both looks, listening and then holding words with Paste, and the Lab drawn from a copy of their database, moved to the new tables first. Every round button's ring measured 68 by 68 pixels, and the Floating background faded out before the window's edges. The Lab's tiles were uneven and one note read "of 1 texts written"; both are fixed, and the tiles measure the same height when drawn off the screen.
 
 Not yet tried:
 - Holding keys together on a real keyboard.
-- The pill's ring and the Floating look's new background on the screen. The glass and the blur can only be seen there.
-- The Lab with the person's own data.
+- The pill and the Lab inside the app itself, rather than in the test window.
 - The menu bar icon's new menu, and opening OmanAI again.
 
 Known limits:
 - The Lab's dictation figures come from the transcripts kept, so with "Keep: the last 50" they cover only those.
 - Changes per proofread are counted from this version on, so earlier weeks show nothing.
+- The glass draws its own one-pixel dark line on each side of a round button, just outside the ring. Counting those lines, a button is 70 by 68 pixels; the ring itself is round.
 
 ## 2026-11-12 — Spending's fixes: what has been tried, and what hasn't
 
