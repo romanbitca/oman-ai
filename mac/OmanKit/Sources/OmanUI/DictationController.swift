@@ -27,7 +27,7 @@ public enum DictationPhase: Equatable, Sendable {
     /// Listening has stopped, and the model is settling the last words before they go in.
     case finishing
     /// The words are ready, but nothing that takes text had the cursor. They wait in the pill until a field gets it,
-    /// Copy, × or Escape is pressed, or a minute passes.
+    /// Paste, Copy, × or Escape is pressed, or a minute passes.
     case holding
 }
 
@@ -198,6 +198,18 @@ public final class DictationController {
         guard phase == .holding, let heldText else { return }
         services.system.copyToClipboard(heldText)
         end()
+    }
+
+    /// The pill's Paste button, while the words wait: pastes them where the cursor is now. The pill never takes the
+    /// keyboard, so the field just clicked keeps it, even in an app that can't say what has the cursor. Nothing is
+    /// asked first, since the person has just chosen the place.
+    public func pasteHeldWords() {
+        guard phase == .holding, let heldText else { return }
+        holdTask?.cancel()
+        phase = .finishing
+        holdTask = Task { [weak self] in
+            await self?.paste(heldText)
+        }
     }
 
     private func start(_ mode: DictationMode, into field: PanelField?) {
@@ -464,7 +476,7 @@ public final class DictationController {
 
     /// Asks the app in front what has the cursor, a few times a second, and pastes the words as soon as a field that
     /// takes text has it, in that app or another. An app that can't say is never pasted into here, since nobody
-    /// chose it. After a minute the words are copied instead.
+    /// chose it; Paste in the pill is for those. After a minute the words are copied instead.
     private func waitForField() async {
         let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: holdTiming.giveUpAfter)

@@ -183,7 +183,7 @@ public struct DictationPillView: View {
     private var showsSeconds: Bool { controller.listeningSince != nil && !showsNotice && !showsWaiting }
     private var showsDone: Bool { controller.mode == .long && controller.phase == .listening }
 
-    /// Cancel, ✨ and Done during a long dictation, or × and Copy while the words wait for a field.
+    /// Cancel, ✨ and Done during a long dictation, or ×, Copy and Paste while the words wait for a field.
     @ViewBuilder
     private var buttons: some View {
         if showsDone {
@@ -197,6 +197,7 @@ public struct DictationPillView: View {
             Group {
                 cancelButton
                 copyButton
+                pasteButton
             }
             .transition(.opacity.combined(with: .scale(scale: 0.8)))
         }
@@ -237,9 +238,10 @@ public struct DictationPillView: View {
         .accessibilityLabel("Time listening")
     }
 
-    /// 202 points wide at this size. In the card's top row, with the symbol, × and Copy beside it, 4 points are left.
+    /// 150 points wide at this size. In the card's top row, with the symbol, ×, Copy and Paste beside it, 14 points
+    /// are left.
     private var waitingMessage: some View {
-        Text("Click where these words should go")
+        Text("Click in a field, then Paste")
             .font(.system(size: 12, weight: .medium))
             .lineLimit(1)
             .minimumScaleFactor(0.9)
@@ -295,6 +297,22 @@ public struct DictationPillView: View {
         .liquidGlass(in: Circle(), interactive: true)
         .help("Copy the words")
         .accessibilityLabel("Copy")
+    }
+
+    /// Pastes where the cursor is. Clicking it doesn't move the keyboard, so the field clicked just before keeps it.
+    private var pasteButton: some View {
+        Button {
+            controller.pasteHeldWords()
+        } label: {
+            Image(systemName: "doc.on.clipboard")
+                .font(.system(size: 13, weight: .semibold))
+                .frame(width: DictationPillMetrics.control, height: DictationPillMetrics.control)
+                .contentShape(Circle())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .liquidGlass(in: Circle(), interactive: true)
+        .help("Paste the words where the cursor is")
+        .accessibilityLabel("Paste")
     }
 
     private var doneButton: some View {

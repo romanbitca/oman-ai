@@ -452,3 +452,13 @@ The maintainer asked whether OmanAI could notice when a dictation finishes with 
 - After a minute with no choice, the words are copied and the pill says "No field was chosen, so your words were copied." for a moment
 - Accessibility is asked away from the main thread, so an app slow to answer never holds up the pill or the menu bar. Each question has the 0.25-second limit that reading a selection has
 - While words wait, the dictation itself is over: the menu bar icon is still again and opens the panel, and the shortcuts start a new dictation. Either first copies the waiting words, so none are lost. Opening the panel also closes the pill, which under the menu bar icon would hang where the panel does
+
+## 2026-11-12 — Paste in the pill, for words that wait
+
+The maintainer tried 0.4.2. Words dictated with the Finder in front waited in the pill, as they should, but a click into an Electron app's message field didn't take them, and they had to press Copy and paste by hand. Electron apps answer that nothing has the cursor even while their own field has it, so they can't be told, and by the entry above waiting words never go into them by themselves. The maintainer's first idea had been to ask for the cursor to be put in place and then paste, and they asked for that as a button.
+
+- The waiting pill has Paste beside × and Copy. A click into a field, then Paste, puts the words where the cursor is, with the space after them and Return or ⌘Return if Settings says so, and the pill fades. The pill never takes the keyboard, so the field just clicked keeps it, in any app
+- Paste doesn't ask what has the cursor first, because the person has just chosen the place. A paste that can't be made copies the words instead, as after a dictation
+- Where an app says what has the cursor, a click into a field still takes the words by itself
+- The pill says "Click in a field, then Paste". "Click where these words should go" left no room for a third button and didn't mention Paste
+- Paste's symbol is the one macOS's Edit menu shows for Paste, beside Copy's

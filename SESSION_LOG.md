@@ -4,6 +4,13 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — Paste for words that wait
+
+- The maintainer tried 0.4.2: words dictated with the Finder in front waited in the pill, and a click into an Electron app's message field didn't take them, so they copied and pasted by hand. The kept transcripts' app names, read without their text, show the dictation made in the Finder and the next one in that app. Electron apps answer that nothing has the cursor even in front, as a Chromium browser did with the Mac in use, so waiting words never went into them by themselves
+- Added Paste to the waiting pill, beside × and Copy: click in a field, then Paste. The pill now says "Click in a field, then Paste" (see DECISIONS.md)
+- 4 new tests, and the whole suite of 531 passes. The waiting row was drawn off the screen in both looks and fits. The app builds, and its build copy was unregistered and deleted
+- Not verified: Paste on the screen. Not merged or released
+
 ## 2026-11-12 — 0.4.2: the redrawn model list, and words that wait for a field
 
 - At the maintainer's word, merged pull requests #17 and #18 and released them as 0.4.2. #17 redraws the model list and Your words. #18 makes dictated words wait in the pill when nothing can take them. #18 went on top of #17. Only DECISIONS.md and SESSION_LOG.md overlapped, and both keep every entry. On the combined code 547 tests pass and the app builds

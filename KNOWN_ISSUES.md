@@ -8,14 +8,17 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 Tried: tests for each answer, a paste when a field gets the cursor with the space after and Return, Copy, ×, the minute, and opening the panel or starting a dictation meanwhile; and the rules for each role. What apps answer was read, without changing anything, from the apps open on this Mac while it was locked, so every one answered as an app in the background: Slack and the other Electron apps said nothing had focus, and so did Mail; Notes, Telegram, WhatsApp and Messages named the app itself, and the Finder named its desktop, a group with the subrole AXDesktop and a text range. Messages didn't answer within the 0.25 seconds the first time it was asked, which counts as can't be told. The app's own reader, built on its own, sorted them as the rules say: the Electron apps can't be told, the desktop takes no text. Asking an app took 20 to 130 milliseconds.
 
+In 0.4.2 the maintainer met the first limit below: words dictated with the Finder in front waited, and a click into an Electron app's message field didn't take them. With the Mac in use, a Chromium browser in front also answered that nothing had focus. Paste in the pill came from that.
+
 Not yet tried:
 
+- Paste on the screen. Its click shouldn't move the keyboard, as Done's doesn't, but that has only been reasoned, not seen
 - Any of it on the screen. Above all, what apps answer while they are in front: a field in Slack or another Electron app, expected to be can't be told; a mail being composed in Mail, expected to be a page whose value can be set; Messages and WhatsApp, which named the app itself from the background and should name their field in front; a Finder window in icon view; a page in Safari with no field in focus
 - macOS before 27, where the desktop may answer differently
 
 Known limits:
 
-- In Slack and other apps that don't say what has the cursor, waiting words don't go in when their field is clicked: use Copy. A dictation made in them goes in as before, so where nothing there takes text it is still pasted into nowhere and kept only in Transcripts and Copy last transcript
+- In Slack and other apps that don't say what has the cursor, waiting words don't go in by themselves when their field is clicked: Paste in the pill puts them there. A dictation made in them goes in as before, so where nothing there takes text it is still pasted into nowhere and kept only in Transcripts and Copy last transcript
 - Something with a role OmanAI doesn't know counts as can't be told, and is pasted into as before. A Finder window in icon view may be one
 - Escape stays taken while words wait, for up to a minute, so it doesn't reach the app in front meanwhile. Its first press throws the words away; their transcript stays
 - Waiting words go into whatever field gets the cursor next, even one clicked for something else, such as a search field
