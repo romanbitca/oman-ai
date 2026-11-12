@@ -66,6 +66,30 @@ enum SelectionReader {
         )
     }
 
+    /// The switch Electron offers apps that assist the person, as screen readers do.
+    private static let manualAccessibility = "AXManualAccessibility"
+
+    /// Electron apps keep their accessibility support off until something asks for it, and say nothing of what has
+    /// the cursor meanwhile. This switches it on only where it reads as off, so support that a screen reader or
+    /// another tool switched on is never touched, and an app without the switch is left alone.
+    static func switchOnManualAccessibility(processID: pid_t) -> Bool {
+        let application = AXUIElementCreateApplication(processID)
+        AXUIElementSetMessagingTimeout(application, messagingTimeoutSeconds)
+        var value: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(application, manualAccessibility as CFString, &value) == .success,
+              let isOn = value as? Bool, !isOn
+        else {
+            return false
+        }
+        return AXUIElementSetAttributeValue(application, manualAccessibility as CFString, kCFBooleanTrue) == .success
+    }
+
+    static func switchOffManualAccessibility(processID: pid_t) {
+        let application = AXUIElementCreateApplication(processID)
+        AXUIElementSetMessagingTimeout(application, messagingTimeoutSeconds)
+        _ = AXUIElementSetAttributeValue(application, manualAccessibility as CFString, kCFBooleanFalse)
+    }
+
     private static func isSettable(_ element: AXUIElement, attribute: String) -> Bool {
         var settable = DarwinBoolean(false)
         guard AXUIElementIsAttributeSettable(element, attribute as CFString, &settable) == .success else {

@@ -8,14 +8,25 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 Tried: tests for each answer, a paste when a field gets the cursor with the space after and Return, Copy, ×, the minute, and opening the panel or starting a dictation meanwhile; and the rules for each role. What apps answer was read, without changing anything, from the apps open on this Mac while it was locked, so every one answered as an app in the background: Slack and the other Electron apps said nothing had focus, and so did Mail; Notes, Telegram, WhatsApp and Messages named the app itself, and the Finder named its desktop, a group with the subrole AXDesktop and a text range. Messages didn't answer within the 0.25 seconds the first time it was asked, which counts as can't be told. The app's own reader, built on its own, sorted them as the rules say: the Electron apps can't be told, the desktop takes no text. Asking an app took 20 to 130 milliseconds.
 
+In 0.4.2 the maintainer met the first limit below: words dictated with the Finder in front waited, and a click into an Electron app's message field didn't take them. With the Mac in use, a Chromium browser in front also answered that nothing had focus. Paste in the pill came from that.
+
+Then, with the maintainer clicking into each app's field and a reader built from the app's own code noting only roles, what apps answer while they are in front: a mail being written in Mail is a page whose value can be set, and its To and Subject are text fields, so they take text; a mail being read is a page that can't be set, so it takes none; the message fields of Telegram and WhatsApp are text areas, so they take text; Slack and other Electron apps said nothing had focus, so they can't be told. Neither Telegram nor WhatsApp named the app itself in front. WhatsApp's window with no field in focus named a group of its own (subrole iOSContentGroup), which can't be told, and right after each switch WhatsApp and Telegram didn't answer for a moment, which can't be told either.
+
+A second run switched on the accessibility support of each app in front that said nothing had focus, and back off at the end. Slack and two other Electron apps then named their message field, a text area, within about three seconds, and Arc did too. Chrome and another Chromium browser refused the switch, so fields inside their pages still can't be told; Chrome's own address bar is a text field either way. Safari, Notes and Messages named their fields without it, so Messages doesn't name the app itself in front either. That run led to switching it on while words wait.
+
 Not yet tried:
 
-- Any of it on the screen. Above all, what apps answer while they are in front: a field in Slack or another Electron app, expected to be can't be told; a mail being composed in Mail, expected to be a page whose value can be set; Messages and WhatsApp, which named the app itself from the background and should name their field in front; a Finder window in icon view; a page in Safari with no field in focus
+- Paste on the screen. Its click shouldn't move the keyboard, as Done's doesn't, but that has only been reasoned, not seen
+- The switch inside the app itself: the runs above used a separate reader, built from the app's code
+- A Finder window in icon view, and a page in Safari with no field in focus
 - macOS before 27, where the desktop may answer differently
 
 Known limits:
 
-- In Slack and other apps that don't say what has the cursor, waiting words don't go in when their field is clicked: use Copy. A dictation made in them goes in as before, so where nothing there takes text it is still pasted into nowhere and kept only in Transcripts and Copy last transcript
+- An Electron app takes up to about three seconds after its support is switched on to name the field clicked, and may run a little slower until the wait ends
+- Chrome and other Chromium browsers refuse the switch, and Arc's can't be read, so OmanAI leaves it alone: in their pages waiting words don't go in by themselves when a field is clicked, and Paste puts them there
+- If OmanAI quits while words wait, an app it switched on keeps its accessibility support on until that app quits
+- A dictation made in an app that can't say goes in as before, so where nothing there takes text it is still pasted into nowhere and kept only in Transcripts and Copy last transcript
 - Something with a role OmanAI doesn't know counts as can't be told, and is pasted into as before. A Finder window in icon view may be one
 - Escape stays taken while words wait, for up to a minute, so it doesn't reach the app in front meanwhile. Its first press throws the words away; their transcript stays
 - Waiting words go into whatever field gets the cursor next, even one clicked for something else, such as a search field

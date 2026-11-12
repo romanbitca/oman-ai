@@ -86,6 +86,13 @@ public protocol SystemBridging: AnyObject {
     /// What has the cursor in the app in front, read through Accessibility without touching it, so that dictated
     /// words aren't pasted where nothing can take them.
     func textFocus() async -> TextFocus
+    /// While dictated words wait for a field: an app in front that doesn't say what has the cursor, as Electron apps
+    /// don't until asked, has its accessibility support switched on, the way screen readers switch it on, so that a
+    /// click into its field can be seen. Only where that support reads as off. Returns whether it was switched on.
+    @discardableResult
+    func switchOnFocusReporting() async -> Bool
+    /// Switches accessibility support back off in every app `switchOnFocusReporting()` switched it on in.
+    func switchOffFocusReporting()
     func copyToClipboard(_ text: String)
     /// Whether the clipboard offers text, decided from its types alone so nothing is read until the person asks.
     var hasClipboardText: Bool { get }

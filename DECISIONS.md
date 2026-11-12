@@ -453,14 +453,34 @@ The maintainer asked whether OmanAI could notice when a dictation finishes with 
 - Accessibility is asked away from the main thread, so an app slow to answer never holds up the pill or the menu bar. Each question has the 0.25-second limit that reading a selection has
 - While words wait, the dictation itself is over: the menu bar icon is still again and opens the panel, and the shortcuts start a new dictation. Either first copies the waiting words, so none are lost. Opening the panel also closes the pill, which under the menu bar icon would hang where the panel does
 
+## 2026-11-12 — Paste in the pill, for words that wait
+
+The maintainer tried 0.4.2. Words dictated with the Finder in front waited in the pill, as they should, but a click into an Electron app's message field didn't take them, and they had to press Copy and paste by hand. Electron apps answer that nothing has the cursor even while their own field has it, so they can't be told, and by the entry above waiting words never go into them by themselves. The maintainer's first idea had been to ask for the cursor to be put in place and then paste, and they asked for that as a button.
+
+- The waiting pill has Paste beside × and Copy. A click into a field, then Paste, puts the words where the cursor is, with the space after them and Return or ⌘Return if Settings says so, and the pill fades. The pill never takes the keyboard, so the field just clicked keeps it, in any app
+- Paste doesn't ask what has the cursor first, because the person has just chosen the place. A paste that can't be made copies the words instead, as after a dictation
+- Where an app says what has the cursor, a click into a field still takes the words by itself
+- The pill says "Click in a field, then Paste". "Click where these words should go" left no room for a third button and didn't mention Paste
+- Paste's symbol is the one macOS's Edit menu shows for Paste, beside Copy's
+
+## 2026-11-12 — While words wait, Electron apps are asked to say what has the cursor
+
+The maintainer asked for a click into a field to take waiting words in Slack and the other apps that can't say what has the cursor, as it does elsewhere. With their yes, a test switched on those apps' accessibility support through `AXManualAccessibility`, the switch Electron offers apps that assist the person, while they clicked into each app's field. Slack and two other Electron apps then named their message field within about three seconds, and Arc did too. Chrome and another Chromium browser refused the switch.
+
+- This narrows "Accessibility mode is not forced on in Electron apps" (2026-11-10). It is switched on only while dictated words wait for a field, only in an app in front that can't say what has the cursor, and only where the switch reads as off, so support that a screen reader or another tool switched on is never touched
+- When the wait ends, however it ends, it is switched back off in every app OmanAI switched it on in
+- Each app is asked once per wait. Terminals, remote desktops and virtual machines are never asked, as before
+- An app whose switch can't be read, such as Arc, is left alone, so OmanAI never switches off what something else switched on. Chromium browsers that refuse it keep Paste
+- A dictation made while such an app is in front goes in as before; nothing is switched on for it
+
 ## 2026-11-12 — The Lab, keys held together, and a cleaner pill
 
-Roman tried 0.4.2 and asked for:
+The maintainer tried 0.4.2 and asked for:
 - round buttons in the pill;
 - no Settings button in the panel's header;
 - a dictation shortcut of keys held together, such as Right ⌘ with Right ⌥;
 - a cleaner background behind the Floating look's words;
-- in place of Settings when OmanAI is opened, a Lab with a few numbers (transcripts, fixes, how his English goes) and his transcripts.
+- in place of Settings when OmanAI is opened, a Lab with a few numbers (transcripts, fixes, how their English goes) and their transcripts.
 
 The Lab opens from a right-click on the menu bar icon, whose menu holds Open Lab, OmanAI Settings and Quit. The rest is the assistant's.
 
@@ -478,7 +498,7 @@ The Lab opens from a right-click on the menu bar icon, whose menu holds Open Lab
   - "Your writing": for the last eight weeks, how many places a proofread changed on average, and the share of proofreads that found nothing to change;
   - the transcripts, with search, Copy, Delete, Delete All and how many to keep. They moved from Settings, whose Dictation page now has Model, Look, Words and Sound.
 - **How the person's English goes** is measured without keeping any words. Each proofread notes how many places it changed, as its own count in `writing_actions`, migration v5. Fewer changes over the weeks means fewer mistakes in what they write. It works for any language, so the Lab calls it "Your writing".
-- **The pill's round controls** get an even white ring at 22%. In Roman's screenshot, the cancel button measured 70 by 68 pixels: lit from above, the glass's sides read darker than its top and bottom, and the circle looks a little wide.
+- **The pill's round controls**, Paste from 0.4.3 among them, get an even white ring at 22%. In the maintainer's screenshot, the cancel button measured 70 by 68 pixels: lit from above, the glass's sides read darker than its top and bottom, and the circle looks a little wide.
 - **The Floating look's words** sit on a stronger blur that fades out well beyond them:
   - blur radius 28 points, up from 14;
   - darkening 24%, down from 34%;

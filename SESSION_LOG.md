@@ -6,12 +6,28 @@ Date-stamped log of what each work session accomplished.
 
 ## 2026-11-12 — The Lab, keys held together, and a cleaner pill
 
-- Roman tried 0.4.2 at home and sent screenshots. He asked for round buttons in the pill, the Settings button gone from the panel, Right ⌘ with Right ⌥ as a dictation shortcut, a cleaner Floating background, and a Lab in place of Settings when OmanAI is opened. He also reported that waiting words didn't go into a field he clicked; that went to the session that built waiting words, which also has his yes for its on-screen check. The choices are in DECISIONS.md
-- Measured the pill's cancel button in his screenshot at 70 by 68 pixels: the glass's darker sides make it read wide. The round controls now have an even ring
+- The maintainer tried 0.4.2 at home and sent screenshots. They asked for round buttons in the pill, the Settings button gone from the panel, Right ⌘ with Right ⌥ as a dictation shortcut, a cleaner Floating background, and a Lab in place of Settings when OmanAI is opened. They also reported that waiting words didn't go into a field they clicked; the session that built waiting words answered that with Paste, released in 0.4.3. The choices are in DECISIONS.md
+- Measured the pill's cancel button in their screenshot at 70 by 68 pixels: the glass's darker sides make it read wide. The round controls now have an even ring
 - Found why Settings appeared when OmanAI was opened: macOS brings back the app's kept Settings window. Opening OmanAI now shows the Lab, and the menu bar icon's right-click menu has Open Lab, OmanAI Settings and Quit
 - Keys on their own became chords of one or more Control, Option or Command keys, recorded by holding them and letting go. The rules are a small type that tests drive; the event monitor feeds it
 - The Lab shows dictations, fixes put back, changes per proofread week by week, money spent, the last two weeks, and the transcripts, which moved there from Settings. Proofreads now note how many places they changed, never the words
 - On this branch every test passes and the app builds. The Lab was drawn off the screen and looked at; the pill's new look hasn't been seen on the screen yet
+- Merged `main`, with 0.4.3's Paste and its Electron change, into this branch, keeping both sets of entries here and in DECISIONS.md. Paste got the ring like the other round buttons. Every test passes with both
+
+## 2026-11-12 — 0.4.3: Paste for words that wait, and Electron apps asked where the cursor is
+
+- At the maintainer's word ("merge it and release so I can try"), merged pull request #20 and released it as 0.4.3. It adds Paste to the waiting pill, and while words wait it switches on the accessibility support of an Electron app in front, so that a click into its field takes them. `main` came to it by fast-forward from c2ac9a3, where #19's test fix had landed. #21 is not in it. 535 tests pass and the app builds
+- The screen check that 0.4.2 shipped without has run since: no app named itself in front, Mail, Messages, Notes, Telegram, WhatsApp and Safari name their fields, and Electron apps do once switched on (see KNOWN_ISSUES.md). Paste and the switch inside the app itself have not been tried on the screen; the maintainer is trying them in this release
+
+## 2026-11-12 — Paste for words that wait, and Electron apps asked where the cursor is
+
+- The maintainer tried 0.4.2: words dictated with the Finder in front waited in the pill, and a click into an Electron app's message field didn't take them, so they copied and pasted by hand. The kept transcripts' app names, read without their text, show the dictation made in the Finder and the next one in that app. Electron apps answer that nothing has the cursor even in front, as a Chromium browser did with the Mac in use, so waiting words never went into them by themselves
+- Added Paste to the waiting pill, beside × and Copy: click in a field, then Paste. The pill now says "Click in a field, then Paste" (see DECISIONS.md)
+- 4 new tests, and the whole suite of 531 passed at that point. The waiting row was drawn off the screen in both looks and fits. The app builds, and its build copy was unregistered and deleted
+- With the maintainer's yes, a reader that only notes roles ran for three minutes while they clicked into each app's field. Mail's message being written, its To and Subject, and Telegram's and WhatsApp's message fields take text; a mail being read takes none; Slack and other Electron apps can't be told. Neither Telegram nor WhatsApp named the app itself in front, which had been the worry. Messages was not in the run. The first run noted nothing, because the reader kept the app that was in front when it started; it was fixed and run once more
+- The maintainer asked for a click alone to work in those apps too. With their yes, a second run switched on the accessibility support of each app in front that said nothing had focus, and back off at the end, which was checked afterwards. Slack and two other Electron apps, and Arc, then named their message field within about three seconds. Chrome and another Chromium browser refused the switch. Safari, Notes and Messages named their fields without it
+- So while words wait, OmanAI now switches that support on in an app in front that can't say what has the cursor, where it reads as off, and back off when the wait ends (see DECISIONS.md). 4 more tests; 535 pass
+- Not verified: Paste, and the switch inside the app, on the screen. Not merged or released
 
 ## 2026-11-12 — 0.4.2: the redrawn model list, and words that wait for a field
 

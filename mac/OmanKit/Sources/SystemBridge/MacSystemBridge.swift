@@ -20,6 +20,10 @@ public final class MacSystemBridge: SystemBridging {
     private let outputMute = OutputMute()
     // CoreFoundation's equality is how two Accessibility references are compared.
     private var insertionTarget = InsertionTarget<AXUIElement> { CFEqual($0, $1) }
+    /// Apps asked to report what has the cursor while words wait, each once, and those whose support OmanAI switched
+    /// on, to switch back off.
+    private var focusReportingAsked: Set<pid_t> = []
+    private var focusReportingSwitchedOn: Set<pid_t> = []
 
     public init() {}
 
@@ -216,6 +220,38 @@ public final class MacSystemBridge: SystemBridging {
         let processID = app.processID
         // Away from the main thread, so an app that is slow to answer never holds up the pill or the menu bar.
         return await Task.detached { SelectionReader.textFocus(processID: processID) }.value
+    }
+
+    @discardableResult
+    public func switchOnFocusReporting() async -> Bool {
+        guard let app = frontmostApp, AXIsProcessTrusted(), !focusReportingAsked.contains(app.processID) else {
+            return false
+        }
+        focusReportingAsked.insert(app.processID)
+        // Never asked anything, as in `textFocus()`.
+        if SensitiveApps.isTerminal(bundleID: app.bundleID) || SensitiveApps.forwardsKeys(bundleID: app.bundleID) {
+            return false
+        }
+        let processID = app.processID
+        let switchedOn = await Task.detached {
+            SelectionReader.switchOnManualAccessibility(processID: processID)
+        }.value
+        if switchedOn {
+            focusReportingSwitchedOn.insert(processID)
+        }
+        return switchedOn
+    }
+
+    public func switchOffFocusReporting() {
+        let apps = focusReportingSwitchedOn
+        focusReportingAsked.removeAll()
+        focusReportingSwitchedOn.removeAll()
+        guard !apps.isEmpty else { return }
+        Task.detached {
+            for processID in apps {
+                SelectionReader.switchOffManualAccessibility(processID: processID)
+            }
+        }
     }
 
     // MARK: Clipboard
