@@ -8,6 +8,8 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 Proofread makes Haiku think before it writes, because without thinking it got about one proofread in four wrong. A short proofread takes about 1.7 seconds on Haiku (nine in ten under 2.7), where a rewrite takes about 0.9. It costs about $0.0002, and about $0.0004 for a message of ninety words. The quality setting does not change this. On Sonnet a proofread takes about 1.2 seconds, as before.
 
+A long text waits longer before anything shows. An email of 290 words took about 5 seconds on Haiku and on Sonnet, three times each, and for the first 3 to 4 of them the panel only showed that it was working. Every one of its fourteen mistakes was corrected and its line breaks were kept. It cost about $0.0008 on Haiku and $0.01 on Sonnet.
+
 The speeds on the website and in the README are from the run of eleven tasks made with 0.3.4. Each now carries a sentence about Proofread. The table itself has not been measured again.
 
 ---

@@ -20,7 +20,7 @@ Asked for by the maintainer before going to sleep: more tests and improvements, 
 - The research report on competitors and features was delivered to the maintainer as a file. It is not in the repository
 - Updated the site, the documentation and the README for what Proofread now does
 - The test runs of the night cost about $2.50 of the maintainer's API credit
-- Not verified: the new prompts with a screenshot attached or with pasted context longer than a line; Proofread on texts of several hundred words, where thinking may take longer; Settings on macOS 14 and 15; the site in Safari and Firefox
+- Not verified: the new prompts with a screenshot attached or with pasted context longer than a line; Proofread on texts longer than 290 words; Settings on macOS 14 and 15; the site in Safari and Firefox
 
 ## 2026-11-12 — The models tried through the API, a new website with docs, and a fuller README
 
