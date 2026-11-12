@@ -12,11 +12,13 @@
 <meta property="og:url" content="https://oman-ai.romanbitca.com/">
 <meta property="og:image" content="https://oman-ai.romanbitca.com/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#050607">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#f4f6fa">
+<meta name="color-scheme" content="light">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preload" as="image" href="media/poster-rewrite.webp" type="image/webp">
-<link rel="stylesheet" href="styles.css">
+<link rel="preload" as="image" href="media/hero-desk.webp" type="image/webp">
+<link rel="stylesheet" href="styles.css?v=3">
+<!-- Without scripts no recording plays, so the first one shows its result. -->
+<noscript><style>#reel-rewrite { background: url("media/hero-rewrite-still.webp") center top / cover; }</style></noscript>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -67,6 +69,8 @@
   </defs>
 </svg>
 
+<div class="backdrop" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+
 <a class="skip" href="#main">Skip to the content</a>
 
 <header class="nav" data-nav>
@@ -91,29 +95,70 @@
 <main id="main">
 
   <section class="hero" id="top">
-    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="wrap">
-      <a class="pill-news" href="https://github.com/romanbitca/oman-ai/releases/latest" data-rise>
-        <span class="dot" aria-hidden="true"></span><span data-version-pill>Free and open source for macOS</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>
-      </a>
-      <h1 data-rise style="--d: 80ms">Your words,<br><em>in your own voice.</em></h1>
-      <p class="lede" data-rise style="--d: 160ms">Select what you wrote in any app and click the wave in your menu bar. OmanAI proofreads or rewrites it in a style built from your own messages. One click puts it back.</p>
-      <div class="cta" data-rise style="--d: 240ms">
-        <a class="btn" href="https://github.com/romanbitca/oman-ai/releases/latest" data-download><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
-        <a class="btn ghost" href="docs/"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Read the docs</a>
-      </div>
-      <p class="fine" data-rise style="--d: 300ms"><span data-version>macOS 14 or later</span> · no account · MIT license</p>
-
-      <figure class="display" data-tilt data-rise style="--d: 380ms">
-        <div class="display-glow" aria-hidden="true"></div>
-        <div class="clip" data-clip>
-          <video data-autoplay muted loop playsinline preload="metadata" poster="media/poster-rewrite.webp" width="1488" height="780" aria-label="A recording of OmanAI rewriting a chat message in a work style and putting it back">
-            <source src="media/demo-rewrite.webm" type="video/webm">
-            <source src="media/demo-rewrite.mp4" type="video/mp4">
-          </video>
-          <button class="clip-toggle" type="button" data-clip-toggle aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <a class="pill-news" href="https://github.com/romanbitca/oman-ai/releases/latest" data-rise>
+          <span class="dot" aria-hidden="true"></span><span data-version-pill>Free and open source for macOS</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+        </a>
+        <h1 data-rise style="--d: 80ms">Your words,<br><em>in your own voice.</em></h1>
+        <p class="lede" data-rise style="--d: 160ms">Select what you wrote in any app and click the wave in your menu bar. OmanAI proofreads or rewrites it in a style built from your own messages. One click puts it back.</p>
+        <div class="cta" data-rise style="--d: 240ms">
+          <a class="btn" href="https://github.com/romanbitca/oman-ai/releases/latest" data-download><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg>Download for Mac</a>
+          <a class="btn ghost" href="docs/"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg>Read the docs</a>
         </div>
-        <figcaption>The real app, recorded on a Mac. The chat window behind it is a stand-in.</figcaption>
+        <p class="fine" data-rise style="--d: 300ms"><span data-version>macOS 14 or later</span> · no account · MIT license</p>
+      </div>
+
+      <!-- The panel at work. Each recording says who wrote to you, what you typed, what it becomes and when. -->
+      <figure class="reel" data-reel data-rise style="--d: 200ms">
+        <div class="reel-glow" aria-hidden="true"></div>
+        <div class="reel-frame">
+          <div class="reel-screen">
+            <div class="reel-clip is-on" role="tabpanel" id="reel-rewrite" aria-labelledby="reel-tab-rewrite"
+                 data-from="Dana" data-message="Do you have the Q3 numbers?"
+                 data-before="hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first"
+                 data-after="Hi Dana, yes. I'll send the Q3 numbers over shortly, I just want to double-check the churn figure first."
+                 data-at="9.5">
+              <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel rewriting a chat message in a work style">
+                <source src="media/hero-rewrite.webm" type="video/webm">
+                <source src="media/hero-rewrite.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="reel-clip" role="tabpanel" id="reel-explain" aria-labelledby="reel-tab-explain" aria-hidden="true"
+                 data-from="Alex" data-message="I moved the launch to next week. Hope that's ok?"
+                 data-before="Fine. Do whatever you think is best, I guess.">
+              <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel explaining how a short reply will be read">
+                <source src="media/hero-explain.webm" type="video/webm">
+                <source src="media/hero-explain.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="reel-clip" role="tabpanel" id="reel-compose" aria-labelledby="reel-tab-compose" aria-hidden="true"
+                 data-from="Dan" data-message="Team sync at 3pm today. Can you make it?"
+                 data-before=""
+                 data-after="hey Dan, can't make the 3pm sync today. could you send me the notes after? i'll catch up tonight"
+                 data-at="12.6">
+              <video muted playsinline preload="none" width="986" height="1234" aria-label="A recording of the OmanAI panel writing a short message from one line">
+                <source src="media/hero-compose.webm" type="video/webm">
+                <source src="media/hero-compose.mp4" type="video/mp4">
+              </video>
+            </div>
+
+            <div class="reel-chat" aria-hidden="true">
+              <p class="reel-msg"><small data-reel-from>Dana</small><span data-reel-message>Do you have the Q3 numbers?</span></p>
+              <p class="reel-field" data-reel-field data-placeholder="Message"><mark>hey yes, ill send u the q3 numbers in a sec, just need to double check the churn figure first</mark></p>
+            </div>
+
+            <div class="reel-bar">
+              <div class="reel-tabs" role="tablist" aria-label="What the recording shows">
+                <button role="tab" type="button" id="reel-tab-rewrite" aria-controls="reel-rewrite" aria-selected="true">Rewrite<i aria-hidden="true"></i></button>
+                <button role="tab" type="button" id="reel-tab-explain" aria-controls="reel-explain" aria-selected="false" tabindex="-1">Explain<i aria-hidden="true"></i></button>
+                <button role="tab" type="button" id="reel-tab-compose" aria-controls="reel-compose" aria-selected="false" tabindex="-1">Compose<i aria-hidden="true"></i></button>
+              </div>
+              <button class="reel-pause" type="button" data-reel-pause aria-label="Pause the recording"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <figcaption>The real panel, recorded on a Mac. The chat under it is drawn by this page.</figcaption>
       </figure>
     </div>
   </section>
@@ -461,23 +506,23 @@
     <div class="gallery" data-gallery data-rise>
       <div class="rail" tabindex="0" role="group" aria-label="Screenshots of Settings">
         <figure class="shot">
-          <img src="media/settings-spending-dark.webp" width="1200" height="1244" loading="lazy" alt="The Spending page: a total for last month, a bar for each day and a list by model">
+          <img src="media/settings-spending-light.webp" width="1200" height="1244" loading="lazy" alt="The Spending page: a total for last month, a bar for each day and a list by model">
           <figcaption><b>Spending</b> By period and by model.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="media/settings-editor-dark.webp" width="1200" height="1376" loading="lazy" alt="The style editor: a name, a note, a list of real messages and a box to try the style">
+          <img src="media/settings-editor-light.webp" width="1200" height="1376" loading="lazy" alt="The style editor: a name, a note, a list of real messages and a box to try the style">
           <figcaption><b>Styles</b> Paste real messages, then try it.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="media/settings-writing-dark.webp" width="1200" height="910" loading="lazy" alt="The Writing page: the model, how long Claude thinks, a language and standing rules">
+          <img src="media/settings-writing-light.webp" width="1200" height="910" loading="lazy" alt="The Writing page: the model, how long Claude thinks, a language and standing rules">
           <figcaption><b>Writing</b> The model, and rules it always follows.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="media/settings-shortcuts-dark.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page: a shortcut for each action anywhere on the Mac and for each button on a result">
+          <img src="media/settings-shortcuts-light.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page: a shortcut for each action anywhere on the Mac and for each button on a result">
           <figcaption><b>Shortcuts</b> One for every action and style.</figcaption>
         </figure>
         <figure class="shot">
-          <img src="media/settings-styles-dark.webp" width="1200" height="1084" loading="lazy" alt="The Styles page: three styles, a default style and a switch to remember the last style in each app">
+          <img src="media/settings-styles-light.webp" width="1200" height="1084" loading="lazy" alt="The Styles page: three styles, a default style and a switch to remember the last style in each app">
           <figcaption><b>Per app</b> It remembers the style you last used.</figcaption>
         </figure>
       </div>
@@ -614,6 +659,6 @@
   </div>
 </footer>
 
-<script src="app.js" defer></script>
+<script src="app.js?v=3" defer></script>
 </body>
 </html>

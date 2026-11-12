@@ -1,4 +1,4 @@
-// The documentation page: the menu darkens once the page scrolls, and the list of sections follows the reader.
+// The documentation page: the menu grows more solid once the page scrolls, and the list of sections follows the reader.
 (() => {
   "use strict";
   const nav = document.querySelector("[data-nav]");

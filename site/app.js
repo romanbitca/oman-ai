@@ -28,15 +28,10 @@
 
   // One handler for everything that follows the scroll position.
   const nav = document.querySelector("[data-nav]");
-  const tilt = document.querySelector("[data-tilt]");
   let queued = false;
   function follow() {
     queued = false;
     nav?.classList.toggle("is-scrolled", window.scrollY > 24);
-    if (tilt && !still.matches) {
-      const top = tilt.getBoundingClientRect().top;
-      tilt.style.setProperty("--p", clamp((window.innerHeight * 0.98 - top) / (window.innerHeight * 0.55), 0, 1).toFixed(3));
-    }
     if (words.length && !still.matches) {
       const box = statement.getBoundingClientRect();
       // Read from when its top passes four fifths of the way down the window until its end passes the middle.
@@ -79,7 +74,12 @@
   // Recordings play while they are on screen, and each one can be paused.
   const onScreen = new Set();
   const stopped = new WeakSet();
-  const wanted = (video) => video.hasAttribute("data-autoplay") || !video.closest("[role=tabpanel]")?.hidden;
+  // A recording is wanted while it is the one being shown: the chosen one in the header, or the open tab below.
+  function wanted(video) {
+    const clip = video.closest(".reel-clip");
+    if (clip) return clip.classList.contains("is-on");
+    return video.hasAttribute("data-autoplay") || !video.closest("[role=tabpanel]")?.hidden;
+  }
   function settle(video) {
     const play = onScreen.has(video) && wanted(video) && !stopped.has(video) && !still.matches;
     if (play && video.paused) video.play().catch(() => { /* The browser may refuse until the reader presses play. */ });
@@ -109,6 +109,103 @@
     });
     show();
     watcher?.observe(video);
+  }
+
+  // The header: recordings of the panel, one after another, with the chat they act on drawn under them.
+  const reel = document.querySelector("[data-reel]");
+  if (reel) {
+    const tabs = all("[role=tab]", reel);
+    const clips = tabs.map((tab) => document.getElementById(tab.getAttribute("aria-controls")));
+    const videos = clips.map((clip) => clip.querySelector("video"));
+    const sender = reel.querySelector("[data-reel-from]");
+    const message = reel.querySelector("[data-reel-message]");
+    const field = reel.querySelector("[data-reel-field]");
+    const typed = field.querySelector("mark");
+    const pause = reel.querySelector("[data-reel-pause]");
+    let active = 0;
+    let handsOff = true;
+    let pasted = null;
+
+    // The text in the chat is selected while the panel works on it, and changes at the moment the recording pastes.
+    function write(isPasted) {
+      if (pasted === isPasted) return;
+      pasted = isPasted;
+      const text = isPasted ? clips[active].dataset.after : clips[active].dataset.before;
+      typed.textContent = text || field.dataset.placeholder;
+      field.classList.toggle("is-empty", !text);
+      field.classList.toggle("is-pasted", isPasted);
+    }
+
+    function showPause() {
+      const paused = videos[active].paused;
+      pause.setAttribute("aria-label", paused ? "Play the recording" : "Pause the recording");
+      pause.querySelector("use")?.setAttribute("href", paused ? "#i-play" : "#i-pause");
+    }
+
+    function choose(index, byReader) {
+      if (byReader) handsOff = false;
+      active = (index + tabs.length) % tabs.length;
+      tabs.forEach((tab, i) => {
+        const on = i === active;
+        tab.setAttribute("aria-selected", String(on));
+        tab.tabIndex = on ? 0 : -1;
+        tab.style.setProperty("--played", "0");
+        clips[i].classList.toggle("is-on", on);
+        clips[i].setAttribute("aria-hidden", String(!on));
+        const video = videos[i];
+        video.loop = !handsOff;
+        if (on) {
+          stopped.delete(video);
+          try { video.currentTime = 0; } catch (error) { /* Not loaded yet, so it starts at the beginning anyway. */ }
+        }
+        settle(video);
+      });
+      sender.textContent = clips[active].dataset.from;
+      message.textContent = clips[active].dataset.message;
+      pasted = null;
+      write(false);
+      showPause();
+    }
+
+    tabs.forEach((tab, index) => {
+      const video = videos[index];
+      const clip = clips[index];
+      const pasteAt = clip.dataset.at ? Number(clip.dataset.at) : null;
+      tab.addEventListener("click", () => choose(index, true));
+      tab.addEventListener("keydown", (event) => {
+        const move = { ArrowRight: index + 1, ArrowDown: index + 1, ArrowLeft: index - 1, ArrowUp: index - 1, Home: 0, End: tabs.length - 1 }[event.key];
+        if (move === undefined) return;
+        event.preventDefault();
+        choose(move, true);
+        tabs[active].focus();
+      });
+      video.addEventListener("timeupdate", () => {
+        if (video.duration) tab.style.setProperty("--played", (video.currentTime / video.duration).toFixed(3));
+        if (index === active && pasteAt !== null) write(video.currentTime >= pasteAt);
+      });
+      // Where the browser reports each frame, the text changes on the very frame the panel closes.
+      if (pasteAt !== null && "requestVideoFrameCallback" in video) {
+        const onFrame = (now, frame) => {
+          if (index === active) write(frame.mediaTime >= pasteAt);
+          video.requestVideoFrameCallback(onFrame);
+        };
+        video.requestVideoFrameCallback(onFrame);
+      }
+      video.addEventListener("ended", () => { if (handsOff && index === active) choose(index + 1, false); });
+      // The next recording is fetched while this one plays, so the change between them has no gap.
+      video.addEventListener("playing", () => {
+        const next = videos[(index + 1) % videos.length];
+        if (index === active && next !== video && next.preload === "none") { next.preload = "auto"; next.load(); }
+      });
+      video.addEventListener("play", showPause);
+      video.addEventListener("pause", showPause);
+      watcher?.observe(video);
+    });
+    pause.addEventListener("click", () => {
+      const video = videos[active];
+      if (video.paused) { stopped.delete(video); video.play().catch(() => {}); } else { stopped.add(video); video.pause(); }
+    });
+    choose(0, false);
   }
 
   // Use cases: four tabs. Left alone, each recording plays once and hands over to the next.
