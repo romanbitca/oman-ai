@@ -74,7 +74,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Dictation** turns what you say into text in any app, on your Mac. Hold Right ⌥ (or another Option or Command key, or a shortcut) while you speak, or tap it for a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. Press ✨ instead to proofread or rewrite them in the panel first. In the panel they go straight into the field you're typing in, and Compose can copy your last transcript.
 - **Context** from the window you are writing in, pasted messages or the clipboard. Only what is switched on is sent, and you see it first.
 - **Shortcuts** for any action and for each of your styles, and a panel you can pin and drag anywhere.
-- **Spending** by day, week, month and model, estimated from what each Claude request used.
+- **Spending and fixes** by day, week, month, action, app and model: what each Claude request cost beside how many of OmanAI's texts you put back, with the details of any day on hover.
 
 Everything is explained button by button in the [documentation](https://oman-ai.romanbitca.com/docs/).
 
@@ -148,10 +148,10 @@ Native macOS controls, in light and dark.
   <tr>
     <td width="50%" valign="top">
       <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="site/media/settings-spending-dark-2.webp">
-        <img src="site/media/settings-spending-light-2.webp" alt="The Spending page">
+        <source media="(prefers-color-scheme: dark)" srcset="site/media/settings-spending-dark-3.webp">
+        <img src="site/media/settings-spending-light-3.webp" alt="The Spending page">
       </picture>
-      <b>Spending</b> for today, this week, this month, last month or all time, split by model.
+      <b>Spending</b> for today, this week, this month, last month or all time: what it cost beside the fixes you put back, split by action, app and model.
     </td>
     <td width="50%" valign="top">
       <picture>
@@ -181,7 +181,7 @@ Native macOS controls, in light and dark.
 
 ## Privacy
 
-- Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain. For the spending charts, the database also keeps each Claude request's date, model and token counts, never its text.
+- Your styles and settings stay on your Mac in a local database, and your API key stays in the Keychain. For the Spending page, the database also keeps each Claude request's date, model, token counts and kind, and for each text OmanAI writes its kind, model, app and whether it was put back, never the text itself.
 - With Claude, each request sends the selected text, the chosen style's messages and any context you switched on to Anthropic, using your own API key. There is no server of ours in between.
 - With Apple's on-device model, your writing stays on your Mac.
 - Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. The database keeps the text of each dictation so you can find it again under Dictation in Settings; choose there how many to keep, or none, and delete them.

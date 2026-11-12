@@ -28,11 +28,78 @@ public struct UsageEntry: Equatable, Sendable {
     public let tokens: TokenUsage
     /// US dollars, estimated at list prices when the request finished.
     public let cost: Double
+    /// What the request was for. Nil for requests from before OmanAI kept it.
+    public let kind: WritingTask.Kind?
 
-    public init(date: Date, model: String, tokens: TokenUsage, cost: Double) {
+    public init(date: Date, model: String, tokens: TokenUsage, cost: Double, kind: WritingTask.Kind? = nil) {
         self.date = date
         self.model = model
         self.tokens = tokens
         self.cost = cost
+        self.kind = kind
     }
+}
+
+extension WritingTask {
+    /// What a request was for, on the Spending page. A change asked for, or Try again, counts as the task it
+    /// changes.
+    public enum Kind: String, Codable, CaseIterable, Sendable, Identifiable {
+        case proofread, rewrite, explain, compose
+
+        public var id: String { rawValue }
+
+        public var displayName: String {
+            switch self {
+            case .proofread: "Proofread"
+            case .rewrite: "Rewrite"
+            case .explain: "Explain"
+            case .compose: "Compose"
+            }
+        }
+    }
+
+    public var kind: Kind {
+        switch self {
+        case .proofread: .proofread
+        case .rewrite: .rewrite
+        case .explain: .explain
+        case .compose: .compose
+        }
+    }
+}
+
+/// One text OmanAI wrote, with any model: what for, in which app, and whether it was put back there with Replace
+/// or Insert. Only these facts are kept, never the text.
+public struct WritingAction: Identifiable, Equatable, Sendable {
+    public let id: UUID
+    public let date: Date
+    public let kind: WritingTask.Kind
+    /// The model chosen, as `WritingModel.rawValue`.
+    public let model: String
+    public let appName: String?
+    public var applied: Bool
+
+    public init(
+        id: UUID = UUID(),
+        date: Date,
+        kind: WritingTask.Kind,
+        model: String,
+        appName: String?,
+        applied: Bool = false
+    ) {
+        self.id = id
+        self.date = date
+        self.kind = kind
+        self.model = model
+        self.appName = appName
+        self.applied = applied
+    }
+}
+
+public protocol ActionStore: Sendable {
+    func recordAction(_ action: WritingAction) throws
+    /// The text was put back into its app.
+    func markActionApplied(id: UUID) throws
+    /// Oldest first.
+    func actions(since date: Date) throws -> [WritingAction]
 }

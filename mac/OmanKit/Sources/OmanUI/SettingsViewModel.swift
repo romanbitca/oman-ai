@@ -119,7 +119,8 @@ public final class SettingsViewModel {
         do {
             // Everything ever recorded, because the page has an All time view.
             let entries = try store.usageEntries(since: .distantPast)
-            spending = SpendingSummary.make(from: entries, now: now, calendar: calendar)
+            let actions = try services.actions?.actions(since: .distantPast) ?? []
+            spending = SpendingSummary.make(from: entries, actions: actions, now: now, calendar: calendar)
             spendingError = nil
         } catch {
             spendingError = error.localizedDescription

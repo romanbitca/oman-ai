@@ -22,7 +22,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 updates: UpdaterController.makeIfConfigured(),
                 usage: database,
                 speech: SpeechService(),
-                dictations: database
+                dictations: database,
+                actions: database
             )
             coordinator = MenuBarCoordinator(services: services)
         } catch {

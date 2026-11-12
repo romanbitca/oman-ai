@@ -32,6 +32,8 @@ public final class PanelViewModel {
     /// Set by the app shell, so the panel's microphone buttons can dictate into its fields.
     @ObservationIgnored public weak var dictation: DictationController?
     @ObservationIgnored private var copiedTask: Task<Void, Never>?
+    /// The last text written, as the Spending page counts it, until it is put back or another is written.
+    @ObservationIgnored private var actionID: UUID?
 
     private(set) var screen: PanelScreen = .compose
     private(set) var capture = SelectionCapture(app: nil, text: nil)
@@ -87,6 +89,7 @@ public final class PanelViewModel {
         cancelWork()
         self.capture = capture
         session += 1
+        actionID = nil
         isDictated = false
         copiedTranscript = false
         hasSavedTranscript = dictation?.lastTranscript() != nil
@@ -513,6 +516,7 @@ public final class PanelViewModel {
     private func perform(_ request: WritingRequest) {
         runningTask?.cancel()
         lastRequest = request
+        actionID = nil
         notice = nil
         errorMessage = nil
         offersSettings = false
@@ -556,6 +560,22 @@ public final class PanelViewModel {
             notice = "Hidden characters were removed from this result."
         }
         screen = .result
+        recordAction()
+    }
+
+    /// Notes what was written, with which model and for which app, for the Spending page. Never the text.
+    private func recordAction() {
+        guard let request = lastRequest, let store = services.actions else { return }
+        let action = WritingAction(
+            date: Date(), kind: request.task.kind, model: request.model.rawValue, appName: capture.app?.name
+        )
+        do {
+            try store.recordAction(action)
+            actionID = action.id
+        } catch {
+            // A gap in the count is no reason to stop the person working.
+            panelLog.error("Noting a written text failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func fail(with error: Error) {
@@ -661,6 +681,9 @@ public final class PanelViewModel {
     private func handle(_ outcome: InsertOutcome) {
         switch outcome {
         case .inserted:
+            if let actionID {
+                try? services.actions?.markActionApplied(id: actionID)
+            }
             if isPinned {
                 presenter?.showPanel()
                 notice = lastTaskIsCompose ? "Inserted" : "Replaced"

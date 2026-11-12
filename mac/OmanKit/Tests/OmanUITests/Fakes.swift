@@ -482,6 +482,42 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
     }
 }
 
+final class FakeActions: ActionStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [WritingAction] = []
+    private var failure: Error?
+
+    var recorded: [WritingAction] { lock.withLock { stored } }
+
+    func seed(_ actions: [WritingAction]) {
+        lock.withLock { stored = actions }
+    }
+
+    func fail(with error: Error?) {
+        lock.withLock { failure = error }
+    }
+
+    func recordAction(_ action: WritingAction) throws {
+        try lock.withLock {
+            if let failure { throw failure }
+            stored.append(action)
+        }
+    }
+
+    func markActionApplied(id: UUID) throws {
+        lock.withLock {
+            if let index = stored.firstIndex(where: { $0.id == id }) { stored[index].applied = true }
+        }
+    }
+
+    func actions(since date: Date) throws -> [WritingAction] {
+        try lock.withLock {
+            if let failure { throw failure }
+            return stored.filter { $0.date >= date }.sorted { $0.date < $1.date }
+        }
+    }
+}
+
 final class FakeDictations: DictationStore, @unchecked Sendable {
     private let lock = NSLock()
     private var stored: [SavedDictation] = []
@@ -557,6 +593,7 @@ final class Harness {
     let usage = FakeUsage()
     let speech = FakeSpeech()
     let dictations = FakeDictations()
+    let actions = FakeActions()
     let dictationPresenter = FakeDictationPresenter()
 
     static let slack = SourceApp(name: "Slack", bundleID: "com.tinyspeck.slackmacgap", processID: 42)
@@ -575,7 +612,8 @@ final class Harness {
             updates: updates,
             usage: usage,
             speech: speech,
-            dictations: dictations
+            dictations: dictations,
+            actions: actions
         )
     }
 

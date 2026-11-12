@@ -129,7 +129,7 @@ public struct ClaudeClient: WritingService {
         let model = meter.model ?? request.model.rawValue
         let cost = ClaudePricing.cost(of: tokens, servedModel: model, requested: request.model)
         // A failed write only leaves a gap in the spending chart, which is no reason to fail the request.
-        try? recorder.record(UsageEntry(date: Date(), model: model, tokens: tokens, cost: cost))
+        try? recorder.record(UsageEntry(date: Date(), model: model, tokens: tokens, cost: cost, kind: request.task.kind))
     }
 
     private static func httpResponse(from response: URLResponse) throws -> HTTPURLResponse {

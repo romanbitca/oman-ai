@@ -395,3 +395,14 @@ The maintainer asked for: Copy last transcript in Compose, more of Handy's setti
 - Copy last transcript sits at the bottom left of Compose when there is one: the last dictation since OmanAI started, or else the newest kept transcript. It says Copied for two seconds
 - The pill's Cancel button is the faintest red: red glass at 13% and a pale red cross. Done and ✨ stay plain glass
 - The next release is 0.4.0, since dictation is a new part of the app
+
+## 2026-11-12 — Spending shows the fixes put back beside what was spent
+
+The maintainer asked for every bar on the Spending page to be split in two, the fixes applied to text and the money spent, with more details on hover, and for the page to be "even more advanced". They asked the assistant to decide the rest, so the choices below are the assistant's.
+
+- A fix is a text OmanAI wrote that was put back into an app with Replace or Insert, with any model, Apple's included. Every text written is noted too, so the page can say how many of them were kept
+- Each written text is kept as a row in a new `writing_actions` table: when, what for (Proofread, Rewrite, Explain or Compose), the model, the app's name and whether it was put back. Never its text. A change asked for, or Try again, is another text of the same kind; only the one put back counts as a fix. Claude's requests also note their kind, in a new `kind` column of `api_usage`, so cost can be split by action; requests from before have none and show as "Earlier requests"
+- Each hour, day or month has a pair of bars: fixes put back in teal and money spent in the accent colour, side by side, each on its own scale. Money's is on the left and fixes' on the right, each labelled in its bar's colour and ending on a round number with a round middle, so a slow day's fixes still show beside a cheap day's cost
+- Pointing at a pair highlights it and shows a card beside it, on the side with more room: the date, the fixes and texts written, the kinds written, the money spent with the requests, the cost of each model and the tokens. The card is drawn over the chart and never takes the pointer
+- The two figures at the top, money spent and fixes put back, each with a square in its bar's colour, stand for the chart's legend. Below the chart come By action, By app (the six with the most fixes) and By model
+- Fixes are counted from the release that brings this, called 0.4.1 in the page's note and the documentation; the number has to match the release that ships it

@@ -4,6 +4,20 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-12 — Spending's fixes: what has been tried, and what hasn't
+
+Tried: tests for noting each text written and marking it when it is put back, a change counting as the action it changes, a failed request noting nothing, a store that fails leaving the result alone, the bars, the actions, the apps, the earlier requests without a kind, the scales and the words of the details card. The page and the details card were drawn off the screen, light and dark, and looked at.
+
+Not yet tried: pointing at the chart in the running app. The card follows the pointer through SwiftUI's hover, which can't be drawn off the screen.
+
+Known limits:
+
+- Only texts written from the release that brings this are counted, so earlier days show money but no fixes
+- A text counts as put back when Replace or Insert pasted it. If the app ignored the paste, or the person pressed ⌘Z afterwards, it still counts
+- Apple's on-device model costs nothing, so its texts add fixes but no money
+
+---
+
 ## 2026-11-12 — Dictation's keys, models and buttons: what has been tried, and what hasn't
 
 Tried: tests for Option and Command on their own (holding, tapping, one key for both, a key used in a shortcut), ✨ opening the panel with the words and Insert putting the result at the cursor, Copy last transcript, how many transcripts are kept, sounds, muting, the chosen microphone, a space after and Return. The new models were downloaded and given the sentence spoken by `say`: Parakeet TDT v2, Parakeet Redux and Whisper Small wrote it word for word, Whisper Small with "ANA" for Anna. Every Settings page was drawn off the screen and looked at.

@@ -13,7 +13,7 @@ enum OmanDatabaseError: LocalizedError, Equatable {
     }
 }
 
-public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, DictationStore, Sendable {
+public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, DictationStore, ActionStore, Sendable {
     private static let selectedModelKey = "selected_model"
     private static let preferencesKey = "app_preferences"
 
@@ -109,6 +109,20 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                     app_name TEXT
                 );
                 CREATE INDEX dictations_created_at ON dictations(created_at);
+                """)
+        }
+        migrator.registerMigration("v4") { db in
+            try db.execute(sql: """
+                CREATE TABLE writing_actions (
+                    id TEXT PRIMARY KEY,
+                    created_at DOUBLE NOT NULL,
+                    kind TEXT NOT NULL,
+                    model TEXT NOT NULL,
+                    app_name TEXT,
+                    applied INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE INDEX writing_actions_created_at ON writing_actions(created_at);
+                ALTER TABLE api_usage ADD COLUMN kind TEXT;
                 """)
         }
         return migrator
@@ -255,12 +269,13 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                 sql: """
                     INSERT INTO api_usage (
                         created_at, model, input_tokens, output_tokens, cache_read_tokens,
-                        cache_write_5m_tokens, cache_write_1h_tokens, cost_usd
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        cache_write_5m_tokens, cache_write_1h_tokens, cost_usd, kind
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                 arguments: [
                     entry.date.timeIntervalSince1970, entry.model, entry.tokens.input, entry.tokens.output,
                     entry.tokens.cacheRead, entry.tokens.cacheWrite5m, entry.tokens.cacheWrite1h, entry.cost,
+                    entry.kind?.rawValue,
                 ]
             )
         }
@@ -272,7 +287,7 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                 db,
                 sql: """
                     SELECT created_at, model, input_tokens, output_tokens, cache_read_tokens,
-                        cache_write_5m_tokens, cache_write_1h_tokens, cost_usd
+                        cache_write_5m_tokens, cache_write_1h_tokens, cost_usd, kind
                     FROM api_usage WHERE created_at >= ? ORDER BY created_at, id
                     """,
                 arguments: [date.timeIntervalSince1970]
@@ -287,7 +302,55 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                         cacheWrite5m: row["cache_write_5m_tokens"],
                         cacheWrite1h: row["cache_write_1h_tokens"]
                     ),
-                    cost: row["cost_usd"]
+                    cost: row["cost_usd"],
+                    kind: (row["kind"] as String?).flatMap(WritingTask.Kind.init(rawValue:))
+                )
+            }
+        }
+    }
+
+    // MARK: ActionStore
+
+    public func recordAction(_ action: WritingAction) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO writing_actions (id, created_at, kind, model, app_name, applied)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                arguments: [
+                    action.id.uuidString, action.date.timeIntervalSince1970, action.kind.rawValue, action.model,
+                    action.appName, action.applied,
+                ]
+            )
+        }
+    }
+
+    public func markActionApplied(id: UUID) throws {
+        try writer.write { db in
+            try db.execute(sql: "UPDATE writing_actions SET applied = 1 WHERE id = ?", arguments: [id.uuidString])
+        }
+    }
+
+    public func actions(since date: Date) throws -> [WritingAction] {
+        try writer.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT id, created_at, kind, model, app_name, applied
+                    FROM writing_actions WHERE created_at >= ? ORDER BY created_at, rowid
+                    """,
+                arguments: [date.timeIntervalSince1970]
+            ).compactMap { row in
+                // A kind this version doesn't know comes from a newer OmanAI, and is left out.
+                guard let kind = WritingTask.Kind(rawValue: row["kind"]) else { return nil }
+                return WritingAction(
+                    id: try Self.uuid(from: row["id"]),
+                    date: Date(timeIntervalSince1970: row["created_at"]),
+                    kind: kind,
+                    model: row["model"],
+                    appName: row["app_name"],
+                    applied: row["applied"]
                 )
             }
         }

@@ -352,7 +352,7 @@ struct UsageStorageTests {
 
         #expect(columns == [
             "id", "created_at", "model", "input_tokens", "output_tokens", "cache_read_tokens",
-            "cache_write_5m_tokens", "cache_write_1h_tokens", "cost_usd",
+            "cache_write_5m_tokens", "cache_write_1h_tokens", "cost_usd", "kind",
         ])
     }
 

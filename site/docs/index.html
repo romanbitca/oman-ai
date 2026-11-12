@@ -306,15 +306,19 @@
 
       <h3 id="settings-spending">Spending</h3>
       <figure class="window narrow">
-        <img src="../media/settings-spending-light-2.webp" width="1200" height="1244" loading="lazy" alt="The Spending page of Settings">
+        <img src="../media/settings-spending-light-3.webp" width="1200" height="1416" loading="lazy" alt="The Spending page of Settings: what last month cost, how many fixes were put back, a pair of bars for each day, and a list by action">
       </figure>
       <dl class="controls">
         <div><dt>Period</dt><dd>Today, This week, This month, Last month or All time. It sets everything below it.</dd></div>
-        <div><dt>Total</dt><dd>What Claude cost in that period, with the number of requests, the tokens sent and received, and the average cost of a request.</dd></div>
-        <div><dt>Chart</dt><dd>A bar for each hour of today, each day of a week or month, or each month of all time.</dd></div>
-        <div><dt>By model</dt><dd>The same total split by model, most expensive first.</dd></div>
+        <div><dt>Spent</dt><dd>What Claude cost in that period, with the number of requests, the average cost of a request and the tokens sent and received.</dd></div>
+        <div><dt>Fixes put back</dt><dd>How many texts OmanAI wrote that you put back into an app with Replace or Insert, with any model, and how many it wrote in all.</dd></div>
+        <div><dt>Chart</dt><dd>A pair of bars for each hour of today, each day of a week or month, or each month of all time: fixes put back, with their scale on the right, and money spent, with its scale on the left.</dd></div>
+        <div><dt>Pointing at a pair</dt><dd>Shows what is behind it: the fixes and the texts written, by action, then what was spent, by model, with the requests and tokens.</dd></div>
+        <div><dt>By action</dt><dd>Proofread, Rewrite, Explain and Compose: how many texts each wrote, how many were put back, and what they cost. A change asked for, or Try again, counts as the action it changes.</dd></div>
+        <div><dt>By app</dt><dd>The apps you wrote for, most fixes first.</dd></div>
+        <div><dt>By model</dt><dd>What Claude cost, split by model, most expensive first.</dd></div>
       </dl>
-      <p>The numbers are an estimate: the tokens Anthropic reports for each request, at list prices built into the app. Only requests made by OmanAI on this Mac are counted, and Apple's on-device model is free. Your Anthropic invoice is what you actually pay.</p>
+      <p>The money is an estimate: the tokens Anthropic reports for each request, at list prices built into the app. Only what OmanAI does on this Mac is counted, Apple's on-device model is free, and your Anthropic invoice is what you actually pay. Fixes are counted from version 0.4.1 on. Only what kind of text, the model, the app and whether it was put back are kept, never the text itself.</p>
     </section>
 
     <section id="shortcuts">

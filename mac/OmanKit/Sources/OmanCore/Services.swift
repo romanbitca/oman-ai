@@ -145,6 +145,7 @@ public struct AppServices {
     public let usage: (any UsageStore)?
     public let speech: (any SpeechRecognizing)?
     public let dictations: (any DictationStore)?
+    public let actions: (any ActionStore)?
 
     public init(
         writing: any WritingService,
@@ -155,7 +156,8 @@ public struct AppServices {
         updates: (any AppUpdating)? = nil,
         usage: (any UsageStore)? = nil,
         speech: (any SpeechRecognizing)? = nil,
-        dictations: (any DictationStore)? = nil
+        dictations: (any DictationStore)? = nil,
+        actions: (any ActionStore)? = nil
     ) {
         self.writing = writing
         self.styles = styles
@@ -166,5 +168,6 @@ public struct AppServices {
         self.usage = usage
         self.speech = speech
         self.dictations = dictations
+        self.actions = actions
     }
 }

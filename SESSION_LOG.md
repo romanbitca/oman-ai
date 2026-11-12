@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — Spending: fixes beside the money, by action and by app
+
+- The maintainer asked for every bar on the Spending page to be split in two, the fixes applied to text and the money spent, with details on hover, and for the page to be more advanced. The choices are in DECISIONS.md
+- Each text OmanAI writes is now noted in a new `writing_actions` table, with its kind, model and app and whether Replace or Insert put it back; never its text. Claude's requests also note their kind, in a new `kind` column of `api_usage`. Both come with migration v4
+- The Spending page has two figures at the top, money spent and fixes put back, then a pair of bars for each hour, day or month with a scale for each, a card with the details of the pair under the pointer, and lists by action, by app and by model
+- 514 tests pass, 14 of them new. The app builds, and its build copy was unregistered and deleted. The page and the card were drawn off the screen, light and dark, and the site, the documentation and the README have the new pictures; the old ones are gone. Pointing at the chart in the running app is not yet tried
+- The dictation release, 0.4.0, and its website films moved to a session of their own, working from branch `dictation`. This work is on branch `spending`, cut from the release commit 58b37ff, for the release after it
+- The maintainer asked whether dictation could notice words that weren't pasted, offer to copy them or wait for a click into a text field, then go. Answered that it could, with how, and proposed it as a task of its own
+- Not merged or released: that is the maintainer's call
+
 ## 2026-11-12 — Dictation
 
 - Asked for by the maintainer, after the dictation app Handy. The maintainer then asked the assistant to make the remaining choices itself; they are in DECISIONS.md, and the phase is W12 in PLAN.md
