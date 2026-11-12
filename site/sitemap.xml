@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The site's pages, for search engines and crawlers. A new page goes here too. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://oman-ai.romanbitca.com/</loc>
+  </url>
+  <url>
+    <loc>https://oman-ai.romanbitca.com/docs/</loc>
+  </url>
+</urlset>

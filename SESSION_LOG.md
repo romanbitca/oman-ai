@@ -4,6 +4,11 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — A sitemap for crawlers
+
+- 9h Agent's crawler marked the site unreachable. Cloudflare's log shows it answered all three of the crawler's requests and blocked nothing: robots.txt and the home page with 200, and `/sitemap.xml` with 404 because there was none. Run locally, the crawler's own code allows every page and reads both pages, so its read failed on 9h's server after the download
+- At the maintainer's request, added `site/sitemap.xml` with the home page and the docs, so a crawler finds both without following links. From the site's own container it comes as `text/xml`, a type the crawler accepts, and the crawler's sitemap reader takes both addresses from it
+
 ## 2026-11-12 — A chat assistant on the website
 
 - At the maintainer's request, added 9h Digital's chat assistant to both pages, and allowed its address for scripts and connections in the site's response headers (see DECISIONS.md). Read the assistant's script first to see what it loads and where it connects, and changed the footers to say where chats go
