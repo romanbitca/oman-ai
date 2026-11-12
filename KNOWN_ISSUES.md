@@ -28,7 +28,7 @@ Every run that asks the models costs money: the runs of this night cost about $2
 
 ## 2026-11-12 — The count of writing habits is simple on purpose
 
-`WritingHabits` counts sentence starts and the word "i". A tie counts as formal writing, so a two-sentence text with one capital start gets its capitals corrected. A sentence that starts after "e.g." or "etc." is counted like any other. Text in a script without capital letters says nothing, and the text being proofread then decides.
+`WritingHabits` counts sentence starts and, in English text, the word "i". A tie counts as formal writing, so a two-sentence text with one capital start gets its capitals corrected. A sentence that starts after "e.g." or "etc." is counted like any other. Text in a script without capital letters says nothing, and the text being proofread then decides.
 
 Whether a message ends without a full stop is taken from one-line samples only, because an email ends with a name.
 

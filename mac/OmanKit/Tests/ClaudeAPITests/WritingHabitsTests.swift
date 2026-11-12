@@ -77,6 +77,12 @@ struct WritingHabitsTests {
         #expect(WritingHabits(of: ["Hey can u send it, I need it today"]).startsSentencesInLowerCase == false)
     }
 
+    @Test func aSmallIIsAnOrdinaryWordInOtherLanguages() {
+        // Polish, where "i" means "and": two capital starts, and three i's that say nothing.
+        let polish = "Dziękuję za wiadomość. Jutro i pojutrze jestem zajęty i nie mogę przyjść, i bardzo przepraszam."
+        #expect(WritingHabits(of: [polish]).startsSentencesInLowerCase == false)
+    }
+
     @Test func aTieCountsAsFormal() {
         #expect(WritingHabits(of: ["Hello there. sorry for the delay"]).startsSentencesInLowerCase == false)
     }

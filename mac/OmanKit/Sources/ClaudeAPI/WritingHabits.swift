@@ -10,7 +10,7 @@ struct WritingHabits: Equatable {
         case written, leftOut, unknown
     }
 
-    /// Whether most sentences start with a lower-case letter and "i" is mostly written small.
+    /// Whether most sentences start with a lower-case letter and, in English, "i" is mostly written small.
     /// Nil when the messages show neither, as in a script that has no capital letters.
     let startsSentencesInLowerCase: Bool?
     /// Most one-line messages end without a full stop.
@@ -22,8 +22,10 @@ struct WritingHabits: Equatable {
         var upper = 0
         var withoutStop = 0
         var withStop = 0
+        // The word "i" and the list of contractions are English, so they are only evidence in English text.
+        let isEnglish = TextLanguage.code(of: texts.joined(separator: "\n")) == "en"
         for text in texts {
-            let starts = Self.sentenceStarts(in: text)
+            let starts = Self.sentenceStarts(in: text, countingI: isEnglish)
             lower += starts.lower
             upper += starts.upper
 
@@ -38,15 +40,16 @@ struct WritingHabits: Equatable {
         }
         startsSentencesInLowerCase = lower + upper == 0 ? nil : lower > upper
         leavesOutFinalFullStop = withoutStop > withStop
-        apostrophes = Self.apostrophes(in: texts)
+        apostrophes = Self.apostrophes(in: texts, isEnglish: isEnglish)
     }
 
     private enum Position {
         case start, inside, afterEnd
     }
 
-    /// Counts the first letter of each sentence and each "i" that stands alone.
-    private static func sentenceStarts(in text: String) -> (lower: Int, upper: Int) {
+    /// Counts the first letter of each sentence and, where asked, each "i" that stands alone. In Polish or
+    /// Catalan "i" is the word for "and", and says nothing about capitals.
+    private static func sentenceStarts(in text: String, countingI: Bool) -> (lower: Int, upper: Int) {
         var lower = 0
         var upper = 0
         var position = Position.start
@@ -56,7 +59,7 @@ struct WritingHabits: Equatable {
         for (index, character) in characters.enumerated() {
             defer { previous = character }
 
-            if character == "i" || character == "I", !previous.isLetter, !previous.isNumber {
+            if countingI, character == "i" || character == "I", !previous.isLetter, !previous.isNumber {
                 let next = index + 1 < characters.count ? characters[index + 1] : " "
                 // Alone, or the start of i'm and i'll. The sentence count below sees it too when it opens a sentence.
                 if !next.isLetter, !next.isNumber, position != .start {
@@ -98,7 +101,7 @@ struct WritingHabits: Equatable {
         "weve", "youve", "theyve",
     ]
 
-    private static func apostrophes(in texts: [String]) -> Apostrophes {
+    private static func apostrophes(in texts: [String], isEnglish: Bool) -> Apostrophes {
         let joined = texts.joined(separator: "\n")
         let characters = Array(joined)
         for index in characters.indices.dropFirst().dropLast()
@@ -106,8 +109,7 @@ struct WritingHabits: Equatable {
             && characters[index - 1].isLetter && characters[index + 1].isLetter {
             return .written
         }
-        // The list is English, so it only counts as evidence in English text.
-        guard TextLanguage.code(of: joined) == "en" else { return .unknown }
+        guard isEnglish else { return .unknown }
         let words = joined.lowercased().split { !$0.isLetter }.map(String.init)
         return words.contains(where: bareContractions.contains) ? .leftOut : .unknown
     }
