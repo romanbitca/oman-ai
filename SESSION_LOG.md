@@ -14,6 +14,19 @@ Date-stamped log of what each work session accomplished.
 - The maintainer asked whether dictation could notice words that weren't pasted, offer to copy them or wait for a click into a text field, then go. Answered that it could, with how, and proposed it as a task of its own
 - Not merged or released: that is the maintainer's call
 
+## 2026-11-12 — Dictation, second round: keys on their own, nine models, ✨ and 0.4.0
+
+- Asked for by the maintainer after trying the signed test copy: Copy last transcript in Compose, more of Handy's settings, Transcripts first, a faint red cancel button, Option or Command on their own for holding and for a long dictation, a model list that doesn't copy Handy's, more models, no speed bars, a button that takes dictated words to Proofread and Rewrite, and a release with the website and documentation. They asked the assistant to decide the rest; the choices are in DECISIONS.md
+- Left or Right Option or Command, on its own, holds to dictate or starts a long dictation, chosen apart for each in the Shortcuts tab. macOS's event monitors watch the keys, with the Accessibility permission OmanAI already has. A hold starts 0.15 seconds after the key goes down, and a key pressed with another starts nothing
+- Nine models in three groups, Live, Accurate and Small, each described in words: how soon its words show, its languages as a phrase that names the person's own, and its size. New: Parakeet TDT v2, Whisper Large v3, Parakeet Redux and Whisper Small. Each was downloaded and given the sentence spoken by `say`, and each wrote it word for word, Whisper Small with "ANA" for Anna. Redux took 26 seconds to be prepared for the Neural Engine the first time. Canary 1B v2 was tried and left out: its first preparation ran past 15 minutes on an M1 Pro without finishing
+- The pill has ✨ between Cancel and Done for a long dictation. It opens the words in the panel, as if selected, and the result goes in at the cursor with Insert. Cancel is the faintest red. Compose has Copy last transcript at its bottom left
+- Settings' Dictation page is in five parts, Transcripts first, and takes from Handy: how many transcripts to keep, the microphone, sounds, muting the Mac while listening, a space after, and Return or ⌘Return after the words go in
+- A review before release changed three things: keeping fewer transcripts deletes the older ones at once, after asking; Return waits 0.15 seconds after the paste; and the keys are watched again once Accessibility is allowed
+- Every Settings page was drawn off the screen and looked at. The field for your own words showed its hint beside it, which is fixed
+- Published 0.4.0 from a tag on `main` at 58b37ff, after 481 tests passed and the app built. All three release jobs passed, and the release checks out from the outside: notarized, signed by the same Developer ID team with Sparkle's helpers, version 0.4.0 with build 4000, the microphone entitlement and its usage text, and a signed feed whose length and zip signature match the update key that the installed 0.3.6 carries. The public feed names 0.4.0
+- The website and documentation for dictation are written on branch `dictation` (pull request 15), with the docs' table of models and pictures of the Dictation and Shortcuts pages, but are not on `main`: the films and the two pictures of the pill are missing. The first filming ran while the Mac was locked and recorded only the lock screen, and the maintainer, away from home, asked to leave the films for later
+- Cleaned up: the signed test copy was quit, unregistered and deleted, the installed OmanAI was opened again, and the test downloads of the models, about 2 GB, were deleted
+
 ## 2026-11-12 — Dictation
 
 - Asked for by the maintainer, after the dictation app Handy. The maintainer then asked the assistant to make the remaining choices itself; they are in DECISIONS.md, and the phase is W12 in PLAN.md
