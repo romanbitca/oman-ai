@@ -218,6 +218,7 @@ public final class DictationController {
         if wasHolding, let heldText {
             services.system.copyToClipboard(heldText)
         }
+        services.system.switchOffFocusReporting()
         holdTask?.cancel()
         holdTask = nil
         heldText = nil
@@ -475,19 +476,31 @@ public final class DictationController {
     }
 
     /// Asks the app in front what has the cursor, a few times a second, and pastes the words as soon as a field that
-    /// takes text has it, in that app or another. An app that can't say is never pasted into here, since nobody
-    /// chose it; Paste in the pill is for those. After a minute the words are copied instead.
+    /// takes text has it, in that app or another. An app that can't say has its accessibility support switched on,
+    /// which makes an Electron app say; one that still can't is never pasted into here, since nobody chose it, and
+    /// Paste in the pill is for those. After a minute the words are copied instead.
     private func waitForField() async {
         let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: holdTiming.giveUpAfter)
         while clock.now < deadline {
             try? await Task.sleep(for: holdTiming.checkEvery)
             guard phase == .holding, !Task.isCancelled else { return }
-            if await services.system.textFocus() == .takesText {
-                guard phase == .holding, !Task.isCancelled, let heldText else { return }
+            let focus = await services.system.textFocus()
+            guard phase == .holding, !Task.isCancelled, let heldText else { return }
+            switch focus {
+            case .takesText:
                 phase = .finishing
                 await paste(heldText)
                 return
+            case .unknown:
+                // An Electron app says what has the cursor once its accessibility support is on, within seconds.
+                await services.system.switchOnFocusReporting()
+                // The wait may have ended meanwhile, after everything was switched back off.
+                if phase != .holding {
+                    services.system.switchOffFocusReporting()
+                }
+            case .cannotTakeText:
+                break
             }
         }
         guard phase == .holding, !Task.isCancelled, let heldText else { return }
@@ -538,6 +551,8 @@ public final class DictationController {
         holdTask?.cancel()
         holdTask = nil
         heldText = nil
+        // Accessibility support switched on in apps while words waited goes back off, however the wait ended.
+        services.system.switchOffFocusReporting()
         restoreOutput()
         improvesAfter = false
         services.system.setTemporaryShortcut(nil, for: .cancelDictation)

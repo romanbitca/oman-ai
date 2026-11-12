@@ -91,4 +91,9 @@ import Testing
         // No such process: there is nobody to answer.
         #expect(SelectionReader.textFocus(processID: Int32.max) == .unknown)
     }
+
+    @Test func accessibilitySupportIsOnlySwitchedOnWhereItReadsAsOff() {
+        // No such process, so the switch can't be read, and nothing is switched on.
+        #expect(!SelectionReader.switchOnManualAccessibility(processID: Int32.max))
+    }
 }

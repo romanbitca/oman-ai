@@ -225,6 +225,22 @@ final class FakeSystem: SystemBridging {
         return focus
     }
 
+    /// What an app that couldn't say has the cursor in once its accessibility support is on, as an Electron app then
+    /// names its field. Nil for one that still can't say.
+    var focusOnceSwitchedOn: TextFocus?
+    var focusReportingSwitchedOn = 0
+    var focusReportingSwitchedOff = 0
+
+    func switchOnFocusReporting() async -> Bool {
+        focusReportingSwitchedOn += 1
+        if let focusOnceSwitchedOn {
+            focus = focusOnceSwitchedOn
+        }
+        return true
+    }
+
+    func switchOffFocusReporting() { focusReportingSwitchedOff += 1 }
+
     var clipboardReads = 0
 
     func copyToClipboard(_ text: String) { copied.append(text) }

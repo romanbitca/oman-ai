@@ -462,3 +462,13 @@ The maintainer tried 0.4.2. Words dictated with the Finder in front waited in th
 - Where an app says what has the cursor, a click into a field still takes the words by itself
 - The pill says "Click in a field, then Paste". "Click where these words should go" left no room for a third button and didn't mention Paste
 - Paste's symbol is the one macOS's Edit menu shows for Paste, beside Copy's
+
+## 2026-11-12 — While words wait, Electron apps are asked to say what has the cursor
+
+The maintainer asked for a click into a field to take waiting words in Slack and the other apps that can't say what has the cursor, as it does elsewhere. With their yes, a test switched on those apps' accessibility support through `AXManualAccessibility`, the switch Electron offers apps that assist the person, while they clicked into each app's field. Slack and two other Electron apps then named their message field within about three seconds, and Arc did too. Chrome and another Chromium browser refused the switch.
+
+- This narrows "Accessibility mode is not forced on in Electron apps" (2026-11-10). It is switched on only while dictated words wait for a field, only in an app in front that can't say what has the cursor, and only where the switch reads as off, so support that a screen reader or another tool switched on is never touched
+- When the wait ends, however it ends, it is switched back off in every app OmanAI switched it on in
+- Each app is asked once per wait. Terminals, remote desktops and virtual machines are never asked, as before
+- An app whose switch can't be read, such as Arc, is left alone, so OmanAI never switches off what something else switched on. Chromium browsers that refuse it keep Paste
+- A dictation made while such an app is in front goes in as before; nothing is switched on for it

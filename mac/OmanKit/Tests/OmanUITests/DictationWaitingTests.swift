@@ -285,6 +285,65 @@ import Testing
         controller.cancel()
     }
 
+    // MARK: Apps that can't say
+
+    @Test func anAppThatCannotSayIsAskedToAndTheWordsGoInOnceItNamesAField() async throws {
+        let harness = Harness()
+        let controller = makeController(harness)
+
+        try await dictateIntoNowhere(harness, controller)
+        // The person goes to an Electron app: it can't say until its accessibility support is on, then it can.
+        harness.system.focusOnceSwitchedOn = .takesText
+        harness.system.focus = .unknown
+        #expect(await eventually { controller.phase == .idle })
+        #expect(harness.system.focusReportingSwitchedOn == 1)
+        #expect(harness.system.insertCalls.map(\.text) == [Self.words])
+        #expect(harness.system.focusReportingSwitchedOff >= 1)
+    }
+
+    @Test func onlyAnAppThatCannotSayIsAskedAndOnlyWhileWordsWait() async throws {
+        let harness = Harness()
+        let controller = makeController(harness)
+
+        // A dictation into an app that can't say goes in as before, and nothing is asked of the app.
+        harness.system.focus = .unknown
+        try await dictate(harness, controller)
+        #expect(await eventually { controller.phase == .idle })
+        #expect(harness.system.insertCalls.count == 1)
+        #expect(harness.system.focusReportingSwitchedOn == 0)
+
+        // Waiting where nothing takes text, nothing is asked either.
+        try await dictateIntoNowhere(harness, controller)
+        let checks = harness.system.focusChecks
+        #expect(await eventually { harness.system.focusChecks >= checks + 4 })
+        #expect(harness.system.focusReportingSwitchedOn == 0)
+        controller.cancel()
+    }
+
+    @Test(arguments: ["×", "Copy", "Paste", "a new dictation", "opening the panel"])
+    func howeverTheWaitEndsItsAppsAreSwitchedBackOff(ending: String) async throws {
+        let harness = Harness()
+        let panel = harness.makePanel()
+        let controller = makeController(harness, panel: panel)
+
+        try await dictateIntoNowhere(harness, controller)
+        // An app that still can't say after it is asked.
+        harness.system.focus = .unknown
+        #expect(await eventually { harness.system.focusReportingSwitchedOn >= 1 })
+        let switchedOff = harness.system.focusReportingSwitchedOff
+        switch ending {
+        case "×": controller.cancel()
+        case "Copy": controller.copyHeldWords()
+        case "Paste": controller.pasteHeldWords()
+        case "a new dictation": controller.longPressed(into: nil)
+        default: panel.begin(with: SelectionCapture(app: Harness.slack, text: nil))
+        }
+        #expect(await eventually { harness.system.focusReportingSwitchedOff > switchedOff })
+        if ending == "a new dictation" {
+            controller.cancel()
+        }
+    }
+
     // MARK: Something else meanwhile
 
     @Test func openingThePanelCopiesTheWaitingWords() async throws {
