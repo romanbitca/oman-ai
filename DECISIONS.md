@@ -299,3 +299,14 @@ What was measured: 17 kinds of short text, each asked several times of Haiku, So
 - The Spending chart's labels use Charts' aligned preset, which centres each under its bar and keeps the first and last on the chart. They used to start at the bar, which cut "29 Nov" off in a 30-day month and dropped the newest month's label from All time once there were more than twelve
 - The website's container is built on nginx's stable line, pinned to the exact image by its digest. It had been built on 1.29, a line that stopped getting updates in April 2026. This one was deployed the same night, because the site is public
 
+## 2026-11-12 — The website is light, with glass, and its header shows the app at work
+
+Asked for by the maintainer after seeing the dark page: no black theme, a header with a video or a set of animations on its right, and more glass, the way Apple uses it. The rest of the page was to stay as it was.
+
+- The page is light. Soft colour stays fixed behind it, and the menu, the cards, the tiles and the second buttons are sheets of glass that blur it as they scroll past. This supersedes "The design is one dark page" above
+- The main button is the violet of the panel's own Replace button. Teal marks what is on or done
+- The header has the words on the left and recordings on the right: the real panel close up in a slab of glass, one recording after another, with names to choose one and a button to pause. There are three: Rewrite, Explain and Compose
+- The header's recordings are cut from the same raw footage as those under Use cases, cropped to the panel, so they are sharp at that size. The chat under the panel is drawn by the page from each recording's own texts, and changes on the frame where the recording pastes. The line under the recordings says which part is which
+- With motion turned off, or without scripts, nothing plays and a still picture of the result is shown
+- Settings is shown in its light pictures on the site and in the documentation. The README keeps both
+- Style sheets and scripts are kept by browsers for an hour, so their addresses carry a number (`?v=3`) that goes up with each redesign

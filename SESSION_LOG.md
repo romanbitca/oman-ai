@@ -4,6 +4,16 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — 0.3.5 released, and the website rebuilt in light and glass
+
+- The maintainer read the night's report and said to merge and release. Brought `main` up to the branch by fast-forward, which closed pull request 13, and published 0.3.5 from a tag on `main`. All three release jobs passed, and the release checks out from the outside: notarized, signed by the same Developer ID team, version 0.3.5 with build 3005, the update key the installed copy carries, and a feed and download whose signatures match that key. The public feed names 0.3.5
+- The maintainer turned down the dark website and its header, and asked for a light page with more glass and a video or animations on the right of the header. Both pages have a new look: light, with colour fixed behind sheets of glass (see DECISIONS.md)
+- The header now plays three recordings of the real panel, cut close from the raw footage, with the chat they act on drawn under them. Checked on single frames that the drawn text changes when the recording pastes
+- Looked at every section at 1512, 1280, 1040, 768 and 390 pixels wide in a headless browser, and fixed what that showed: a hard edge where the gallery cut off its pictures' shadows, sections of the documentation spaced as widely as the home page's, columns of the speed table touching on a phone, and steps showing through the ring around the How it works picture
+- Tried both pages in the real container: its headers block nothing, and the recordings can be sought
+- With motion turned off, and without scripts, the header shows a still picture and nothing plays
+- Not verified: Safari, Firefox and a real phone, and how the glass performs on an older Mac. Three pictures still show the app before 0.3.5 (see KNOWN_ISSUES.md)
+
 ## 2026-11-12 — A night of checks: prompts measured and rewritten, the site's nginx, the chart labels
 
 Asked for by the maintainer before going to sleep: more tests and improvements, a look at speed, security and stability, and research into competitors and features.
