@@ -125,6 +125,9 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                 ALTER TABLE api_usage ADD COLUMN kind TEXT;
                 """)
         }
+        migrator.registerMigration("v5") { db in
+            try db.execute(sql: "ALTER TABLE writing_actions ADD COLUMN changes INTEGER")
+        }
         return migrator
     }
 
@@ -315,12 +318,12 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
         try writer.write { db in
             try db.execute(
                 sql: """
-                    INSERT INTO writing_actions (id, created_at, kind, model, app_name, applied)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO writing_actions (id, created_at, kind, model, app_name, applied, changes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                     """,
                 arguments: [
                     action.id.uuidString, action.date.timeIntervalSince1970, action.kind.rawValue, action.model,
-                    action.appName, action.applied,
+                    action.appName, action.applied, action.changes,
                 ]
             )
         }
@@ -337,7 +340,7 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
             try Row.fetchAll(
                 db,
                 sql: """
-                    SELECT id, created_at, kind, model, app_name, applied
+                    SELECT id, created_at, kind, model, app_name, applied, changes
                     FROM writing_actions WHERE created_at >= ? ORDER BY created_at, rowid
                     """,
                 arguments: [date.timeIntervalSince1970]
@@ -350,7 +353,8 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                     kind: kind,
                     model: row["model"],
                     appName: row["app_name"],
-                    applied: row["applied"]
+                    applied: row["applied"],
+                    changes: row["changes"]
                 )
             }
         }

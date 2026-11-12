@@ -78,6 +78,9 @@ public struct WritingAction: Identifiable, Equatable, Sendable {
     public let model: String
     public let appName: String?
     public var applied: Bool
+    /// For a proofread, how many places it changed, which the Lab follows week by week. Nil for the rest, and for
+    /// proofreads from before this was kept.
+    public let changes: Int?
 
     public init(
         id: UUID = UUID(),
@@ -85,7 +88,8 @@ public struct WritingAction: Identifiable, Equatable, Sendable {
         kind: WritingTask.Kind,
         model: String,
         appName: String?,
-        applied: Bool = false
+        applied: Bool = false,
+        changes: Int? = nil
     ) {
         self.id = id
         self.date = date
@@ -93,6 +97,7 @@ public struct WritingAction: Identifiable, Equatable, Sendable {
         self.model = model
         self.appName = appName
         self.applied = applied
+        self.changes = changes
     }
 }
 

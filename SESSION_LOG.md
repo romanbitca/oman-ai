@@ -4,6 +4,15 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — The Lab, keys held together, and a cleaner pill
+
+- Roman tried 0.4.2 at home and sent screenshots. He asked for round buttons in the pill, the Settings button gone from the panel, Right ⌘ with Right ⌥ as a dictation shortcut, a cleaner Floating background, and a Lab in place of Settings when OmanAI is opened. He also reported that waiting words didn't go into a field he clicked; that went to the session that built waiting words, which also has his yes for its on-screen check. The choices are in DECISIONS.md
+- Measured the pill's cancel button in his screenshot at 70 by 68 pixels: the glass's darker sides make it read wide. The round controls now have an even ring
+- Found why Settings appeared when OmanAI was opened: macOS brings back the app's kept Settings window. Opening OmanAI now shows the Lab, and the menu bar icon's right-click menu has Open Lab, OmanAI Settings and Quit
+- Keys on their own became chords of one or more Control, Option or Command keys, recorded by holding them and letting go. The rules are a small type that tests drive; the event monitor feeds it
+- The Lab shows dictations, fixes put back, changes per proofread week by week, money spent, the last two weeks, and the transcripts, which moved there from Settings. Proofreads now note how many places they changed, never the words
+- On this branch every test passes and the app builds. The Lab was drawn off the screen and looked at; the pill's new look hasn't been seen on the screen yet
+
 ## 2026-11-12 — 0.4.2: the redrawn model list, and words that wait for a field
 
 - At the maintainer's word, merged pull requests #17 and #18 and released them as 0.4.2. #17 redraws the model list and Your words. #18 makes dictated words wait in the pill when nothing can take them. #18 went on top of #17. Only DECISIONS.md and SESSION_LOG.md overlapped, and both keep every entry. On the combined code 547 tests pass and the app builds

@@ -34,6 +34,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Opening OmanAI while it runs shows the Lab. Without this, macOS would bring back the Settings window, which
+    /// is kept after it closes.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        coordinator?.openLab()
+        return false
+    }
+
     // Text fields in a normal window only get Cmd+V and the other editing shortcuts through an Edit menu.
     private func installMainMenu() {
         let appMenu = NSMenu()

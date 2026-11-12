@@ -24,6 +24,15 @@ import Testing
         #expect(try database.actions(since: .distantPast) == [explain, applied])
     }
 
+    @Test func aProofreadKeepsHowManyPlacesItChanged() throws {
+        let database = try OmanDatabase.inMemory()
+        let proofread = WritingAction(
+            date: Date(timeIntervalSince1970: 1), kind: .proofread, model: "claude-haiku-5-5", appName: "Mail", changes: 3
+        )
+        try database.recordAction(proofread)
+        #expect(try database.actions(since: .distantPast) == [proofread])
+    }
+
     @Test func aKindFromANewerVersionIsLeftOut() throws {
         let database = try OmanDatabase.inMemory()
         try database.recordAction(action(.proofread, at: 1))
@@ -58,6 +67,7 @@ import Testing
         try earlier.writer.write { db in
             try db.execute(sql: """
                 DROP TABLE writing_actions;
+                DELETE FROM grdb_migrations WHERE identifier = 'v5';
                 CREATE TABLE api_usage_old AS SELECT id, created_at, model, input_tokens, output_tokens,
                     cache_read_tokens, cache_write_5m_tokens, cache_write_1h_tokens, cost_usd FROM api_usage;
                 DROP TABLE api_usage;

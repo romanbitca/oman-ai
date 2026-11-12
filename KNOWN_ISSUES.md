@@ -22,6 +22,24 @@ Known limits:
 
 ---
 
+## 2026-11-12 — The Lab, keys held together and the pill's new look: what has been tried
+
+Tried:
+- Tests for the chord tracker: one key, two keys in either order, a chord growing into another, other keys, Shift and Fn, and keys that can't make a chord.
+- Tests for recording and saving chords, single keys saved by 0.4.2 still loading, and dictating with two keys held.
+- Tests for the Lab's figures, weeks and days, its transcripts, and proofreads counting their changes.
+- The Lab drawn off the screen, light and dark.
+
+Not yet tried:
+- Holding keys together on a real keyboard.
+- The pill's ring and the Floating look's new background on the screen. The glass and the blur can only be seen there.
+- The Lab with the person's own data.
+- The menu bar icon's new menu, and opening OmanAI again.
+
+Known limits:
+- The Lab's dictation figures come from the transcripts kept, so with "Keep: the last 50" they cover only those.
+- Changes per proofread are counted from this version on, so earlier weeks show nothing.
+
 ## 2026-11-12 — Spending's fixes: what has been tried, and what hasn't
 
 Tried: tests for noting each text written and marking it when it is put back, a change counting as the action it changes, a failed request noting nothing, a store that fails leaving the result alone, the bars, the actions, the apps, the earlier requests without a kind, the scales and the words of the details card. The page and the details card were drawn off the screen, light and dark, and looked at.

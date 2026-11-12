@@ -18,6 +18,8 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
     private var panelModel: PanelViewModel?
     private var settingsModel: SettingsViewModel?
     private var settingsWindow: NSWindow?
+    private var labModel: LabViewModel?
+    private var labWindow: NSWindow?
     private var outsideClickMonitor: Any?
     private var isPinned = false
     private var placedOrigin: NSPoint?
@@ -141,10 +143,8 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
 
     private func showStatusMenu() {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
-        if services.updates != nil {
-            menu.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdatesFromMenu), keyEquivalent: "").target = self
-        }
+        menu.addItem(withTitle: "Open Lab", action: #selector(openLabFromMenu), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "OmanAI Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit OmanAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
@@ -156,8 +156,21 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         openSettings()
     }
 
-    @objc private func checkForUpdatesFromMenu() {
-        services.updates?.checkForUpdates()
+    @objc private func openLabFromMenu() {
+        openLab()
+    }
+
+    /// What OmanAI did, how the person's writing goes, and their transcripts.
+    func openLab() {
+        dismissPanel()
+        let model = labModel ?? LabViewModel(services: services)
+        labModel = model
+        model.reload()
+        if labWindow == nil {
+            labWindow = LabWindow.make(model: model)
+        }
+        NSApp.activate()
+        labWindow?.makeKeyAndOrderFront(nil)
     }
 
     private func dismissPanel() {

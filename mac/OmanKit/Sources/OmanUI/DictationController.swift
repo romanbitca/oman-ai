@@ -569,13 +569,12 @@ public final class DictationController {
 
 /// The parts of the Dictation page in Settings.
 enum DictationPage: String, CaseIterable, Identifiable {
-    case transcripts, model, look, words, sound
+    case model, look, words, sound
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .transcripts: "Transcripts"
         case .model: "Model"
         case .look: "Look"
         case .words: "Words"

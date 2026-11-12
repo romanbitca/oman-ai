@@ -8,7 +8,6 @@ struct DictationSettingsView: View {
     var body: some View {
         SettingsForm {
             switch model.dictationPage {
-            case .transcripts: transcriptsPage
             case .model: modelPage
             case .look: lookPage
             case .words: wordsPage
@@ -32,105 +31,6 @@ struct DictationSettingsView: View {
         .labelsHidden()
         .frame(maxWidth: .infinity)
         .padding(.bottom, 6)
-    }
-
-    // MARK: Transcripts
-
-    @ViewBuilder
-    private var transcriptsPage: some View {
-        Section {
-            Picker(selection: Binding(
-                get: { model.preferences.dictationHistory },
-                set: { history in
-                    if confirmKeeping(history) { model.setDictationHistory(history) }
-                }
-            )) {
-                ForEach(DictationHistory.allCases) { history in
-                    Text(history.displayName).tag(history)
-                }
-            } label: {
-                Text("Keep")
-                Text("Only the text is kept, on this Mac. The sound never is.")
-            }
-        } header: {
-            pagePicker
-        }
-        Section {
-            if model.savedDictations.isEmpty {
-                Text(model.preferences.dictationHistory == .off ? "Transcripts aren't kept." : "No transcripts yet.")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(model.savedDictations) { dictation in
-                    transcriptRow(dictation)
-                }
-            }
-        } header: {
-            Text("Transcripts")
-        } footer: {
-            if !model.savedDictations.isEmpty {
-                HStack {
-                    Spacer()
-                    Button("Delete All Transcripts…", role: .destructive) { confirmDeleteAll() }
-                }
-            }
-        }
-        if let error = model.dictationError {
-            Section { SettingsError(text: error) }
-        }
-    }
-
-    private func transcriptRow(_ dictation: SavedDictation) -> some View {
-        LabeledContent {
-            HStack(spacing: 10) {
-                Button {
-                    model.copyDictation(dictation)
-                } label: {
-                    Image(systemName: model.copiedDictationID == dictation.id ? "checkmark" : "doc.on.doc")
-                }
-                .buttonStyle(.borderless)
-                .help("Copy")
-                .accessibilityLabel("Copy")
-                Button {
-                    model.deleteDictation(id: dictation.id)
-                } label: {
-                    Image(systemName: "minus.circle.fill")
-                }
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
-                .help("Delete")
-                .accessibilityLabel("Delete")
-            }
-        } label: {
-            Text(dictation.text)
-                .lineLimit(4)
-                .textSelection(.enabled)
-            Text(dictation.detail)
-        }
-    }
-
-    /// Keeping fewer transcripts deletes the older ones, so it asks first.
-    private func confirmKeeping(_ history: DictationHistory) -> Bool {
-        let count = model.transcriptsDeleted(by: history)
-        guard count > 0 else { return true }
-        let alert = NSAlert()
-        alert.messageText = "Keep only \(history.displayName.lowercased())?"
-        alert.informativeText = count == 1
-            ? "The oldest transcript is deleted. This can't be undone."
-            : "The \(count) oldest transcripts are deleted. This can't be undone."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        return alert.runModal() == .alertSecondButtonReturn
-    }
-
-    private func confirmDeleteAll() {
-        let alert = NSAlert()
-        alert.messageText = "Delete all transcripts?"
-        alert.informativeText = "This can't be undone."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        if alert.runModal() == .alertSecondButtonReturn {
-            model.deleteAllDictations()
-        }
     }
 
     // MARK: Model
@@ -209,7 +109,7 @@ struct DictationSettingsView: View {
                 }
             } footer: {
                 if group == DictationModel.Group.allCases.last {
-                    Text("Every model runs on this Mac, so what you say never leaves it.")
+                    Text("Every model runs on this Mac, so what you say never leaves it. Your transcripts are in the Lab: right-click the wave in the menu bar and choose Open Lab.")
                 }
             }
         }

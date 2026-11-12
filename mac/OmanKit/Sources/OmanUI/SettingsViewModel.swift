@@ -50,7 +50,7 @@ public final class SettingsViewModel {
     @ObservationIgnored private(set) var downloadTask: Task<Void, Never>?
     @ObservationIgnored private var downloadID: UUID?
     /// The part of the Dictation page on show.
-    var dictationPage: DictationPage = .transcripts
+    var dictationPage: DictationPage = .model
     /// What each model needs before it can listen, read from the models.
     private(set) var modelStatuses: [DictationModel: DictationModelStatus] = [:]
     /// The languages each model knows, as language codes such as "en".
@@ -66,8 +66,6 @@ public final class SettingsViewModel {
     private(set) var microphoneAccess: MicrophoneAccess = .notDetermined
     /// The microphones the Mac has now, to choose one for dictation.
     private(set) var microphones: [Microphone] = []
-    private(set) var savedDictations: [SavedDictation] = []
-    private(set) var copiedDictationID: UUID?
     var newDictationWord = ""
     var offersDictation: Bool { services.speech != nil }
 
@@ -155,7 +153,6 @@ public final class SettingsViewModel {
     /// Asks every model what it can do here, and reads the kept transcripts again.
     func reloadDictation() {
         microphoneAccess = services.system.microphoneAccess
-        reloadSavedDictations()
         guard let speech = services.speech else { return }
         let preferences = self.preferences
         let chosen = preferences.dictationModel
@@ -336,53 +333,6 @@ public final class SettingsViewModel {
 
     func removeDictationWord(_ word: String) {
         updatePreferences { $0.dictationWords.removeAll { $0 == word } }
-    }
-
-    func reloadSavedDictations() {
-        savedDictations = (try? services.dictations?.savedDictations()) ?? []
-    }
-
-    /// How many transcripts the new choice would delete now. None keeps the old ones and only stops keeping more.
-    func transcriptsDeleted(by history: DictationHistory) -> Int {
-        guard history != .off, let limit = history.limit else { return 0 }
-        return max(savedDictations.count - limit, 0)
-    }
-
-    func setDictationHistory(_ history: DictationHistory) {
-        updatePreferences { $0.dictationHistory = history }
-        guard transcriptsDeleted(by: history) > 0, let limit = history.limit else { return }
-        do {
-            try services.dictations?.trimDictations(keepingNewest: limit)
-            dictationError = nil
-        } catch {
-            dictationError = error.localizedDescription
-        }
-        reloadSavedDictations()
-    }
-
-    func copyDictation(_ dictation: SavedDictation) {
-        services.system.copyToClipboard(dictation.text)
-        copiedDictationID = dictation.id
-    }
-
-    func deleteDictation(id: UUID) {
-        do {
-            try services.dictations?.deleteDictation(id: id)
-            dictationError = nil
-        } catch {
-            dictationError = error.localizedDescription
-        }
-        reloadSavedDictations()
-    }
-
-    func deleteAllDictations() {
-        do {
-            try services.dictations?.deleteAllDictations()
-            dictationError = nil
-        } catch {
-            dictationError = error.localizedDescription
-        }
-        reloadSavedDictations()
     }
 
     func saveAPIKey() async {

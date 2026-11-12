@@ -452,3 +452,36 @@ The maintainer asked whether OmanAI could notice when a dictation finishes with 
 - After a minute with no choice, the words are copied and the pill says "No field was chosen, so your words were copied." for a moment
 - Accessibility is asked away from the main thread, so an app slow to answer never holds up the pill or the menu bar. Each question has the 0.25-second limit that reading a selection has
 - While words wait, the dictation itself is over: the menu bar icon is still again and opens the panel, and the shortcuts start a new dictation. Either first copies the waiting words, so none are lost. Opening the panel also closes the pill, which under the menu bar icon would hang where the panel does
+
+## 2026-11-12 — The Lab, keys held together, and a cleaner pill
+
+Roman tried 0.4.2 and asked for:
+- round buttons in the pill;
+- no Settings button in the panel's header;
+- a dictation shortcut of keys held together, such as Right ⌘ with Right ⌥;
+- a cleaner background behind the Floating look's words;
+- in place of Settings when OmanAI is opened, a Lab with a few numbers (transcripts, fixes, how his English goes) and his transcripts.
+
+The Lab opens from a right-click on the menu bar icon, whose menu holds Open Lab, OmanAI Settings and Quit. The rest is the assistant's.
+
+- **The panel's header** keeps only its pin. Settings opens from the menu bar icon's menu, from the style chips' Create a style, and from the setup screens. Check for Updates leaves that menu; Settings' General page has Check Now.
+- **Keys on their own become a chord:** one or more Control, Option or Command keys, left or right, held together. Control joins Option and Command for this.
+  - In the Shortcuts tab, Record Keys takes the keys held and keeps the most that were held at once when they are let go. Esc stops recording, and the keys already chosen don't start a dictation while it records.
+  - A chord counts only while its keys and no others are held. Shift, Fn or any other key makes the press a shortcut until every key is let go.
+  - A chord that grows into another chosen one, such as Right ⌥ then Right ⌘ when both chords are chosen, hands over to the larger one.
+  - Shift stays out of chords, since holding it to type capitals would start dictations.
+  - Settings saved by 0.4.2 with a single key load as a chord of that key.
+- **Opening OmanAI while it runs shows the Lab.** Settings had appeared because macOS brings back the app's window when an app is opened again, and OmanAI keeps its Settings window after it closes.
+- **The Lab** is a plain macOS window. It has:
+  - four figures: dictations, with words and time spoken; fixes put back, of all texts written; changes per proofread this week, against last week; and money spent this month and in all;
+  - the last two weeks, day by day, as dictations and fixes put back;
+  - "Your writing": for the last eight weeks, how many places a proofread changed on average, and the share of proofreads that found nothing to change;
+  - the transcripts, with search, Copy, Delete, Delete All and how many to keep. They moved from Settings, whose Dictation page now has Model, Look, Words and Sound.
+- **How the person's English goes** is measured without keeping any words. Each proofread notes how many places it changed, as its own count in `writing_actions`, migration v5. Fewer changes over the weeks means fewer mistakes in what they write. It works for any language, so the Lab calls it "Your writing".
+- **The pill's round controls** get an even white ring at 22%. In Roman's screenshot, the cancel button measured 70 by 68 pixels: lit from above, the glass's sides read darker than its top and bottom, and the circle looks a little wide.
+- **The Floating look's words** sit on a stronger blur that fades out well beyond them:
+  - blur radius 28 points, up from 14;
+  - darkening 24%, down from 34%;
+  - the fade starts a third of the way out and eases in and out, where it used to start halfway;
+  - the blurred area reaches 30 points past the words' sides and 16 above and below;
+  - the text's shadow is lighter.

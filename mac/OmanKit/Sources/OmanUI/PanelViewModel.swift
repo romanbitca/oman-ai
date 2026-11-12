@@ -566,8 +566,14 @@ public final class PanelViewModel {
     /// Notes what was written, with which model and for which app, for the Spending page. Never the text.
     private func recordAction() {
         guard let request = lastRequest, let store = services.actions else { return }
+        // For a proofread, how many places it changed, for the Lab's look at how the person's writing goes.
+        var changes: Int?
+        if case .proofread(let original) = request.task {
+            changes = TextChanges(from: original, to: draft).count
+        }
         let action = WritingAction(
-            date: Date(), kind: request.task.kind, model: request.model.rawValue, appName: capture.app?.name
+            date: Date(), kind: request.task.kind, model: request.model.rawValue, appName: capture.app?.name,
+            changes: changes
         )
         do {
             try store.recordAction(action)
