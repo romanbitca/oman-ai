@@ -2,28 +2,43 @@ import AppKit
 import QuartzCore
 import SwiftUI
 
+/// How the Floating look sets its words off from what is behind them.
+struct FloatingBackdrop: Hashable, Sendable {
+    /// How far what is behind is blurred, in points. None at 0.
+    var blur: CGFloat = 28
+    /// How much everything behind is darkened, alike, from 0 to 1.
+    var dim: CGFloat = 0.24
+    /// The brightest anything behind may stay, from 0 to 1. At 1 nothing is pressed down. Below it, bright things
+    /// are darkened toward it and dark ones are left alone.
+    var ceiling: CGFloat = 1
+    /// The shadow under the letters.
+    var shadowOpacity: Double = 0.3
+    var shadowRadius: CGFloat = 3
+}
+
+extension EnvironmentValues {
+    @Entry var floatingBackdrop = FloatingBackdrop()
+}
+
 /// Blurs and darkens whatever is behind the window, fully in the middle and fading to nothing at the edges of the
 /// ellipse that fills the view, so words can float on it with no box around them. It uses the panel backdrop's
 /// tint-free blur; where that is missing, only the darkening shows.
 struct SoftBlur: NSViewRepresentable {
-    var points: CGFloat
-    var dim: CGFloat
+    var look: FloatingBackdrop
 
     func makeNSView(context: Context) -> SoftBlurView {
-        SoftBlurView(points: points, dim: dim)
+        SoftBlurView(look: look)
     }
 
     func updateNSView(_ view: SoftBlurView, context: Context) {}
 }
 
 final class SoftBlurView: NSView {
-    private let points: CGFloat
-    private let dim: CGFloat
+    private let look: FloatingBackdrop
     private var builtSize = CGSize.zero
 
-    init(points: CGFloat, dim: CGFloat) {
-        self.points = points
-        self.dim = dim
+    init(look: FloatingBackdrop) {
+        self.look = look
         super.init(frame: .zero)
         wantsLayer = true
     }
@@ -44,12 +59,14 @@ final class SoftBlurView: NSView {
         guard let layer else { return }
         layer.sublayers?.forEach { $0.removeFromSuperlayer() }
         guard let strength = Self.feather(size: bounds.size) else { return }
-        if let blur = BackdropBlur.makeLayer(points: points, strength: strength, frame: bounds) {
+        if look.blur > 0 || look.ceiling < 1,
+           let blur = BackdropBlur.makeLayer(points: look.blur, strength: strength, frame: bounds, ceiling: look.ceiling) {
             layer.addSublayer(blur)
         }
+        guard look.dim > 0 else { return }
         let shade = CALayer()
         shade.frame = bounds
-        shade.backgroundColor = NSColor.black.withAlphaComponent(dim).cgColor
+        shade.backgroundColor = NSColor.black.withAlphaComponent(look.dim).cgColor
         let mask = CALayer()
         mask.frame = bounds
         mask.contents = strength

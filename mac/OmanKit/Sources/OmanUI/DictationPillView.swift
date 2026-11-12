@@ -75,6 +75,7 @@ public enum DictationPillMetrics {
 public struct DictationPillView: View {
     private let controller: DictationController
     private let state: DictationPillState
+    @Environment(\.floatingBackdrop) private var backdrop
 
     public init(controller: DictationController, state: DictationPillState) {
         self.controller = controller
@@ -151,13 +152,14 @@ public struct DictationPillView: View {
     private var floating: some View {
         VStack(spacing: 6) {
             wordsArea(alignment: .center, padding: EdgeInsets(top: 14, leading: 28, bottom: 14, trailing: 28))
-                .shadow(color: .black.opacity(0.3), radius: 3, y: 0.5)
+                .shadow(color: .black.opacity(backdrop.shadowOpacity), radius: backdrop.shadowRadius, y: 0.5)
                 .frame(width: DictationPillMetrics.width)
                 .background {
                     // Wider than the words, so the blur has faded away before its edge, with no rim to see.
-                    SoftBlur(points: 28, dim: 0.24)
+                    SoftBlur(look: backdrop)
                         .padding(.horizontal, -30)
                         .padding(.vertical, -16)
+                        .id(backdrop)
                 }
             HStack(spacing: DictationPillMetrics.gap) {
                 HStack(spacing: 8) {
