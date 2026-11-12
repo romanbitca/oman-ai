@@ -41,6 +41,14 @@ struct GeneralSettingsView: View {
                     Text("Include the screen by default")
                     Text("Sends a picture of the window you're writing in with each request.")
                 }
+                Picker(selection: model.preference(\.proofreadChanges)) {
+                    ForEach(ProofreadChanges.allCases) { choice in
+                        Text(choice.displayName).tag(choice)
+                    }
+                } label: {
+                    Text("Show what Proofread changed")
+                    Text(model.preferences.proofreadChanges.explanation)
+                }
                 if let error = model.preferencesError {
                     SettingsError(text: error)
                 }
@@ -81,6 +89,15 @@ struct GeneralSettingsView: View {
                     Text("The menu bar icon goes away until you open the app again.")
                 }
             }
+        }
+    }
+}
+
+extension ProofreadChanges {
+    fileprivate var explanation: String {
+        switch self {
+        case .atOnce: "Changed words are marked. Click the count to see what they replaced."
+        case .whenAsked: "The result stays plain until you click Show changes."
         }
     }
 }

@@ -133,6 +133,23 @@ public enum AppearanceMode: String, Codable, CaseIterable, Sendable, Identifiabl
     }
 }
 
+/// How the panel shows what a proofread changed in the person's text.
+public enum ProofreadChanges: String, Codable, CaseIterable, Sendable, Identifiable {
+    /// Changed words are marked as soon as the result appears. The count of changes shows the words they replaced.
+    case atOnce
+    /// The result is plain until Show changes is clicked. Then the old words are struck through beside the new ones.
+    case whenAsked
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .atOnce: "At once"
+        case .whenAsked: "When I ask"
+        }
+    }
+}
+
 public enum WritingQuality: String, Codable, CaseIterable, Sendable, Identifiable {
     case fast, balanced, best
 
@@ -296,6 +313,7 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var remembersStylePerApp = true
     public var includesScreenByDefault = false
     public var keepsPanelOpen = false
+    public var proofreadChanges: ProofreadChanges = .atOnce
     /// Global shortcuts start empty so OmanAI never takes a combination another app is using.
     public var shortcuts: [String: KeyCombo] = [
         ShortcutAction.acceptResult.storageKey: KeyCombo(keyCode: 36, modifiers: KeyCombo.command),
@@ -321,6 +339,8 @@ public struct AppPreferences: Codable, Equatable, Sendable {
         includesScreenByDefault =
             (try? values.decodeIfPresent(Bool.self, forKey: .includesScreenByDefault)) ?? defaults.includesScreenByDefault
         keepsPanelOpen = (try? values.decodeIfPresent(Bool.self, forKey: .keepsPanelOpen)) ?? defaults.keepsPanelOpen
+        proofreadChanges =
+            (try? values.decodeIfPresent(ProofreadChanges.self, forKey: .proofreadChanges)) ?? defaults.proofreadChanges
         shortcuts = (try? values.decodeIfPresent([String: KeyCombo].self, forKey: .shortcuts)) ?? defaults.shortcuts
     }
 

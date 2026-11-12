@@ -28,6 +28,7 @@ public final class PanelViewModel {
     @ObservationIgnored private(set) var lastRequest: WritingRequest?
     @ObservationIgnored private var preferences = AppPreferences()
     @ObservationIgnored private var terminalPasteConfirmed = false
+    @ObservationIgnored private var changesCache: (original: String, draft: String, changes: TextChanges)?
 
     private(set) var screen: PanelScreen = .compose
     private(set) var capture = SelectionCapture(app: nil, text: nil)
@@ -62,6 +63,8 @@ public final class PanelViewModel {
     private(set) var errorMessage: String?
     private(set) var offersSettings = false
     var showOriginal = false
+    /// With changes shown, the words a proofread replaced are struck through beside the new ones.
+    var showChanges = false
 
     public init(services: AppServices, presenter: any PanelPresenting) {
         self.services = services
@@ -88,6 +91,7 @@ public final class PanelViewModel {
         errorMessage = nil
         offersSettings = false
         showOriginal = false
+        showChanges = false
         lastRequest = nil
         terminalPasteConfirmed = false
         apiKeyDraft = ""
@@ -144,8 +148,12 @@ public final class PanelViewModel {
         case .tryAgain:
             tryAgain()
         case .toggleOriginal:
-            guard originalText != nil else { return false }
-            showOriginal.toggle()
+            if offersChanges {
+                showChanges.toggle()
+            } else {
+                guard offersOriginal else { return false }
+                showOriginal.toggle()
+            }
         default:
             return false
         }
@@ -278,6 +286,7 @@ public final class PanelViewModel {
         offersSettings = false
         adjustment = ""
         showOriginal = false
+        showChanges = false
         screen = baseScreen
         // Only the screen's name is logged, so a Back that seems to do nothing can be told from one that never arrived.
         panelLog.notice("Back pressed, now on \(String(describing: self.screen), privacy: .public)")
@@ -508,6 +517,34 @@ public final class PanelViewModel {
         default: nil
         }
     }
+
+    /// What a proofread changed in the person's text, worked out on the Mac. Nil for every other task,
+    /// and until the whole answer is in.
+    var proofreadChanges: TextChanges? {
+        guard screen == .result, case .proofread(let original) = lastRequest?.task else { return nil }
+        if let cache = changesCache, cache.original == original, cache.draft == draft {
+            return cache.changes
+        }
+        let changes = TextChanges(from: original, to: draft)
+        changesCache = (original, draft, changes)
+        return changes
+    }
+
+    /// The header shows the changes instead of the original. Not when nothing changed, and not when nearly
+    /// every word did, because marks would then cover the whole text.
+    var offersChanges: Bool {
+        guard let changes = proofreadChanges else { return false }
+        return changes.count > 0 && !changes.isRewrite
+    }
+
+    /// The header offers the original for a rewrite or an explanation, and for a proofread that changed nearly
+    /// every word. After any other proofread it offers the changes, which show the original words too.
+    var offersOriginal: Bool {
+        guard originalText != nil else { return false }
+        return proofreadChanges?.isRewrite ?? true
+    }
+
+    var proofreadChangesDisplay: ProofreadChanges { preferences.proofreadChanges }
 
     func applyResult() {
         guard !isExplanation else { return }

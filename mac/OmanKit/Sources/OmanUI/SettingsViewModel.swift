@@ -248,7 +248,7 @@ public final class SettingsViewModel {
         case .acceptResult: "Replace or Insert"
         case .copyResult: "Copy result"
         case .tryAgain: "Try again"
-        case .toggleOriginal: "Show original"
+        case .toggleOriginal: "Show original or changes"
         }
     }
 
