@@ -4,6 +4,21 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — 0.4.1 released, and the model list and Your words redrawn
+
+- At the maintainer's word, released the Spending change as 0.4.1 after 0.4.0 had published: brought `main` to it by fast-forward and tagged it. All three release jobs passed. Checked from outside:
+  - notarized and signed by the same Developer ID team;
+  - version 0.4.1, build 4001, with the update key the app carries;
+  - a signed feed whose zip length and signature match;
+  - the public feed serves 0.4.1.
+
+  Its website changes, the Spending picture and line, went live with `main`
+- The 0.4.0 session-log entry missed `main` because 0.4.1 was tagged first. It now rides on the redesign's pull request
+- The maintainer found the model list too plain and the row for their own words poor-looking. They asked for every element of Handy's list in a look of its own. Read Handy's source for its elements and redrew both; the decisions are in DECISIONS.md. 520 tests pass and the app builds; the pages were drawn off the screen only. Draft pull request #17
+- Holding dictated words when nothing can take them was built in a session of its own, draft pull request #18. Its on-screen check of Slack, Mail, Messages and WhatsApp waits until the maintainer is home, as they asked
+- The website films stay held until the maintainer is back at the Mac
+- Removed six stale LaunchServices records of this session's build copies, and the downloaded copy of 0.4.1 used for the check
+
 ## 2026-11-12 — Spending: fixes beside the money, by action and by app
 
 - The maintainer asked for every bar on the Spending page to be split in two, the fixes applied to text and the money spent, with details on hover, and for the page to be more advanced. The choices are in DECISIONS.md
