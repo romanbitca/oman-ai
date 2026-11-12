@@ -4,6 +4,24 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-12 — A night of checks: prompts measured and rewritten, the site's nginx, the chart labels
+
+Asked for by the maintainer before going to sleep: more tests and improvements, a look at speed, security and stability, and research into competitors and features.
+
+- Built a way to measure prompts: each kind of text asked several times of each model at each quality through the app's own client, every answer graded by checks on its text. The first run of 432 answers found far more wrong than the single run before it: 90 failed a check, and Haiku at Fast, the default, failed 32 of 80
+- Tried wordings against it, about 3,800 answers over the night. What was learned: Haiku does not think at Fast, with or without the line that asks for an immediate answer; without thinking it proofreads by copying and then corrects itself in the open ("Wait, I need to correct that"), more often the more rules it is given; and no wording fixed that, only thinking did
+- Rewrote the prompts and the request (see DECISIONS.md). The same 17 kinds of text now fail in 4 of 459 answers. On ten kinds never used for tuning, 31 of 80 failed before and 1 of 80 after
+- Added `WritingHabits`, which counts a template's casing, full stops and apostrophes, and a language check for Explain, both with tests. Added `LiveWritingTests`, the measurement as a test that only runs with a key
+- Fixed the dates under the Spending chart: each is centred under its bar, "29 Nov" is no longer cut off, and the newest month of a long All time view has its label again. Checked by drawing the chart for months of 28 to 31 days and for 6 to 48 months, without a window
+- Found the website's container was built on nginx 1.29, a line without updates since April 2026. Moved it to 1.30.6 from the stable line, pinned by digest, tried the container locally, pushed it and saw Coolify deploy it: pages, recordings and headers answer as before
+- Stability: the whole suite passes under the thread sanitizer and the address sanitizer with no reports, and 15 runs in a row had no failure. The installed 0.3.4, which had updated itself, sat at 0.0% CPU and 15 MB after an hour and a half
+- Speed: a connection to Anthropic takes 0.02 to 0.05 s to set up from here, so opening one ahead of time would gain nothing worth a request nobody asked for. Summing up Spending takes 47 ms for 10,000 requests
+- Security: the two cases with orders hidden in the text or the context passed in every run. The dependencies and the workflow actions are pinned to commits. The Keychain item for the API key still lists a debug build from a temporary folder among the apps that may read it; nothing was changed there
+- The research report on competitors and features was delivered to the maintainer as a file. It is not in the repository
+- Updated the site, the documentation and the README for what Proofread now does
+- The test runs of the night cost about $2.50 of the maintainer's API credit
+- Not verified: the new prompts with a screenshot attached or with pasted context longer than a line; Proofread on texts of several hundred words, where thinking may take longer; Settings on macOS 14 and 15; the site in Safari and Firefox
+
 ## 2026-11-12 — The models tried through the API, a new website with docs, and a fuller README
 
 - The maintainer entered the Keychain password, and the run of Haiku, Sonnet and Opus at each quality went through: 99 requests through the app's own client, none failed, about $0.20 in all. Haiku gave its first word in 0.6 seconds and a whole answer in 1.0, for about $0.0001 a message. Sonnet took 0.7 and 1.4 seconds, Opus 1.1 and 1.8 at Fast

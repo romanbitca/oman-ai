@@ -104,6 +104,21 @@ Everything below is parked until the writing tool ships. P1 and P2 produced an E
 
 ---
 
+## W10: Answers that hold up [IN PROGRESS]
+
+The prompts are judged by what the real models answer, many times over, and not by one reply. Waiting for the maintainer's yes on the two changes a person can see: Proofread is about a second slower on Haiku, and As written keeps lower case.
+
+Acceptance:
+- Proofread corrects spelling, grammar and apostrophes and keeps the person's wording and shorthand, on each Claude model at each quality
+- With As written, a message typed in lower case stays in lower case, and a missed capital in text that mostly has them is put right
+- With a template, capital letters, apostrophes and the final full stop follow the template's messages, in both directions, and nothing is added
+- Explain gives only the reading, in the language of the text, and says so when a text reads clearly
+- `LiveWritingTests`, run with a key, has no more than 1 answer in 20 failing a check
+- Each date under the Spending chart sits under its own bar, and none is cut off
+- The website runs on an nginx image that still gets updates
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.

@@ -4,13 +4,55 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-12 — Proofread is slower than the other actions on Haiku
+
+Proofread makes Haiku think before it writes, because without thinking it got about one proofread in four wrong. A short proofread takes about 1.7 seconds on Haiku (nine in ten under 2.7), where a rewrite takes about 0.9. It costs about $0.0002, and about $0.0004 for a message of ninety words. The quality setting does not change this. On Sonnet a proofread takes about 1.2 seconds, as before.
+
+The speeds on the website and in the README are from the run of eleven tasks made with 0.3.4. Each now carries a sentence about Proofread. The table itself has not been measured again.
+
+---
+
+## 2026-11-12 — What the checks on real answers do and don't show
+
+The numbers in DECISIONS.md come from checks on the text of each answer: a word is there or not, the line breaks are kept, the answer is not longer than its text. They catch a wrong letter case, a missing apostrophe, a second version or a comment on the first, an added greeting, the wrong language. They do not judge whether a rewrite sounds like the person, or whether an explanation is a good reading.
+
+There are 27 kinds of text, almost all English and short. Seventeen were looked at while the wording was tuned, so the ten that were not are the fairer measure: 1 answer in 80 failed there.
+
+What still goes wrong, about once in a hundred answers: "its" left where "it's" is meant, and an explanation of a grudging message that gives its warning inside the first paragraph instead of a second one.
+
+A proofread that failed under the first new wordings is worth knowing about, though it no longer happens: the model wrote the text out with mistakes still in it, then "Wait, I need to correct that" and a second version. Should an answer like that ever come back, it is all in the panel before anything is pasted. Nothing in the app catches it.
+
+Every run that asks the models costs money: the runs of this night cost about $2.50 in all.
+
+---
+
+## 2026-11-12 — The count of writing habits is simple on purpose
+
+`WritingHabits` counts sentence starts and the word "i". A tie counts as formal writing, so a two-sentence text with one capital start gets its capitals corrected. A sentence that starts after "e.g." or "etc." is counted like any other. Text in a script without capital letters says nothing, and the text being proofread then decides.
+
+Whether a message ends without a full stop is taken from one-line samples only, because an email ends with a name.
+
+Apostrophes left out are recognised from a list of English contractions. In another language a template that leaves apostrophes out is not noticed, and Proofread adds them.
+
+Proofread with As written always adds missing apostrophes, even for someone who leaves them out on purpose. A template whose samples leave them out keeps them out.
+
+---
+
+## 2026-11-12 — The website's nginx image has to be moved on by hand
+
+`site/Dockerfile` names one exact image. Nothing reminds anyone when nginx publishes a newer one. To move it on: `docker buildx imagetools inspect nginx:stable-alpine`, put the version and digest in the Dockerfile, build and try it locally, push.
+
+Cloudflare adds its Web Analytics script to pages on this domain. The site's response headers stop it from loading, which shows as one blocked-script line in the browser's console. Turning it off for this hostname is a Cloudflare setting and was left to the maintainer.
+
+---
+
 ## 2026-11-11 — Apple's on-device model: what it does well and badly
 
 Run through the app's own client on a Mac with macOS 27. It is available and runs locally. The first request after a pause takes 5 to 9 seconds; after that the first word comes in 0.6 to 1 second and the whole answer in 1 to 2.5.
 
 Plain proofreading in English is good. Beyond that it is weak: asked to rewrite a formal note in a casual style it returned the note almost unchanged, "make it polite but still firm" only swapped words, a reply was signed with the other person's name, "Fine. Do whatever you think is best, I guess." was read as casual permission, and Romanian came back wrong once and as a guardrail error once.
 
-Haiku answered the same eleven tasks without any of those faults. That was a Haiku agent given the app's exact prompts, not the app calling the API, so it says nothing about speed, cost or the three quality levels. A run through the API with each Claude model at each quality is still to do and needs a key.
+Claude was then run through the API on the same eleven tasks and on many more. See the entries of 2026-11-12 below.
 
 ---
 
@@ -26,6 +68,8 @@ The alert that asks before a style is deleted has not been tried by hand. SwiftU
 
 All time needs every request ever recorded, so the page reads them all each time Settings opens. That is fine for tens of thousands of rows. If it ever gets slow, the sums can be made by SQLite instead.
 
+Timed on 2026-11-12 in a debug build: summing up 1,000 requests takes 6 ms, 10,000 takes 47 ms, 50,000 takes 0.23 s and 200,000 takes 0.9 s, on the main thread when the page opens. At a hundred requests a day that is years away from being felt.
+
 ---
 
 ## 2026-11-11 — Trying Settings without showing a window
@@ -33,7 +77,8 @@ All time needs every request ever recorded, so the page reads them all each time
 - A window with a title bar placed outside every display is pulled back onto one when it is shown. Replacing `constrainFrameRect(_:to:)` for the test process keeps it where it is put
 - `screencapture -l` writes nothing for a window that is on no display. The window's frame view can draw itself with `cacheDisplay(in:to:)` instead. Drawn that way the toolbar gets a border round every tab, which the real window doesn't have
 - Never close a SwiftUI sheet from outside. `endSheet` left SwiftUI's own state set, the sheet came straight back, and a loop that waited for it to go ran for about twenty minutes on the maintainer's screen, until they pressed Done
-- `Charts` centres an axis label between marks. With a label for only some bars, that is days away from the bar it names, so each label is anchored at the middle of its own bar
+- `Charts` centres an axis label between marks, or starts it at its mark. With a label for only some bars, neither is under the bar it names. `AxisMarks(preset: .aligned)` on the middle of each bar is. An `anchor` on the label changed nothing
+- The Spending chart alone can be drawn to a picture with `ImageRenderer`, with no window at all. That is how its labels were checked for every length of month
 
 ---
 
