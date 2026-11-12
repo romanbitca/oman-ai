@@ -33,18 +33,37 @@ Known limits:
 
 ---
 
-## 2026-11-13 — The Floating look's background: variants, and what has been tried
+## 2026-11-13 — The Floating look's background: what has been tried
 
-The maintainer finds the darkening behind the Floating look's words too easy to notice, and asked for variants. White words need something dark behind them only where the screen is bright. An even darkening shows as a dark cloud over a mid-toned desktop picture, where it isn't needed, and is still too weak over a white window.
+The maintainer found the darkening behind the Floating look's words too easy to notice, asked for variants, and then left the choice to the assistant. White words need something dark behind them only where the screen is bright. The even darkening of 0.4.4 showed as a dark cloud over a mid-toned desktop picture, where it isn't needed, and was still too faint over a white window.
 
 Tried:
-- Five variants drawn as simulated pictures in a headless browser, over the maintainer's desktop picture, a white window of text and a dark one: the look of 0.4.3 and of 0.4.4, half the darkening, a blur with none, a shadow on the letters alone, and a blur that presses down only what is bright. A simulation, not the app: the browser's blur and curve stand in for Core Animation's.
-- This macOS has the filter the last variant needs, `luminanceCurveMap`, and `BackdropBlur` can add it to its layer with a ceiling on brightness. `FloatingBackdrop` holds the numbers of a variant, with those of 0.4.4 as its default.
-- A test that shows each variant once on the screen, over the desktop and over a white and a dark sheet of text, beside the same background with no words on it, and saves a picture of each. It is written and builds.
+- Five variants drawn as simulated pictures in a headless browser, over the maintainer's desktop picture, a white window of text and a dark one. The browser's blur and curve only stood in for Core Animation's.
+- With the maintainer's yes, while they were away and the Mac was unlocked: five short runs of a test window on their screen, 84 seconds in all. Four showed the Floating look's words over a sheet of white text, a sheet of dark text and the desktop, beside the same background with no words, and saved a picture of each; two measured the filters on grey bars from black to white. Nothing was clicked or typed, and nothing was left on the screen. The first run's pictures of the bare desktop held the windows open on it, so they were deleted and the later runs showed a copy of the desktop picture instead.
+- On the grey bars, `luminanceCurveMap` and `curves` both draw a cubic Bézier through the four values they are given: with 0, ⅓, ⅔ and w, a brightness of x comes out as x − (1 − w)x³. The values first guessed darkened mid-greys about as much as white.
+- `luminanceCurveMap` works on brightness alone, so over the desktop picture it left a grey patch where there had been colour. `curves` takes the same values for each colour and keeps them.
+- As a second filter on the blur's own layer, the curve needed that layer faded as a whole, and the blur then faded twice as fast. In a layer of its own under the blur, the blur takes in what the curve darkened.
+- Every variant measured behind the words: the average brightness from 0 to 1, and the contrast of white words against it. Contrast of the average leaves out the letters' own shadow, which adds to it.
+
+| Behind the words | Desktop picture | White window | Dark window |
+| --- | --- | --- | --- |
+| Nothing | 0.635, 2.5:1 | 0.838, 1.5:1 | 0.269, 9.7:1 |
+| 0.4.4: everything darkened by 0.24 | 0.482, 4.2:1 | 0.673, 2.3:1 | 0.169, 14.2:1 |
+| Half that | not measured | 0.776, 1.7:1 | 0.196, 12.8:1 |
+| Everything darkened by 0.16, with more shadow on the letters | 0.531, 3.6:1 | 0.744, 1.9:1 | 0.188, 13.2:1 |
+| Brightness alone, white to 0.55, under the blur | 0.530, 3.6:1 | 0.547, 3.4:1 | 0.196, 12.8:1 |
+| Brightness alone, white to 0.45, under the blur | 0.509, 3.9:1 | 0.473, 4.4:1 | 0.188, 13.2:1 |
+| Each colour, white to 0.55, on the blur's own layer, wider | 0.519, 3.7:1 | 0.573, 3.1:1 | 0.220, 11.7:1 |
+| **0.4.5: each colour, white to 0.55, under the blur** | **0.532, 3.6:1** | **0.547, 3.4:1** | **0.196, 12.8:1** |
 
 Not yet tried:
-- Any of it on the screen. The test waits for the maintainer's yes.
-- What `luminanceCurveMap` does with the four values it is given. They are a guess at "leave the dark alone and hold the bright under a ceiling" and have to be measured on grey steps.
+- The look in the app itself, rather than in a test window built from the same code.
+- macOS before 27.
+
+Known limits:
+- `curves` is a private Core Animation filter, as the blur is. Where a macOS doesn't have it, the even darkening of 0.4.4 stands in, and either could go in a later macOS.
+- Over a white window 0.4.5 is darker behind the words than 0.4.4 was, on purpose: white words there went from 2.3:1 to 3.4:1.
+- Light greys come out a little lighter than white, since the curve bends back: 0.86 comes out as 0.57 and white as 0.55. The blur hides it.
 
 ## 2026-11-12 — OmanAI's window, keys held together and the pill's new look: what has been tried
 

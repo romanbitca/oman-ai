@@ -544,3 +544,19 @@ The maintainer tried the window for five minutes in a test build with their own 
   - A choice is kept under the app's bundle identifier, under its name where it has none, and under one key for no app at all.
 - **The panel's microphone is a round button.** On its own beside Write it is glass with the even ring the pill's buttons have, as high as Write. At the end of a field it is a flat patch on the field's glass. Its symbol is filled and in the text's colour, where it was an outline in grey.
 - **The shadow behind the Floating look's words is not decided.** 0.4.4 has the lighter one from the entry of 2026-11-12, which the maintainer had only seen in pictures. Variants are to be shown on their screen before one is chosen.
+
+## 2026-11-13 — The Floating look darkens only what is bright
+
+The maintainer asked for less of a shadow behind the Floating look's words, with variants to choose from. Away from home, they agreed to the variants being shown on their screen if it wasn't locked, and left the choice to the assistant. This supersedes "The shadow behind the Floating look's words is not decided" in the entry above. The measurements are in KNOWN_ISSUES.md.
+
+- **Only what is bright behind the words is darkened.** Each colour goes through one curve: white comes out as 0.55, a mid grey of 0.5 as 0.44, and what is darker stays nearly as it was. The even darkening of 0.4.4, by 0.24 everywhere, is gone.
+- **The curve is Core Animation's `curves` filter, in a layer of its own under the blur.** `luminanceCurveMap` bends brightness the same way but on brightness alone, and turned the desktop picture's colours grey behind the words. As a second filter on the blur's own layer, the curve needed that layer faded as a whole, which weakened the blur.
+- **White goes to 0.55, not 0.45.** 0.45 made white words easier to read over a white window, 4.4:1 against 3.4:1, but darkened every background more, which is what the maintainer wanted less of. 0.55 keeps white words above 3:1 over white.
+- **The curve keeps its full strength out to 45% of the way to the oval's edge,** where the blur keeps it out to a third, and then fades out the same smooth way. So the words' longest lines stay over the darkened part.
+- **The blur stays at 28 points, and the letters' shadow goes from 0.3 to 0.35,** which helps where the background is now lighter.
+- **What changes, behind the words, from 0.4.4 to 0.4.5:**
+  - over the desktop picture, brightness 0.48 to 0.53 and white words 4.2:1 to 3.6:1, so less of a dark cloud;
+  - over a white window, 0.67 to 0.55 and 2.3:1 to 3.4:1, so the words can be read: here it is darker than before, on purpose;
+  - over a dark window, 0.17 to 0.20 and 14.2:1 to 12.8:1, so less is darkened where nothing needed it.
+- **Where a macOS lacks the filter,** the even darkening of 0.4.4 stands in.
+- **The numbers sit together in `FloatingBackdrop`,** read from the environment, so variants can be drawn side by side with the same code as the app.

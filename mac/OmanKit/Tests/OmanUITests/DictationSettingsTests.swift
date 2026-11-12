@@ -261,6 +261,24 @@ import Testing
         #expect(image?.height == 20)
     }
 
+    @Test func theFloatingLookDarkensOnlyWhatIsBrightOverAWiderMiddle() {
+        let look = FloatingBackdrop()
+        // White behind the words comes out as 0.55, enough for white words to be read; dark is left alone.
+        #expect(look.whiteLevel == 0.55)
+        #expect(look.blur == 28)
+        // Where that can't be done, the even darkening of 0.4.4 stands in.
+        #expect(look.fallbackDim == 0.24)
+        // The darkening keeps its full strength further out than the blur does, and still fades to nothing.
+        #expect(SoftBlurView.strength(atDistance: 0.44, full: look.curveReach) > 0.999)
+        #expect(SoftBlurView.strength(atDistance: 0.44) < 0.999)
+        #expect(SoftBlurView.strength(atDistance: 1, full: look.curveReach) == 0)
+        let samples = stride(from: 0.0, through: 1.0, by: 0.01).map {
+            SoftBlurView.strength(atDistance: CGFloat($0), full: look.curveReach)
+        }
+        #expect(zip(samples, samples.dropFirst()).allSatisfy { $0 >= $1 && $0 - $1 < 0.06 })
+        #expect(SoftBlurView.feather(size: CGSize(width: 100, height: 40), full: look.curveReach) != nil)
+    }
+
     @Test func joiningSpeechLeavesOneSpace() {
         #expect(LiveTranscript.join(" Hello ", " world ") == "Hello world")
         #expect(LiveTranscript.join("", "world") == "world")

@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-13 — 0.4.5: a lighter background behind the Floating look's words
+
+- The maintainer had asked for less of a shadow behind the Floating look's words, with variants. Away from home, they said the variants could be tried on their screen if it wasn't locked, that the assistant should choose the best, and that a release should follow
+- The Mac was unlocked and they had been away for over half an hour. Five short runs of a test window, 84 seconds in all, showed the words over a white sheet, a dark sheet and the desktop picture, or grey bars, and measured them. Nothing was clicked or typed, and nothing was left on the screen. The first run's pictures of the bare desktop held the windows open on it and were deleted
+- Measured on grey bars how Core Animation's curve filters bend brightness: a cubic through the four values given. The values first guessed darkened mid-greys about as much as white, and the brightness-only filter turned the desktop picture's colours grey
+- Chose a curve that brings white down to 0.55 and leaves dark alone, applied to each colour in a layer under the blur. Behind the words, white text went from 2.3:1 to 3.4:1 over a white window, and the background is lighter than 0.4.4's over the desktop picture and over a dark window (see DECISIONS.md, with every variant's numbers in KNOWN_ISSUES.md). The even darkening of 0.4.4 stays only where the filter is missing
+- Every test passes and the app builds. Merged pull request #22 into `main` by fast-forward and tagged it v0.4.5
+
 ## 2026-11-13 — 0.4.4: OmanAI's own window, the chip that stays chosen, keys held together
 
 - The maintainer ran the window for five minutes in a test build with their own dictations, liked it, and sent screenshots with what to change. They said to release once it was done
