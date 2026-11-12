@@ -62,8 +62,8 @@ public final class MacSystemBridge: SystemBridging {
         set { modifierKeys.onEvent = newValue }
     }
 
-    public func watchModifierKeys(_ keys: Set<ModifierKey>) {
-        modifierKeys.watch(keys)
+    public func watchModifierKeys(_ chords: Set<ModifierChord>) {
+        modifierKeys.watch(chords)
     }
 
     // MARK: Dictation

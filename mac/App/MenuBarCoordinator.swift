@@ -66,7 +66,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         if let preferences = try? services.settings.preferences() {
             services.system.setAppearance(preferences.appearance)
             services.system.registerGlobalShortcuts(preferences.globalShortcuts)
-            services.system.watchModifierKeys(preferences.dictationModifierKeys)
+            services.system.watchModifierKeys(preferences.dictationChords)
         }
 
         if let button = statusItem.button {
@@ -126,7 +126,7 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         let keepPinned = isPinned && panel.isVisible
         // Option or Command on their own start working once Accessibility is allowed, without a restart.
         if let preferences = try? services.settings.preferences() {
-            services.system.watchModifierKeys(preferences.dictationModifierKeys)
+            services.system.watchModifierKeys(preferences.dictationChords)
         }
         // The selection must be read before the panel takes keyboard focus.
         Task { @MainActor in

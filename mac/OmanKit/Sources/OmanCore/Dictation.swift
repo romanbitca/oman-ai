@@ -413,10 +413,10 @@ public enum MicrophoneAccess: Equatable, Sendable {
     case notDetermined
 }
 
-/// A modifier key that starts a dictation on its own, without another key: Option or Command, on the left or
-/// right of the space bar.
+/// A modifier key that, held on its own or with others like it, starts a dictation: Control, Option or Command,
+/// on the left or the right of the space bar.
 public enum ModifierKey: String, Codable, CaseIterable, Sendable, Identifiable {
-    case rightOption, leftOption, rightCommand, leftCommand
+    case rightOption, leftOption, rightCommand, leftCommand, leftControl, rightControl
 
     public var id: String { rawValue }
 
@@ -426,6 +426,8 @@ public enum ModifierKey: String, Codable, CaseIterable, Sendable, Identifiable {
         case .leftOption: "Left Option"
         case .rightCommand: "Right Command"
         case .leftCommand: "Left Command"
+        case .leftControl: "Left Control"
+        case .rightControl: "Right Control"
         }
     }
 
@@ -435,6 +437,8 @@ public enum ModifierKey: String, Codable, CaseIterable, Sendable, Identifiable {
         case .leftOption: "Left ⌥"
         case .rightCommand: "Right ⌘"
         case .leftCommand: "Left ⌘"
+        case .leftControl: "Left ⌃"
+        case .rightControl: "Right ⌃"
         }
     }
 
@@ -445,6 +449,8 @@ public enum ModifierKey: String, Codable, CaseIterable, Sendable, Identifiable {
         case .leftOption: 58
         case .rightCommand: 54
         case .leftCommand: 55
+        case .leftControl: 59
+        case .rightControl: 62
         }
     }
 
@@ -452,14 +458,143 @@ public enum ModifierKey: String, Codable, CaseIterable, Sendable, Identifiable {
         guard let key = Self.allCases.first(where: { $0.keyCode == keyCode }) else { return nil }
         self = key
     }
+
+    /// Whether the key is down, from the device-dependent bits of an event's modifier flags, which tell the left
+    /// key from the right one.
+    public func isDown(inDeviceFlags flags: UInt) -> Bool {
+        let mask: UInt = switch self {
+        case .leftControl: 0x0001
+        case .rightControl: 0x2000
+        case .leftCommand: 0x0008
+        case .rightCommand: 0x0010
+        case .leftOption: 0x0020
+        case .rightOption: 0x0040
+        }
+        return flags & mask != 0
+    }
+
+    /// The keys down in an event's modifier flags.
+    public static func down(inDeviceFlags flags: UInt) -> Set<ModifierKey> {
+        Set(allCases.filter { $0.isDown(inDeviceFlags: flags) })
+    }
+
+    /// Control, then Option, then Command, as macOS writes them, left before right.
+    fileprivate var order: Int {
+        switch self {
+        case .leftControl: 0
+        case .rightControl: 1
+        case .leftOption: 2
+        case .rightOption: 3
+        case .leftCommand: 4
+        case .rightCommand: 5
+        }
+    }
 }
 
-/// What a modifier key on its own did: went down, came up, or another key was pressed while it was down, which
-/// makes it part of an ordinary shortcut rather than a dictation.
+/// One or more modifier keys held together and nothing else, such as Right ⌥ alone or Right ⌥ with Right ⌘.
+public struct ModifierChord: Hashable, Codable, Sendable {
+    public let keys: Set<ModifierKey>
+
+    public init?(_ keys: Set<ModifierKey>) {
+        guard !keys.isEmpty else { return nil }
+        self.keys = keys
+    }
+
+    public init(_ key: ModifierKey) {
+        keys = [key]
+    }
+
+    /// The keys in the order macOS writes them.
+    public var ordered: [ModifierKey] { keys.sorted { $0.order < $1.order } }
+
+    /// "Right ⌥" or "Right ⌥ + Right ⌘".
+    public var displayName: String { ordered.map(\.symbol).joined(separator: " + ") }
+
+    /// A list of keys, or a single key as 0.4.2 saved it.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let list = try? container.decode([ModifierKey].self), let chord = ModifierChord(Set(list)) {
+            self = chord
+        } else {
+            self = ModifierChord(try container.decode(ModifierKey.self))
+        }
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(ordered)
+    }
+}
+
+/// What the watched keys did: a chord was pressed, it came up, or another key joined while it was down, which makes
+/// it part of an ordinary shortcut rather than a dictation.
 public enum ModifierKeyEvent: Equatable, Sendable {
-    case down(ModifierKey)
-    case up(ModifierKey)
+    case down(ModifierChord)
+    case up(ModifierChord)
     case otherKey
+}
+
+/// Turns the modifier keys held, as each flags-changed event reports them, into chords pressed and let go. A chord
+/// counts only when its keys, and no others, are held. Shift, Fn or any other key joining makes the press part of a
+/// shortcut: a chord already down is reported as `otherKey`, and nothing more starts until every key is let go.
+public struct ModifierChordTracker: Sendable {
+    public var chords: Set<ModifierChord>
+    private var held: Set<ModifierKey> = []
+    private var active: ModifierChord?
+    private var spoiled = false
+
+    public init(chords: Set<ModifierChord> = []) {
+        self.chords = chords
+    }
+
+    /// The modifier keys now held, and whether Shift or Fn is held with them.
+    public mutating func flagsChanged(held now: Set<ModifierKey>, othersHeld: Bool) -> [ModifierKeyEvent] {
+        let before = held
+        held = now
+        if now.isEmpty {
+            spoiled = false
+            guard let active else { return [] }
+            self.active = nil
+            return [.up(active)]
+        }
+        if othersHeld {
+            return spoil()
+        }
+        if let active, !before.subtracting(now).isDisjoint(with: active.keys) {
+            // A key of the chord came up. Whatever is still held starts nothing.
+            self.active = nil
+            spoiled = true
+            return [.up(active)]
+        }
+        guard !now.subtracting(before).isEmpty, !spoiled else { return [] }
+        if let chord = ModifierChord(now), chords.contains(chord) {
+            var events: [ModifierKeyEvent] = []
+            if active != nil { events.append(.otherKey) }
+            active = chord
+            events.append(.down(chord))
+            return events
+        }
+        if active != nil {
+            return spoil()
+        }
+        if !chords.contains(where: { $0.keys.isSuperset(of: now) }) {
+            // No watched chord can grow from these keys.
+            spoiled = true
+        }
+        return []
+    }
+
+    /// A key other than a modifier went down.
+    public mutating func keyDown() -> [ModifierKeyEvent] {
+        held.isEmpty ? [] : spoil()
+    }
+
+    private mutating func spoil() -> [ModifierKeyEvent] {
+        spoiled = true
+        guard active != nil else { return [] }
+        active = nil
+        return [.otherKey]
+    }
 }
 
 /// A key pressed after the words are pasted, to send a message in apps where Return sends.

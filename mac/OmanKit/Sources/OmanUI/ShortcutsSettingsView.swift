@@ -28,7 +28,7 @@ struct ShortcutsSettingsView: View {
             } header: {
                 Text("Dictation")
             } footer: {
-                Text("Hold the first while you speak, and let go to put the words in. For a longer dictation, press the second to start and again to finish. A key on its own still works in shortcuts such as ⌥E. With the same key for both, a tap starts a long dictation and holding it dictates until you let go.")
+                Text("Hold the first while you speak, and let go to put the words in. For a longer dictation, press the second to start and again to finish. Keys on their own, such as Right ⌥ or Right ⌥ with Right ⌘, still work in shortcuts such as ⌥E. With the same keys for both, a tap starts a long dictation and holding them dictates until you let go.")
             }
 
             Section("While a result is showing") {
@@ -89,23 +89,47 @@ struct ShortcutRow: View {
     }
 }
 
-/// Option or Command pressed on its own, as another way to start a dictation.
+/// Control, Option or Command keys held on their own, one or several together, as another way to start a
+/// dictation. Recorded by holding them and letting go.
 struct ModifierKeyRow: View {
     let model: SettingsViewModel
     let action: ShortcutAction
 
+    private var isRecording: Bool { model.recordingKeysFor == action }
+    private var chord: ModifierChord? { model.dictationKeys(for: action) }
+
     var body: some View {
-        Picker(selection: Binding(
-            get: { model.dictationKey(for: action) },
-            set: { model.setDictationKey($0, for: action) }
-        )) {
-            Text("None").tag(ModifierKey?.none)
-            Divider()
-            ForEach(ModifierKey.allCases) { key in
-                Text(key.displayName).tag(ModifierKey?.some(key))
+        LabeledContent {
+            HStack(spacing: 6) {
+                if chord != nil, !isRecording {
+                    Button {
+                        model.setDictationKeys(nil, for: action)
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.tertiary)
+                    .help("Remove the keys")
+                    .accessibilityLabel("Remove the keys")
+                }
+                if isRecording {
+                    Button { model.cancelKeyRecording() } label: {
+                        Text(ModifierChord(model.keysHeld)?.displayName ?? "Hold the keys…").frame(minWidth: 104)
+                    }
+                    .buttonStyle(.borderedProminent)
+                } else {
+                    Button { model.startRecordingKeys(for: action) } label: {
+                        Text(chord?.displayName ?? "Record Keys")
+                            .foregroundStyle(chord == nil ? .secondary : .primary)
+                            .frame(minWidth: 104)
+                    }
+                }
             }
         } label: {
-            Text(action == .dictateLong ? "Or tap a key on its own" : "Or hold a key on its own")
+            Text(action == .dictateLong ? "Or tap keys on their own" : "Or hold keys on their own")
+            if isRecording {
+                Text("Hold Control, Option or Command, one or more together, then let go. Esc stops.")
+            }
         }
     }
 }
@@ -173,8 +197,59 @@ private struct ShortcutRecording: ViewModifier {
     }
 }
 
+/// Listens for modifier keys held on their own while one of the dictation rows records them.
+private struct KeyChordRecording: ViewModifier {
+    let model: SettingsViewModel
+    @State private var monitor: Any?
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: model.recordingKeysFor) { syncMonitor() }
+            .onDisappear {
+                model.cancelKeyRecording()
+                removeMonitor()
+            }
+    }
+
+    private func syncMonitor() {
+        guard model.recordingKeysFor != nil else {
+            removeMonitor()
+            return
+        }
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { event in
+            handle(event)
+        }
+    }
+
+    private func removeMonitor() {
+        if let monitor {
+            NSEvent.removeMonitor(monitor)
+        }
+        monitor = nil
+    }
+
+    private func handle(_ event: NSEvent) -> NSEvent? {
+        guard model.recordingKeysFor != nil else { return event }
+        switch event.type {
+        case .flagsChanged:
+            model.keysChanged(to: ModifierKey.down(inDeviceFlags: event.modifierFlags.rawValue))
+        case .keyDown:
+            if event.keyCode == 53 {
+                model.cancelKeyRecording()
+            } else {
+                // Only modifier keys can be held on their own.
+                NSSound.beep()
+            }
+        default:
+            break
+        }
+        return nil
+    }
+}
+
 extension View {
     func recordsShortcuts(_ model: SettingsViewModel) -> some View {
-        modifier(ShortcutRecording(model: model))
+        modifier(ShortcutRecording(model: model)).modifier(KeyChordRecording(model: model))
     }
 }

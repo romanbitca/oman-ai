@@ -67,10 +67,10 @@ public protocol SystemBridging: AnyObject {
     /// moves. Reads nothing from the app's text.
     func rememberFocus(in app: SourceApp)
 
-    /// Called for the modifier keys being watched, and for any other key pressed while one of them is down.
+    /// Called when a watched chord of modifier keys is pressed or let go, and when another key joins it.
     var onModifierKey: (@MainActor (ModifierKeyEvent) -> Void)? { get set }
-    /// Watches these keys on their own, anywhere on the Mac; none stops watching.
-    func watchModifierKeys(_ keys: Set<ModifierKey>)
+    /// Watches these chords of modifier keys held on their own, anywhere on the Mac; none stops watching.
+    func watchModifierKeys(_ chords: Set<ModifierChord>)
     func playSound(_ sound: DictationSound)
     /// Mutes the Mac's sound output, or brings back what it was.
     func setOutputMuted(_ muted: Bool)

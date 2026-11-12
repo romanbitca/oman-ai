@@ -273,12 +273,12 @@ import Testing
         let settings = harness.makeSettings()
         settings.reload()
 
-        settings.setDictationKey(.rightOption, for: .dictateHold)
+        settings.setDictationKeys(.rightOption, for: .dictateHold)
         #expect(harness.system.watchedKeys == [.rightOption])
-        settings.setDictationKey(.rightCommand, for: .dictateLong)
+        settings.setDictationKeys(.rightCommand, for: .dictateLong)
         #expect(harness.system.watchedKeys == [.rightOption, .rightCommand])
-        #expect(settings.dictationKey(for: .dictateLong) == .rightCommand)
-        settings.setDictationKey(nil, for: .dictateHold)
+        #expect(settings.dictationKeys(for: .dictateLong) == .rightCommand)
+        settings.setDictationKeys(nil, for: .dictateHold)
         #expect(harness.system.watchedKeys == [.rightCommand])
         #expect((try? harness.settings.preferences())?.dictationLongKey == .rightCommand)
     }
@@ -309,8 +309,8 @@ import Testing
 
     private func make(
         _ harness: Harness,
-        hold: ModifierKey?,
-        long: ModifierKey?
+        hold: ModifierChord?,
+        long: ModifierChord?
     ) throws -> (DictationController, ModifierKeyDictation, Clock) {
         var preferences = AppPreferences()
         preferences.dictationHoldKey = hold

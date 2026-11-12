@@ -1,10 +1,11 @@
 import Foundation
 import OmanCore
 
-/// Turns Option or Command on their own into dictation. Holding the hold key dictates while it is down; a tap on
-/// the long key starts a long dictation, and another tap finishes it. With the same key for both, a tap starts a
-/// long dictation and holding it dictates until it comes up. A key used with another, as in ⌥E for é, stays an
-/// ordinary shortcut: nothing starts, or a dictation it started is dropped.
+/// Turns chords of Control, Option or Command keys held on their own into dictation, such as Right ⌥ alone or
+/// Right ⌥ with Right ⌘. Holding the hold chord dictates while it is down; a tap on the long chord starts a long
+/// dictation, and another tap finishes it. With the same chord for both, a tap starts a long dictation and holding
+/// it dictates until it comes up. Keys used with another, as in ⌥E for é, stay an ordinary shortcut: nothing
+/// starts, or a dictation they started is dropped.
 @MainActor
 public final class ModifierKeyDictation {
     /// A press shorter than this is a tap.
@@ -13,9 +14,9 @@ public final class ModifierKeyDictation {
     private let controller: DictationController
     private let preferences: () -> AppPreferences
     private let now: () -> Date
-    /// A hold dictation starts this long after the key goes down, so a quick ⌥E never starts one.
+    /// A hold dictation starts this long after the chord goes down, so a quick ⌥E never starts one.
     private let holdDelay: Duration
-    private var pressed: ModifierKey?
+    private var pressed: ModifierChord?
     private var pressedAt = Date.distantPast
     private var usedWithOtherKey = false
     private var startedHold = false
@@ -36,17 +37,17 @@ public final class ModifierKeyDictation {
     /// `panelField` is where the words go when the panel holds the keyboard, as for the other shortcuts.
     public func handle(_ event: ModifierKeyEvent, panelField: @escaping () -> PanelField?) {
         switch event {
-        case .down(let key):
-            pressed = key
+        case .down(let chord):
+            pressed = chord
             pressedAt = now()
             usedWithOtherKey = false
             startedHold = false
             holdTask?.cancel()
-            guard key == preferences().dictationHoldKey, !controller.isActive else { return }
+            guard chord == preferences().dictationHoldKey, !controller.isActive else { return }
             let delay = holdDelay
             holdTask = Task { [weak self] in
                 try? await Task.sleep(for: delay)
-                guard let self, !Task.isCancelled, self.pressed == key, !self.usedWithOtherKey,
+                guard let self, !Task.isCancelled, self.pressed == chord, !self.usedWithOtherKey,
                       !self.controller.isActive
                 else { return }
                 self.controller.holdPressed(into: panelField())
@@ -60,19 +61,19 @@ public final class ModifierKeyDictation {
                 controller.cancel()
                 startedHold = false
             }
-        case .up(let key):
-            guard key == pressed else { return }
+        case .up(let chord):
+            guard chord == pressed else { return }
             pressed = nil
             holdTask?.cancel()
             let isTap = now().timeIntervalSince(pressedAt) < Self.tapLimit && !usedWithOtherKey
-            let longKey = preferences().dictationLongKey
+            let longChord = preferences().dictationLongKey
             if startedHold {
-                if isTap, key == longKey {
+                if isTap, chord == longChord {
                     controller.keepListening()
                 } else {
                     controller.holdReleased()
                 }
-            } else if isTap, key == longKey {
+            } else if isTap, chord == longChord {
                 controller.longPressed(into: panelField())
             }
             startedHold = false

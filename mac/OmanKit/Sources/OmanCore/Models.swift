@@ -353,10 +353,10 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var dictationPillPosition: DictationPillPosition = .menuBar
     public var dictationPillStyle: DictationPillStyle = .card
     public var dictationHistory: DictationHistory = .all
-    /// Option or Command on their own, as the key held down to dictate and the key tapped for a long dictation.
-    /// Each takes the place of that action's ordinary shortcut while it is set.
-    public var dictationHoldKey: ModifierKey?
-    public var dictationLongKey: ModifierKey?
+    /// Control, Option or Command keys on their own, one or several held together: the chord held down to dictate
+    /// and the chord tapped for a long dictation. Each works beside that action's ordinary shortcut.
+    public var dictationHoldKey: ModifierChord?
+    public var dictationLongKey: ModifierChord?
     /// The microphone's identifier, or nil for the one chosen in System Settings.
     public var dictationMicrophone: String?
     public var playsDictationSounds = false
@@ -407,8 +407,8 @@ public struct AppPreferences: Codable, Equatable, Sendable {
             ?? defaults.dictationPillStyle
         dictationHistory =
             (try? values.decodeIfPresent(DictationHistory.self, forKey: .dictationHistory)) ?? defaults.dictationHistory
-        dictationHoldKey = try? values.decodeIfPresent(ModifierKey.self, forKey: .dictationHoldKey)
-        dictationLongKey = try? values.decodeIfPresent(ModifierKey.self, forKey: .dictationLongKey)
+        dictationHoldKey = try? values.decodeIfPresent(ModifierChord.self, forKey: .dictationHoldKey)
+        dictationLongKey = try? values.decodeIfPresent(ModifierChord.self, forKey: .dictationLongKey)
         dictationMicrophone = try? values.decodeIfPresent(String.self, forKey: .dictationMicrophone)
         playsDictationSounds =
             (try? values.decodeIfPresent(Bool.self, forKey: .playsDictationSounds)) ?? defaults.playsDictationSounds
@@ -426,7 +426,7 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     }
 
     /// Option or Command keys that dictate on their own, to be watched.
-    public var dictationModifierKeys: Set<ModifierKey> {
+    public var dictationChords: Set<ModifierChord> {
         Set([dictationHoldKey, dictationLongKey].compactMap { $0 })
     }
 

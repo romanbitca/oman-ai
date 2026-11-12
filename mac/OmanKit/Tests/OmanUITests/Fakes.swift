@@ -262,13 +262,13 @@ final class FakeSystem: SystemBridging {
     }
 
     var onModifierKey: (@MainActor (ModifierKeyEvent) -> Void)?
-    var watchedKeys: Set<ModifierKey> = []
+    var watchedKeys: Set<ModifierChord> = []
     var sounds: [DictationSound] = []
     var mutes: [Bool] = []
     var returnPresses: [Bool] = []
     var focusRemembered: [SourceApp] = []
 
-    func watchModifierKeys(_ keys: Set<ModifierKey>) { watchedKeys = keys }
+    func watchModifierKeys(_ chords: Set<ModifierChord>) { watchedKeys = chords }
     func playSound(_ sound: DictationSound) { sounds.append(sound) }
     func setOutputMuted(_ muted: Bool) { mutes.append(muted) }
     func pressReturn(withCommand: Bool) { returnPresses.append(withCommand) }
@@ -654,4 +654,12 @@ func eventually(timeout: Duration = .seconds(10), _ condition: () -> Bool) async
         try? await Task.sleep(for: .milliseconds(5))
     }
     return condition()
+}
+
+/// Single keys as chords, so tests can write `.rightOption` where a chord is wanted.
+extension ModifierChord {
+    static let rightOption = ModifierChord(.rightOption)
+    static let leftOption = ModifierChord(.leftOption)
+    static let rightCommand = ModifierChord(.rightCommand)
+    static let leftCommand = ModifierChord(.leftCommand)
 }

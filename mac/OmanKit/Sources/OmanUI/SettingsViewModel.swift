@@ -34,6 +34,9 @@ public final class SettingsViewModel {
     private(set) var preferences = AppPreferences()
     private(set) var preferencesError: String?
     private(set) var recordingAction: ShortcutAction?
+    /// The dictation action whose keys held on their own are being recorded, and the most held at once so far.
+    private(set) var recordingKeysFor: ShortcutAction?
+    private(set) var keysHeld: Set<ModifierKey> = []
     private(set) var failedShortcuts: Set<ShortcutAction> = []
     private(set) var shortcutNotice: String?
 
@@ -570,20 +573,49 @@ public final class SettingsViewModel {
         })
     }
 
-    /// Option or Command on its own, for holding to dictate or for a long dictation.
-    func dictationKey(for action: ShortcutAction) -> ModifierKey? {
+    /// The keys held on their own for holding to dictate, or for a long dictation.
+    func dictationKeys(for action: ShortcutAction) -> ModifierChord? {
         action == .dictateLong ? preferences.dictationLongKey : preferences.dictationHoldKey
     }
 
-    func setDictationKey(_ key: ModifierKey?, for action: ShortcutAction) {
+    func setDictationKeys(_ chord: ModifierChord?, for action: ShortcutAction) {
         updatePreferences {
             if action == .dictateLong {
-                $0.dictationLongKey = key
+                $0.dictationLongKey = chord
             } else {
-                $0.dictationHoldKey = key
+                $0.dictationHoldKey = chord
             }
         }
-        services.system.watchModifierKeys(preferences.dictationModifierKeys)
+        services.system.watchModifierKeys(preferences.dictationChords)
+    }
+
+    /// Starts recording keys held on their own for a dictation action. The keys already chosen stop working
+    /// meanwhile, so pressing them starts no dictation.
+    func startRecordingKeys(for action: ShortcutAction) {
+        cancelRecording()
+        recordingKeysFor = action
+        keysHeld = []
+        services.system.watchModifierKeys([])
+    }
+
+    /// The keys held now. The most held at once are kept, and letting them all go records them.
+    func keysChanged(to held: Set<ModifierKey>) {
+        guard let action = recordingKeysFor else { return }
+        if held.isEmpty {
+            guard let chord = ModifierChord(keysHeld) else { return }
+            recordingKeysFor = nil
+            keysHeld = []
+            setDictationKeys(chord, for: action)
+        } else if held.count >= keysHeld.count {
+            keysHeld = held
+        }
+    }
+
+    func cancelKeyRecording() {
+        guard recordingKeysFor != nil else { return }
+        recordingKeysFor = nil
+        keysHeld = []
+        services.system.watchModifierKeys(preferences.dictationChords)
     }
 
     private func registerShortcuts() {
