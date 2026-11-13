@@ -34,6 +34,13 @@ public protocol StyleStore: Sendable {
     func setLastStyleChoice(_ choice: StyleChoice?, forApp key: String) throws
 }
 
+/// The person's own actions, in the order they were made.
+public protocol CustomActionStore: Sendable {
+    func loadCustomActions() throws -> [CustomAction]
+    func saveCustomAction(_ action: CustomAction) throws
+    func deleteCustomAction(id: UUID) throws
+}
+
 public protocol AppSettingsStore: Sendable {
     func selectedModel() throws -> WritingModel
     func setSelectedModel(_ model: WritingModel) throws
@@ -175,7 +182,10 @@ public struct AppServices {
     public let usage: (any UsageStore)?
     public let speech: (any SpeechRecognizing)?
     public let dictations: (any DictationStore)?
+    /// Notes each text written, for the Spending page.
     public let actions: (any ActionStore)?
+    /// The person's own actions, made in Settings.
+    public let customActions: (any CustomActionStore)?
 
     public init(
         writing: any WritingService,
@@ -187,7 +197,8 @@ public struct AppServices {
         usage: (any UsageStore)? = nil,
         speech: (any SpeechRecognizing)? = nil,
         dictations: (any DictationStore)? = nil,
-        actions: (any ActionStore)? = nil
+        actions: (any ActionStore)? = nil,
+        customActions: (any CustomActionStore)? = nil
     ) {
         self.writing = writing
         self.styles = styles
@@ -199,5 +210,6 @@ public struct AppServices {
         self.speech = speech
         self.dictations = dictations
         self.actions = actions
+        self.customActions = customActions
     }
 }

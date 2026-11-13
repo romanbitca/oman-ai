@@ -13,7 +13,8 @@ enum OmanDatabaseError: LocalizedError, Equatable {
     }
 }
 
-public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, DictationStore, ActionStore, Sendable {
+public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, DictationStore, ActionStore, CustomActionStore,
+    Sendable {
     private static let selectedModelKey = "selected_model"
     private static let preferencesKey = "app_preferences"
 
@@ -165,6 +166,18 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                 DROP TABLE app_style_preferences;
                 """)
         }
+        migrator.registerMigration("v8") { db in
+            // The person's own actions. Their shortcuts are kept with the other shortcuts, in the preferences.
+            try db.execute(sql: """
+                CREATE TABLE custom_actions (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    instruction TEXT NOT NULL DEFAULT '',
+                    output TEXT NOT NULL DEFAULT 'paste',
+                    created_at DOUBLE NOT NULL
+                );
+                """)
+        }
         return migrator
     }
 
@@ -252,6 +265,46 @@ public final class OmanDatabase: StyleStore, AppSettingsStore, UsageStore, Dicta
                     """,
                 arguments: [key, choice.styleID?.uuidString]
             )
+        }
+    }
+
+    // MARK: CustomActionStore
+
+    public func loadCustomActions() throws -> [CustomAction] {
+        try writer.read { db in
+            try Row.fetchAll(
+                db, sql: "SELECT id, name, instruction, output FROM custom_actions ORDER BY created_at, rowid"
+            ).map { row in
+                CustomAction(
+                    id: try Self.uuid(from: row["id"]),
+                    name: row["name"],
+                    instruction: row["instruction"],
+                    // An output a newer OmanAI wrote is only read, so nothing this version can't name is pasted.
+                    output: CustomAction.Output(rawValue: row["output"]) ?? .read
+                )
+            }
+        }
+    }
+
+    public func saveCustomAction(_ action: CustomAction) throws {
+        try writer.write { db in
+            try db.execute(
+                sql: """
+                    INSERT INTO custom_actions (id, name, instruction, output, created_at) VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        name = excluded.name, instruction = excluded.instruction, output = excluded.output
+                    """,
+                arguments: [
+                    action.id.uuidString, action.name, action.instruction, action.output.rawValue,
+                    now().timeIntervalSince1970,
+                ]
+            )
+        }
+    }
+
+    public func deleteCustomAction(id: UUID) throws {
+        try writer.write { db in
+            try db.execute(sql: "DELETE FROM custom_actions WHERE id = ?", arguments: [id.uuidString])
         }
     }
 

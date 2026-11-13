@@ -23,7 +23,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 usage: database,
                 speech: SpeechService(),
                 dictations: database,
-                actions: database
+                actions: database,
+                customActions: database
             )
             coordinator = MenuBarCoordinator(services: services)
         } catch {

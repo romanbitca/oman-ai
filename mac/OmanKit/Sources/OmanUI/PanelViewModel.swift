@@ -53,6 +53,8 @@ public final class PanelViewModel {
 
     private(set) var styles: [WritingStyle] = []
     private(set) var selectedStyleID: UUID?
+    /// The person's own actions that can run: those with an instruction.
+    private(set) var customActions: [CustomAction] = []
 
     var contextText = ""
     private(set) var includesMessages = false
@@ -118,6 +120,7 @@ public final class PanelViewModel {
         presenter?.setPanelPinned(isPinned)
         styles = (try? services.styles.loadStyles()) ?? []
         selectedStyleID = preselectedStyleID()
+        customActions = ((try? services.customActions?.loadCustomActions()) ?? []).filter { !$0.instruction.trimmed.isEmpty }
         hasClipboardCandidate = services.system.hasClipboardText
         route()
         if preferences.includesScreenByDefault, !usesLocalModel, screen != .setup, capture.app != nil,
@@ -155,6 +158,9 @@ public final class PanelViewModel {
                 // With nothing selected the shortcut only has the template ready for what is written next.
                 selectedStyleID = id
             }
+        case .custom(let id):
+            guard let action = customActions.first(where: { $0.id == id }) else { return }
+            runCustomAction(action)
         case .openPanel, .acceptResult, .copyResult, .tryAgain, .toggleOriginal:
             break
         case .dictateHold, .dictateLong, .cancelDictation:
@@ -200,7 +206,7 @@ public final class PanelViewModel {
         switch screen {
         case .home: .instruction
         case .compose: .composePrompt
-        case .result: isExplanation ? nil : .adjustment
+        case .result: isOnlyToRead ? nil : .adjustment
         case .setup, .working, .failed: nil
         }
     }
@@ -412,6 +418,20 @@ public final class PanelViewModel {
         startWithContext(task: .explain(text: text), style: nil)
     }
 
+    /// Runs one of the person's own actions on the selection, as typing its instruction into Describe your change
+    /// would: with the chosen template and the context that is switched on. An action whose answer is only read
+    /// takes the context but no template, as Explain does, since the answer is for the person and not written as
+    /// them.
+    func runCustomAction(_ action: CustomAction) {
+        guard let text = capture.text else { return }
+        let instruction = action.instruction.trimmed
+        guard !instruction.isEmpty else { return }
+        startWithContext(
+            task: .custom(text: text, instruction: instruction, output: action.output),
+            style: action.output == .paste ? selectedStyle : nil
+        )
+    }
+
     /// Chooses the template the next Proofread, Rewrite or Compose uses, and starts nothing. No template is
     /// As written: the person's own voice, as it shows in what they wrote. The choice is remembered for the app
     /// at once, whether or not anything is then written with it.
@@ -441,8 +461,8 @@ public final class PanelViewModel {
 
     func tryAgain() {
         guard var request = lastRequest else { return }
-        if isExplanation {
-            // A fresh reading, rather than a variation on the last one.
+        if isOnlyToRead {
+            // A fresh reading or answer, rather than a variation on the last one.
             perform(request)
             return
         }
@@ -452,7 +472,7 @@ public final class PanelViewModel {
 
     func applyAdjustment() {
         let typed = adjustment.trimmed
-        guard !typed.isEmpty, !isExplanation, var request = lastRequest else { return }
+        guard !typed.isEmpty, !isOnlyToRead, var request = lastRequest else { return }
         request.refinement = Refinement(currentDraft: draft, adjustment: typed)
         adjustment = ""
         perform(request)
@@ -610,18 +630,17 @@ public final class PanelViewModel {
         return false
     }
 
-    /// An explanation is for the person to read, so it is never pasted.
-    var isExplanation: Bool {
-        if case .explain = lastRequest?.task { return true }
-        return false
+    /// An explanation, or the answer of an action that says so, is for the person to read, so it is never pasted.
+    var isOnlyToRead: Bool {
+        lastRequest?.task.isOnlyToRead ?? false
     }
 
     var primaryActionTitle: String { lastTaskIsCompose || isDictated ? "Insert" : "Replace" }
-    var canApplyResult: Bool { capture.app != nil && !isExplanation }
+    var canApplyResult: Bool { capture.app != nil && !isOnlyToRead }
 
     var originalText: String? {
         switch lastRequest?.task {
-        case .proofread(let text), .rewrite(let text, _), .explain(let text): text
+        case .proofread(let text), .rewrite(let text, _), .explain(let text), .custom(let text, _, _): text
         default: nil
         }
     }
@@ -655,7 +674,7 @@ public final class PanelViewModel {
     var proofreadChangesDisplay: ProofreadChanges { preferences.proofreadChanges }
 
     func applyResult() {
-        guard !isExplanation else { return }
+        guard !isOnlyToRead else { return }
         if SensitiveApps.isTerminal(bundleID: capture.app?.bundleID), !terminalPasteConfirmed {
             terminalPasteConfirmed = true
             let app = capture.app?.name ?? "a terminal"

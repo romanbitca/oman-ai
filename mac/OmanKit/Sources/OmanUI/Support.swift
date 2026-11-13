@@ -9,6 +9,10 @@ extension WritingStyle {
     var displayName: String { name.trimmed.isEmpty ? "Untitled" : name }
 }
 
+extension CustomAction {
+    var displayName: String { name.trimmed.isEmpty ? "Untitled" : name }
+}
+
 extension WritingModel {
     var tagline: String {
         switch self {
