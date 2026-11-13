@@ -1,16 +1,16 @@
 {
   "fill": {
     "linear-gradient": [
-      "display-p3:0.02353,0.80000,0.57255,1.00000",
-      "display-p3:0.01176,0.24706,0.40000,1.00000"
+      "extended-srgb:0.35686,0.49412,0.67451,1.00000",
+      "extended-srgb:0.21176,0.32549,0.48627,1.00000"
     ],
     "orientation": {
       "start": {
-        "x": 0.2,
+        "x": 0,
         "y": 0
       },
       "stop": {
-        "x": 0.8,
+        "x": 1,
         "y": 1
       }
     }
@@ -19,42 +19,19 @@
     {
       "layers": [
         {
-          "image-name": "line.svg",
-          "name": "line",
+          "image-name": "wave.svg",
+          "name": "wave",
           "glass": true
         }
       ],
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.35
+        "opacity": 0.4
       },
       "specular": true
-    },
-    {
-      "layers": [
-        {
-          "image-name": "lens.svg",
-          "name": "lens",
-          "glass": true,
-          "fill": {
-            "solid": "display-p3:1.00000,1.00000,1.00000,0.40000"
-          }
-        }
-      ],
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0.3
-      },
-      "specular": true,
-      "translucency": {
-        "enabled": true,
-        "value": 0.8
-      }
     }
   ],
   "supported-platforms": {
-    "squares": [
-      "macOS"
-    ]
+    "squares": "shared"
   }
 }

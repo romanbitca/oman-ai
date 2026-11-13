@@ -4,6 +4,15 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-14 — A new app icon: the menu bar's wave on blue
+
+- The maintainer asked for the app icon to match the menu bar icon, a white wave on slate blue, everywhere it shows. Branch `new-icon`, from `main` at f3badb6. The choices are in DECISIONS.md
+- `AppIcon.icon` has a blue gradient and one glass layer, `wave.svg`: the menu bar's own path, 41 times larger, with a line of 2.4 instead of 2. The old line and lens layers are deleted, and the file now names macOS and iOS
+- Tried the wave at 56% to 64% of the icon's width with lines from 2 to 2.5, and five blues, each drawn by macOS at 1024, 256, 64, 32 and 16 pixels and set beside Apple's own icons. Icon Composer's `ictool` drew the Dark, Clear and Tinted looks on macOS and iOS, and `actool` compiled the file for iPhone and iPad without a warning
+- Found that macOS draws an icon's background gradient from top to bottom whatever direction the file gives, and that `NSWorkspace` can't draw the icon of an app under `/private/tmp`, so the builds for looking at the icon went into the repository's ignored `build/` folder (see KNOWN_ISSUES.md)
+- The website's favicon, which is also the README's picture, and the logo at the top of both pages show the new icon. `og-2.png`, the picture shown when the site is shared, replaces `og.png` with the new icon on blue. Both pages were checked in headless Chromium at 1440 and 390 points wide, with requests to other sites blocked: the logo draws, and the favicon and the picture load
+- 575 tests pass and the app builds. Its icon was drawn from the built app with `NSWorkspace` at 1024, 256 and 32 pixels and looked at, and the build was unregistered from LaunchServices and deleted. Not merged or released
+
 ## 2026-11-14 — An installer: the disk image
 
 - The maintainer sent a screenshot of another app's disk image and asked for one for OmanAI, a direct download link on the website, and both kept up to date

@@ -4,6 +4,15 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-14 — The app icon: a direction macOS ignores, and drawing it without a window
+
+- An Icon Composer file's background gradient is always drawn from top to bottom. Its `orientation` in `icon.json` changes nothing: across, corner to corner and upside down all came out the same, in Icon Composer's `ictool`, in the `.icns` that `actool` makes for macOS 14 and 15, and in macOS 27's own drawing. A gradient on a layer does follow its direction. So `AppIcon.icon` asks for the top left to the bottom right and shows top to bottom
+- `NSWorkspace.shared.icon(forFile:)` gives the plain document icon for an app anywhere under `/private/tmp`, the assistant's scratch folders included, registered or not. The same app under the home folder gives its own icon. To look at the icon, build into the repository's ignored `build/` folder, then unregister the build and delete it
+- Asking `NSWorkspace` for an app's icon registers that app with LaunchServices, so a copy made only to draw its icon has to be unregistered too
+- `ictool`, in `Icon Composer.app/Contents/Executables` inside Xcode, draws an `.icon` file to a PNG for macOS or iOS in each look (Default, Dark, ClearLight, ClearDark, TintedLight, TintedDark), with no window and no build. It draws the whole square, without the margin and shadow macOS puts around an app's icon
+
+---
+
 ## 2026-11-13 — Quick fix: what has been tried, and what hasn't
 
 Tried: 34 tests, with fakes for the app being written in and for the model. They cover the shortcut that is a quick fix and the one that isn't, the request it sends, the template it follows, the paste, each case in which nothing is pasted, the icon's states and how long each lasts, a second press, a click while it works, the panel opening, Settings' switch, and the panel showing each kind of last quick fix. Every test of the package passes, and the app builds.

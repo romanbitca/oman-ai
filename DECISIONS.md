@@ -631,3 +631,15 @@ Built for the next version from item 3 of the research report on competitors: in
 - **Counting:** a text an action wrote is noted as "Your actions", a kind of its own on the Spending page, whatever its result. One that is put back is a fix, and OmanAI's window counts it among the rewritten ones.
 - Apple's on-device model gets the same split in plain sentences: an action whose result is pasted is its rewrite with the instruction, and one to read asks for an answer for the person, with no template.
 - `LiveWritingTests` has four cases for actions: bullet points to paste, a summary to read, an answer in the language of the instruction, and text that gives orders. They have not been run, because they need a key.
+
+## 2026-11-14 — A new app icon: the menu bar's wave on blue
+
+The maintainer asked for the app icon to match the menu bar icon, one white wave on a blue rounded square, and sent a picture of a white wave on slate blue. This supersedes "App icon: the `flow` concept" of 2026-11-10. The rest is the assistant's.
+
+- **The wave is the menu bar icon's own curve.** `wave.svg` holds the path from `MenuBarIcon.svg` unchanged, 41 times larger and centred on its middle point, so the two icons are one shape. Its line is 2.4 where the menu bar's is 2, a fifth heavier, so that it still reads at 16 pixels. It spans about 64% of the icon's width.
+- **The blue** runs from #5b7eac at the top to #36537c at the bottom: the slate blue of the maintainer's picture, about #4d6f9c to #3f5f8a, with a little more light and depth. As macOS draws it, the middle of the icon comes out at #476692, the middle of that range.
+- **One group holds the wave, with glass and specular light on and a light shadow**, the way Icon Composer builds Apple's own icons. The line and lens layers of the old icon are deleted. Its sources stay in `design/icon/` with the other concepts.
+- **The file asks for the blue to run from the top left to the bottom right, but macOS draws it from top to bottom.** Nothing in macOS 27 follows the direction of an icon's background gradient (see KNOWN_ISSUES.md). So the top is lighter and the bottom deeper, and the glass's highlight runs along the top.
+- **One file serves macOS and iOS** (`"squares": "shared"`), so the iPhone app can use it as it is. It compiles for iPhone and iPad without a warning, and the Dark, Clear and Tinted looks work on both. In Dark the wave takes the blue, on black.
+- **The website and the README show the same icon:** the favicon, which is also the README's picture, and the logo beside the name at the top of both pages. The favicon adds a soft light along its top edge and a shadow under the wave, as the app's glass has. The pages ask for `favicon.svg?v=2`, so neither Cloudflare nor a browser keeps showing the old one.
+- **The picture shown when the site is shared is `og-2.png`:** the same layout, words and cards as before, with the new icon on blue instead of the old green. It has a new name because Cloudflare keeps a file for a week, and `og.png` is deleted, since nothing names it any more.
