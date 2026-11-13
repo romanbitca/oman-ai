@@ -458,6 +458,11 @@ public final class SettingsViewModel {
         }
     }
 
+    /// Proofread's shortcut puts the corrections straight back over the selection, without the panel.
+    func setProofreadQuickFix(_ enabled: Bool) {
+        updatePreferences { $0.proofreadQuickFix = enabled }
+    }
+
     func setAppearance(_ mode: AppearanceMode) {
         updatePreferences { $0.appearance = mode }
         services.system.setAppearance(mode)

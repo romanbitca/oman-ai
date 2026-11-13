@@ -157,6 +157,13 @@ public protocol DictationPresenting: AnyObject {
     func setDictationActive(_ active: Bool)
 }
 
+/// Implemented by the app shell, whose menu bar icon shows how a quick fix is going.
+@MainActor
+public protocol QuickFixPresenting: AnyObject {
+    /// `announcement` is a sentence for VoiceOver to say, when there is something to tell.
+    func showQuickFixStatus(_ status: QuickFixStatus, announcement: String?)
+}
+
 /// Implemented by the app shell. Builds without an update signing key don't have one.
 @MainActor
 public protocol AppUpdating: AnyObject {

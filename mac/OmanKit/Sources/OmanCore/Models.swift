@@ -91,6 +91,19 @@ public enum TextFocus: Equatable, Sendable {
     case unknown
 }
 
+/// How a quick fix is going, as the menu bar icon shows it.
+public enum QuickFixStatus: Equatable, Sendable {
+    case idle
+    /// Reading the selection, proofreading it and putting it back.
+    case working
+    /// The corrections went in, or there was nothing to correct.
+    case done
+    /// Nothing was pasted. The panel says why.
+    case failed
+    /// Nothing was selected, so there was nothing to fix.
+    case nothingSelected
+}
+
 public struct ScreenshotAttachment: Equatable, Sendable {
     public let jpegData: Data
     public let pixelWidth: Int
@@ -346,6 +359,8 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     public var includesScreenByDefault = false
     public var keepsPanelOpen = false
     public var proofreadChanges: ProofreadChanges = .atOnce
+    /// Proofread's global shortcut puts the corrected text straight back over the selection, without the panel.
+    public var proofreadQuickFix = false
     public var dictationModel: DictationModel = .default
     /// The language chosen for each model, keyed by the model's identifier. The lists differ from model to model,
     /// so each keeps its own choice. A model without one listens for its default language.
@@ -394,6 +409,8 @@ public struct AppPreferences: Codable, Equatable, Sendable {
         keepsPanelOpen = (try? values.decodeIfPresent(Bool.self, forKey: .keepsPanelOpen)) ?? defaults.keepsPanelOpen
         proofreadChanges =
             (try? values.decodeIfPresent(ProofreadChanges.self, forKey: .proofreadChanges)) ?? defaults.proofreadChanges
+        proofreadQuickFix =
+            (try? values.decodeIfPresent(Bool.self, forKey: .proofreadQuickFix)) ?? defaults.proofreadQuickFix
         dictationModel =
             (try? values.decodeIfPresent(DictationModel.self, forKey: .dictationModel)) ?? defaults.dictationModel
         dictationLanguages =

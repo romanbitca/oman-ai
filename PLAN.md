@@ -178,6 +178,20 @@ Acceptance:
 
 ---
 
+## W14: Quick fix [IN PROGRESS]
+
+An option on Proofread's global shortcut that corrects the selection and puts it back without opening the panel. See DECISIONS.md, 2026-11-13.
+
+Acceptance:
+- With Quick fix on, Proofread's shortcut corrects the selected text in any app and pastes it over the selection, and no panel opens
+- ⌘Z in the app brings back what was there
+- The menu bar icon's wave rocks while it works, a check mark shows when it is done, and an exclamation mark when nothing was pasted
+- Nothing is pasted when nothing is selected, the selection changed, another app is in front, nothing needed correcting, or most of the words changed
+- A click on the icon's mark, or Show Last Quick Fix in its menu, shows the last quick fix in the panel with its changes marked
+- Nothing appears in or near the text field
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.

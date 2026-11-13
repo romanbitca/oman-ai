@@ -67,7 +67,7 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
   </tr>
 </table>
 
-- **Proofread** fixes spelling and grammar and leaves your wording alone. A message you type in lower case stays in lower case, and with a style chosen that style's habits with capital letters, apostrophes and full stops decide. It marks the words it changed, and one click shows the words they replaced. Settings says whether the marks appear at once or only when you ask.
+- **Proofread** fixes spelling and grammar and leaves your wording alone. A message you type in lower case stays in lower case, and with a style chosen that style's habits with capital letters, apostrophes and full stops decide. It marks the words it changed, and one click shows the words they replaced. Settings says whether the marks appear at once or only when you ask. With Quick fix on, its shortcut puts the corrections straight back without opening the panel, and ⌘Z brings back what you wrote.
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
