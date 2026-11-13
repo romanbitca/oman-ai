@@ -516,3 +516,31 @@ import Testing
         #expect(noted.last?.changes == nil)
     }
 }
+
+/// The column of times beside the transcripts in OmanAI's window.
+@MainActor @Suite struct HomeTranscriptTimeTests {
+    private func width(of text: String) -> CGFloat {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: HomeTranscripts.timeFontSize, weight: .regular)
+        return NSAttributedString(string: text, attributes: [.font: font]).size().width
+    }
+
+    private func time(_ hour: Int, _ minute: Int, in locale: Locale) -> String {
+        let style = Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, timeZone: .gmt)
+        return Date(timeIntervalSinceReferenceDate: Double(hour * 3600 + minute * 60)).formatted(style)
+    }
+
+    @Test func aTwelveHourClockGetsRoomForItsLongestTime() {
+        let us = Locale(identifier: "en_US")
+        let column = HomeTranscripts.timeWidth(locale: us)
+        // "9:12 AM" broke onto two lines in the 44 points a 24-hour clock needs.
+        #expect(column > 44)
+        #expect(column >= width(of: time(12, 58, in: us)))
+        #expect(column >= width(of: time(9, 12, in: us)))
+    }
+
+    @Test func aTwentyFourHourClockKeepsItsColumn() {
+        let uk = Locale(identifier: "en_GB")
+        #expect(HomeTranscripts.timeWidth(locale: uk) == 44)
+        #expect(width(of: time(23, 58, in: uk)) < 44)
+    }
+}
