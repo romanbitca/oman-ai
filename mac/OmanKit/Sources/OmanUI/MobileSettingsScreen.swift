@@ -6,9 +6,10 @@ import SwiftUI
 /// such as shortcuts, the pill's place or Accessibility.
 struct MobileSettingsScreen: View {
     @Bindable var model: SettingsViewModel
+    @State private var path: [MobileSettingsPage] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Form {
                 writing
                 Section {
@@ -87,7 +88,11 @@ struct MobileSettingsScreen: View {
                     }
                 }
             }
-            Button("Add a Style") { model.createStyle() }
+            Button("Add a Style") {
+                model.createStyle()
+                // A new style opens at once, to name it and paste its messages.
+                if let id = model.selectedStyleID { path.append(.style(id)) }
+            }
         } header: {
             Text("Styles")
         } footer: {
@@ -102,7 +107,7 @@ struct MobileSettingsScreen: View {
                     Text(action.displayName)
                 }
             }
-            Button("Add an Action") { _ = model.createCustomAction() }
+            Button("Add an Action") { path.append(.action(model.createCustomAction())) }
         } header: {
             Text("Actions")
         } footer: {
