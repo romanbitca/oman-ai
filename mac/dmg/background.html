@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- The picture behind OmanAI's disk image, at 660 by 400 points. Finder's path and status bars can cover the
+     bottom 60 points, so nothing that matters goes there. See scripts/make-dmg.sh. -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 660px; height: 400px; overflow: hidden; }
+  body {
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+    background:
+      radial-gradient(420px 260px at 8% 0%, rgba(96, 214, 190, 0.34), transparent 70%),
+      radial-gradient(380px 240px at 100% 8%, rgba(99, 155, 255, 0.22), transparent 70%),
+      radial-gradient(460px 280px at 96% 104%, rgba(160, 128, 255, 0.26), transparent 70%),
+      radial-gradient(360px 220px at 0% 100%, rgba(120, 200, 255, 0.16), transparent 70%),
+      #f6f8fb;
+    color: #1b2230;
+    position: relative;
+  }
+  .title { position: absolute; top: 44px; left: 0; right: 0; text-align: center; }
+  .title h1 { margin: 0; font: 600 22px/1.2 -apple-system, "SF Pro Display", system-ui, sans-serif; letter-spacing: -0.2px; }
+  .title p { margin: 8px 0 0; font-size: 13px; color: #626c7c; }
+  .arrow { position: absolute; left: 262px; top: 186px; width: 136px; height: 40px; }
+</style></head>
+<body>
+  <div class="title">
+    <h1>Drag OmanAI to Applications</h1>
+    <p>Then open it, and click the wave in your menu bar.</p>
+  </div>
+  <svg class="arrow" viewBox="0 0 136 40" aria-hidden="true">
+    <defs>
+      <linearGradient id="flow" gradientUnits="userSpaceOnUse" x1="6" x2="124" y1="20" y2="20">
+        <stop offset="0" stop-color="#4fd1b5" stop-opacity="0.25"/>
+        <stop offset="0.55" stop-color="#4f9cf0"/>
+        <stop offset="1" stop-color="#8a6cf5"/>
+      </linearGradient>
+    </defs>
+    <path d="M6 20 H122" stroke="url(#flow)" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M110 9 L124 20 L110 31" stroke="#8a6cf5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+</body></html>

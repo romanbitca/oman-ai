@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-14 — An installer: the disk image
+
+- The maintainer sent a screenshot of another app's disk image and asked for one for OmanAI, a direct download link on the website, and both kept up to date
+- Added `scripts/make-dmg.sh`, which lays out OmanAI beside Applications over a picture of OmanAI's own, and made every release sign, notarize and staple the image and publish it with its version and as `OmanAI.dmg` (see DECISIONS.md)
+- With the maintainer's yes, dmgbuild 1.6.7 and its two helpers were downloaded from PyPI into a throwaway folder; the release installs the same versions, checked by hash
+- With their yes, the image was opened once in Finder on their screen to check the window (see KNOWN_ISSUES.md)
+- The website's buttons move to the image once a release has one
+
 ## 2026-11-13 — The website shows 0.4.5: dictation, OmanAI's window and new recordings
 
 - The maintainer asked for the website to be updated and its recordings filmed. The drafts for dictation from 0.4.0, which waited for films, were taken up from the `dictation` branch onto `main`

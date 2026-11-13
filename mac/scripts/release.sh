@@ -1,5 +1,6 @@
 #!/bin/bash
-# Builds OmanAI, signs it with Developer ID, notarizes it and writes a stapled zip to the output folder.
+# Builds OmanAI, signs it with Developer ID, notarizes it and writes a stapled zip and disk image to the output
+# folder.
 # Usage: scripts/release.sh <version> [output-folder]
 #
 # Needs a "Developer ID Application" certificate in the keychain, and one of these for notarizing:
@@ -76,3 +77,20 @@ spctl --assess --type execute --verbose=2 "$APP"
 # The zip has to come after stapling, so the ticket travels with the app.
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 echo "Ready: $ZIP"
+
+# The disk image people download from the website: the stapled app beside a link to Applications. It is signed and
+# notarized on its own, so Gatekeeper accepts it before it is even opened.
+DMG="$OUT/OmanAI-$VERSION.dmg"
+scripts/make-dmg.sh "$APP" "$DMG"
+IDENTITY="$(security find-identity -v -p codesigning | awk -v team="($TEAM)" \
+    '/Developer ID Application/ && index($0, team) { print $2; exit }')"
+if [ -z "$IDENTITY" ]; then
+    echo "No Developer ID Application certificate for team $TEAM in the keychain." >&2
+    exit 1
+fi
+codesign --force --sign "$IDENTITY" --timestamp "$DMG"
+xcrun notarytool submit "$DMG" "${NOTARY_AUTH[@]}" --wait --timeout 30m
+xcrun stapler staple "$DMG"
+xcrun stapler validate "$DMG"
+spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
+echo "Ready: $DMG"
