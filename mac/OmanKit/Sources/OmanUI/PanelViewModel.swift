@@ -31,6 +31,8 @@ public final class PanelViewModel {
     @ObservationIgnored private var changesCache: (original: String, draft: String, changes: TextChanges)?
     /// Set by the app shell, so the panel's microphone buttons can dictate into its fields.
     @ObservationIgnored public weak var dictation: DictationController?
+    /// Set by the app shell, so the panel can show the last quick fix, and stop one still working when it opens.
+    @ObservationIgnored public weak var quickFix: QuickFixController?
     @ObservationIgnored private var copiedTask: Task<Void, Never>?
     /// The last text written, as the Spending page counts it, until it is put back or another is written.
     @ObservationIgnored private var actionID: UUID?
@@ -70,6 +72,9 @@ public final class PanelViewModel {
     /// The panel opened on dictated words rather than a selection. They aren't in the app yet, so a result goes in
     /// at the cursor instead of replacing anything.
     private(set) var isDictated = false
+    /// The panel shows a quick fix whose text is already in the app as it is, so there is nothing to put back and
+    /// nothing to change: only Copy.
+    private(set) var showsQuickFixInPlace = false
     /// Whether there is a transcript for Copy last transcript, from a dictation or a kept transcript.
     private(set) var hasSavedTranscript = false
     private(set) var copiedTranscript = false
@@ -86,11 +91,14 @@ public final class PanelViewModel {
 
     public func begin(with capture: SelectionCapture, keepPinned: Bool = false) {
         dictation?.panelWillOpen()
+        // A quick fix still working would paste while the panel has the keyboard, so it stops.
+        quickFix?.interrupt()
         cancelWork()
         self.capture = capture
         session += 1
         actionID = nil
         isDictated = false
+        showsQuickFixInPlace = false
         copiedTranscript = false
         hasSavedTranscript = dictation?.lastTranscript() != nil
         instruction = ""
@@ -133,6 +141,35 @@ public final class PanelViewModel {
         }
         begin(with: SelectionCapture(app: app, text: text))
         isDictated = true
+    }
+
+    /// Shows the last quick fix as a proofread's result, its changes marked as Settings says, with a line saying what
+    /// became of it. One that went in, or found nothing to correct, is only for reading and copying. One that wasn't
+    /// pasted has Replace, which puts it in once its text is selected again, and one that failed can be tried again.
+    public func showLastQuickFix(keepPinned: Bool = false) {
+        guard let fix = quickFix?.last else { return }
+        // What the app holds now: the corrected text after a quick fix that went in, the person's own otherwise.
+        let inApp = fix.outcome == .applied ? fix.corrected ?? fix.original : fix.original
+        begin(with: SelectionCapture(app: fix.app, text: inApp), keepPinned: keepPinned)
+        guard screen != .setup else { return }
+        lastRequest = fix.request
+        switch fix.outcome {
+        case .applied, .unchanged:
+            draft = fix.corrected ?? ""
+            showsQuickFixInPlace = true
+            notice = fix.panelNotice
+            screen = .result
+        case .notPasted:
+            draft = fix.corrected ?? ""
+            // Put in from here, it counts as a fix put back.
+            actionID = fix.actionID
+            notice = fix.panelNotice
+            screen = .result
+        case .failed(let message, let error):
+            errorMessage = message
+            offersSettings = [.missingAPIKey, .unreadableAPIKey, .invalidAPIKey].contains(error)
+            screen = .failed
+        }
     }
 
     /// Carries out a global shortcut right after `begin(with:)`.
@@ -200,7 +237,7 @@ public final class PanelViewModel {
         switch screen {
         case .home: .instruction
         case .compose: .composePrompt
-        case .result: isExplanation ? nil : .adjustment
+        case .result: isExplanation || showsQuickFixInPlace ? nil : .adjustment
         case .setup, .working, .failed: nil
         }
     }
@@ -251,23 +288,12 @@ public final class PanelViewModel {
     /// The chip chosen last in this app, As written included. An app nothing was chosen in yet, or one whose
     /// template has since been deleted, starts on the default from Settings.
     private func preselectedStyleID() -> UUID? {
-        if preferences.remembersStylePerApp, let choice = try? services.styles.lastStyleChoice(forApp: styleMemoryKey) {
-            switch choice {
-            case .asWritten:
-                return nil
-            case .style(let id):
-                if styles.contains(where: { $0.id == id }) { return id }
-            }
-        }
-        return styles.first(where: { $0.id == preferences.defaultStyleID })?.id
+        TemplateMemory.preselectedStyleID(
+            for: capture.app, styles: styles, preferences: preferences, store: services.styles
+        )
     }
 
-    /// What an app's choice is kept under: its bundle identifier, its name where it has none, and one key for no
-    /// app at all, so that a choice is remembered wherever it is made.
-    private var styleMemoryKey: String {
-        guard let app = capture.app else { return "none" }
-        return app.bundleID ?? "name:\(app.name)"
-    }
+    private var styleMemoryKey: String { TemplateMemory.key(for: capture.app) }
 
     private func loadAPIKey() -> String? {
         guard let key = try? services.apiKeys.loadAPIKey(), !key.isEmpty else { return nil }
@@ -373,6 +399,7 @@ public final class PanelViewModel {
         adjustment = ""
         showOriginal = false
         showChanges = false
+        showsQuickFixInPlace = false
         screen = baseScreen
         // Only the screen's name is logged, so a Back that seems to do nothing can be told from one that never arrived.
         panelLog.notice("Back pressed, now on \(String(describing: self.screen), privacy: .public)")
@@ -440,7 +467,7 @@ public final class PanelViewModel {
     }
 
     func tryAgain() {
-        guard var request = lastRequest else { return }
+        guard !showsQuickFixInPlace, var request = lastRequest else { return }
         if isExplanation {
             // A fresh reading, rather than a variation on the last one.
             perform(request)
@@ -452,7 +479,7 @@ public final class PanelViewModel {
 
     func applyAdjustment() {
         let typed = adjustment.trimmed
-        guard !typed.isEmpty, !isExplanation, var request = lastRequest else { return }
+        guard !typed.isEmpty, !isExplanation, !showsQuickFixInPlace, var request = lastRequest else { return }
         request.refinement = Refinement(currentDraft: draft, adjustment: typed)
         adjustment = ""
         perform(request)
@@ -532,6 +559,7 @@ public final class PanelViewModel {
         errorMessage = nil
         offersSettings = false
         showOriginal = false
+        showsQuickFixInPlace = false
         terminalPasteConfirmed = false
         rememberScreenBeforeRun()
         guard let apiKey = request.model.isLocal ? "" : loadAPIKey() else {
@@ -617,7 +645,7 @@ public final class PanelViewModel {
     }
 
     var primaryActionTitle: String { lastTaskIsCompose || isDictated ? "Insert" : "Replace" }
-    var canApplyResult: Bool { capture.app != nil && !isExplanation }
+    var canApplyResult: Bool { capture.app != nil && !isExplanation && !showsQuickFixInPlace }
 
     var originalText: String? {
         switch lastRequest?.task {

@@ -10,11 +10,14 @@ struct ShortcutsSettingsView: View {
             Section {
                 ForEach(model.globalShortcutActions, id: \.self) { action in
                     ShortcutRow(model: model, action: action)
+                    if action == .proofread {
+                        QuickFixRow(model: model)
+                    }
                 }
             } header: {
                 Text("Anywhere on your Mac")
             } footer: {
-                Text("Select text in any app, then press the shortcut. The result opens in the panel.")
+                Text("Select text in any app, then press the shortcut. The result opens in the panel, unless Quick fix puts a proofread straight back.")
             }
 
             Section {
@@ -85,6 +88,21 @@ struct ShortcutRow: View {
                         .frame(minWidth: 104)
                 }
             }
+        }
+    }
+}
+
+/// Under Proofread's shortcut: whether it puts the corrections straight back instead of opening the panel.
+struct QuickFixRow: View {
+    let model: SettingsViewModel
+
+    var body: some View {
+        Toggle(isOn: Binding(
+            get: { model.preferences.proofreadQuickFix },
+            set: { model.setProofreadQuickFix($0) }
+        )) {
+            Text("Quick fix")
+            Text("The shortcut puts the corrections straight back, without the panel. The menu bar icon shows how it goes, and ⌘Z in the app brings back what you wrote.")
         }
     }
 }

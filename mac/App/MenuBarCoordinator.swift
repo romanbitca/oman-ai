@@ -4,7 +4,7 @@ import OmanUI
 import SwiftUI
 
 @MainActor
-final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
+final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting, QuickFixPresenting {
     private let services: AppServices
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let panel = FloatingPanel()
@@ -12,6 +12,8 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
     private let pillWindow = DictationPillWindow()
     private let pillState = DictationPillState()
     private var dictation: DictationController?
+    private var quickFix: QuickFixController?
+    private var quickFixStatus: QuickFixStatus = .idle
     private var modifierDictation: ModifierKeyDictation?
     private var hidePillTask: Task<Void, Never>?
     private var iconTask: Task<Void, Never>?
@@ -44,6 +46,9 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         dictation.panel = model
         model.dictation = dictation
         self.dictation = dictation
+        let quickFix = QuickFixController(services: services, presenter: self)
+        model.quickFix = quickFix
+        self.quickFix = quickFix
         let pillView = PanelHostingView(rootView: DictationPillView(controller: dictation, state: pillState))
         pillView.sizingOptions = []
         pillWindow.setContentSize(DictationPillMetrics.windowSize)
@@ -91,7 +96,22 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
             dictation.finishNow()
             return
         }
-        togglePanel()
+        // While a quick fix works, a click hands its text to the panel's Proofread. While the icon shows how one
+        // ended, a click shows it in the panel.
+        switch quickFix?.iconClicked() {
+        case .handOver(let capture):
+            if let capture {
+                openPanel(with: capture, keepPinned: isPinned && panel.isVisible, then: .proofread)
+            } else {
+                openPanel(then: .proofread)
+            }
+        case .wait:
+            return
+        case .showLast:
+            showLastQuickFix()
+        case nil:
+            togglePanel()
+        }
     }
 
     private func togglePanel() {
@@ -104,6 +124,14 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
     }
 
     private func handleGlobalShortcut(_ action: ShortcutAction) {
+        if action == .proofread {
+            let preferences = (try? services.settings.preferences()) ?? AppPreferences()
+            let panelHasKeyboard = panel.isVisible && panel.isKeyWindow
+            if QuickFixController.handles(action, preferences: preferences, panelHasKeyboard: panelHasKeyboard) {
+                startQuickFix()
+                return
+            }
+        }
         switch action {
         case .openPanel:
             togglePanel()
@@ -124,26 +152,55 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         return panelModel?.dictationField
     }
 
+    /// Proofread's shortcut with Quick fix on: the selection is corrected where it is, with no panel.
+    private func startQuickFix() {
+        // A dictation that runs has the icon, and its words go in at the cursor, so the two don't run together.
+        if dictation?.isActive == true {
+            NSSound.beep()
+            return
+        }
+        // Words waiting for a field are copied first, so none are lost, as when the panel opens.
+        dictation?.copyHeldWords()
+        quickFix?.start()
+    }
+
     private func openPanel(then action: ShortcutAction?) {
         let keepPinned = isPinned && panel.isVisible
         // Option or Command on their own start working once Accessibility is allowed, without a restart.
         if let preferences = try? services.settings.preferences() {
             services.system.watchModifierKeys(preferences.dictationChords)
         }
+        // Before the selection is read, so a quick fix can't paste while the panel is opening.
+        quickFix?.interrupt()
         // The selection must be read before the panel takes keyboard focus.
         Task { @MainActor in
             let capture = await services.system.captureSelection()
-            panelModel?.begin(with: capture, keepPinned: keepPinned)
-            showPanel()
-            if let action {
-                panelModel?.run(action)
-            }
+            openPanel(with: capture, keepPinned: keepPinned, then: action)
         }
+    }
+
+    private func openPanel(with capture: SelectionCapture, keepPinned: Bool, then action: ShortcutAction?) {
+        panelModel?.begin(with: capture, keepPinned: keepPinned)
+        showPanel()
+        if let action {
+            panelModel?.run(action)
+        }
+    }
+
+    /// The last quick fix, in the panel, with its changes marked.
+    private func showLastQuickFix() {
+        guard quickFix?.hasLast == true else { return }
+        panelModel?.showLastQuickFix(keepPinned: isPinned && panel.isVisible)
+        showPanel()
     }
 
     private func showStatusMenu() {
         let menu = NSMenu()
         menu.addItem(withTitle: "Open OmanAI", action: #selector(openHomeFromMenu), keyEquivalent: "").target = self
+        if quickFix?.hasLast == true {
+            menu.addItem(withTitle: "Show Last Quick Fix", action: #selector(showLastQuickFixFromMenu), keyEquivalent: "")
+                .target = self
+        }
         menu.addItem(withTitle: "OmanAI Settings…", action: #selector(openSettingsFromMenu), keyEquivalent: ",").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit OmanAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -158,6 +215,10 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
 
     @objc private func openHomeFromMenu() {
         openHome()
+    }
+
+    @objc private func showLastQuickFixFromMenu() {
+        showLastQuickFix()
     }
 
     /// OmanAI's own window: what it did, how the person's writing goes, and their transcripts.
@@ -337,11 +398,11 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         iconTask?.cancel()
         iconTask = nil
         guard active else {
-            statusItem.button?.image = NSImage(named: "MenuBarIcon")
-            statusItem.button?.image?.isTemplate = true
-            statusItem.button?.image?.accessibilityDescription = "OmanAI"
+            showRestingIcon()
             return
         }
+        // The icon is the dictation's now, and a quick fix still working stops before it pastes.
+        quickFix?.interrupt()
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         iconTask = Task { [weak self] in
             var shown: CGFloat = 1
@@ -380,14 +441,85 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting {
         }
     }
 
-    /// The menu bar icon's wave, drawn with the given height. At 1 it matches MenuBarIcon.svg.
-    private static func waveIcon(amplitude: CGFloat) -> NSImage {
+    // MARK: QuickFixPresenting
+
+    func showQuickFixStatus(_ status: QuickFixStatus, announcement: String?) {
+        quickFixStatus = status
+        if status == .nothingSelected {
+            // As macOS answers a shortcut that has nothing to act on.
+            NSSound.beep()
+        }
+        if let announcement {
+            NSAccessibility.post(
+                element: NSApplication.shared,
+                notification: .announcementRequested,
+                userInfo: [.announcement: announcement, .priority: NSAccessibilityPriorityLevel.high.rawValue]
+            )
+        }
+        // A dictation that runs keeps the icon, and hands it back when it ends.
+        guard dictation?.isActive != true else { return }
+        showRestingIcon()
+    }
+
+    /// The icon when no dictation runs: the still wave, or how a quick fix is going. While one works the wave rocks
+    /// from side to side, unlike a dictation's, which follows the voice; with Reduce Motion it stays still and faint.
+    private func showRestingIcon() {
+        iconTask?.cancel()
+        iconTask = nil
+        guard let button = statusItem.button else { return }
+        switch quickFixStatus {
+        case .idle:
+            button.image = NSImage(named: "MenuBarIcon")
+            button.image?.isTemplate = true
+            button.image?.accessibilityDescription = "OmanAI"
+        case .working:
+            let description = "OmanAI, fixing your text"
+            guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+                let image = Self.waveIcon(amplitude: 1, opacity: 0.45)
+                image.accessibilityDescription = description
+                button.image = image
+                return
+            }
+            let started = Date()
+            iconTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    guard let self else { return }
+                    let turn = Date().timeIntervalSince(started) / Self.workingPeriod
+                    let image = Self.waveIcon(amplitude: CGFloat(cos(turn * 2 * .pi)))
+                    image.accessibilityDescription = description
+                    self.statusItem.button?.image = image
+                    try? await Task.sleep(for: .milliseconds(50))
+                }
+            }
+        case .done:
+            button.image = Self.symbolIcon("checkmark", description: "OmanAI, quick fix done")
+        case .failed:
+            button.image = Self.symbolIcon("exclamationmark.triangle", description: "OmanAI, quick fix pasted nothing")
+        case .nothingSelected:
+            button.image = Self.symbolIcon("exclamationmark.triangle", description: "OmanAI, nothing selected to fix")
+        }
+    }
+
+    /// Seconds for the working wave to rock there and back.
+    private static let workingPeriod = 1.4
+
+    private static func symbolIcon(_ name: String, description: String) -> NSImage? {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
+        let image = NSImage(systemSymbolName: name, accessibilityDescription: description)?
+            .withSymbolConfiguration(configuration)
+        image?.isTemplate = true
+        return image
+    }
+
+    /// The menu bar icon's wave, drawn with the given height. At 1 it matches MenuBarIcon.svg, and below 0 it is
+    /// turned upside down.
+    private static func waveIcon(amplitude: CGFloat, opacity: CGFloat = 1) -> NSImage {
         let image = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { rect in
             let path = NSBezierPath(cgPath: DictationWave.cgPath(in: rect, amplitude: amplitude))
             path.lineWidth = 2
             path.lineCapStyle = .round
             path.lineJoinStyle = .round
-            NSColor.black.setStroke()
+            NSColor.black.withAlphaComponent(opacity).setStroke()
             path.stroke()
             return true
         }
