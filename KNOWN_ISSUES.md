@@ -33,6 +33,30 @@ Known limits:
 
 ---
 
+## 2026-11-13 — The website's recordings and pictures for 0.4.5
+
+With the maintainer's yes, one filming run on their screen, 167 seconds in all, filmed every recording again with 0.4.5: Rewrite, Proofread, Explain and Compose, and three dictations. Settings showed on the screen for ten of those seconds, for its Dictation and Shortcuts pages. Nothing outside the test's own windows was clicked or typed. Before it, the clicks each film makes were checked off every display: the Work chip, Rewrite, Insert and the pill's ✨ each did what the film needs.
+
+- Proofread now ends with its paste, which the 0.3.6 recording never reached, so its header clip changes the chat at 12.60 seconds like the others
+- Each film ends where its test ends. The explanation and the dictation are held at their last picture for a few seconds, so they can be read
+- OmanAI's window is drawn off the screen, with four months of made-up use and in UK English, so numbers read 1,033 and times 9:40. It is never filled from the maintainer's own transcripts
+- The panel pictures in the docs come from the same run, and show the panel without its old gear
+
+What is still not as it should be:
+
+- The pictures of Styles, the style editor, Writing, General, Spending and Key & Permissions are from 0.3.4 to 0.3.6. Those pages have not changed since
+- `og.png`, the picture shown when the site is shared, is older still
+- On a phone 390 points wide the page is 2 points wider than the screen, because of the glow behind the header's recordings. That was so before this update
+- Checked in Chromium only, at 1440 and 390 points wide
+
+---
+
+## 2026-11-13 — Transcript times wrap with a 12-hour clock
+
+In OmanAI's window each transcript's time sits in a column 44 points wide (`HomeTranscripts.swift`). With a 24-hour clock "9:40" fits. With a 12-hour clock, as in US English, "9:12 AM" breaks onto two lines. Seen in a picture of the window drawn with US English. Not fixed yet.
+
+---
+
 ## 2026-11-13 — The Floating look's background: what has been tried
 
 The maintainer found the darkening behind the Floating look's words too easy to notice, asked for variants, and then left the choice to the assistant. White words need something dark behind them only where the screen is bright. The even darkening of 0.4.4 showed as a dark cloud over a mid-toned desktop picture, where it isn't needed, and was still too faint over a white window.

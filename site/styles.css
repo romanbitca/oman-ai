@@ -235,10 +235,11 @@ kbd { font: 600 0.8em/1 var(--mono); padding: 3px 7px; border-radius: 7px; backg
 .reel-clip video { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; cursor: pointer; }
 /* With motion turned off nothing plays, so each recording shows its result instead. */
 @media (prefers-reduced-motion: reduce) {
-  #reel-rewrite { background: url("media/hero-rewrite-still-2.webp") center top / cover; }
-  #reel-proofread { background: url("media/hero-proofread-still-2.webp") center top / cover; }
-  #reel-explain { background: url("media/hero-explain-still-2.webp") center top / cover; }
-  #reel-compose { background: url("media/hero-compose-still-2.webp") center top / cover; }
+  #reel-rewrite { background: url("media/hero-rewrite-still-3.webp") center top / cover; }
+  #reel-proofread { background: url("media/hero-proofread-still-3.webp") center top / cover; }
+  #reel-explain { background: url("media/hero-explain-still-3.webp") center top / cover; }
+  #reel-compose { background: url("media/hero-compose-still-3.webp") center top / cover; }
+  #reel-dictate { background: url("media/hero-dictate-still-1.webp") center top / cover; }
 }
 .reel-chat {
   position: absolute; z-index: 2; left: 4.4%; right: 4.4%; bottom: calc(4.4% + 54px);
@@ -682,6 +683,22 @@ main > section.numbers { padding-block: 0; }
   .stats > div:first-child { border-left: 0; }
   .stats > div:nth-child(n + 3) { border-top: 0; }
 }
+
+/* Dictation: the two looks of the pill side by side, then three sheets */
+.dictation .lede { margin-top: 22px; }
+.looks { display: grid; gap: 22px; margin-top: 48px; }
+@media (min-width: 760px) { .looks { grid-template-columns: 1fr 1fr; } }
+.looks figure { display: grid; gap: 14px; align-content: start; }
+.looks img { width: 100%; height: auto; border-radius: 22px; box-shadow: var(--edge), var(--lift); }
+.looks figcaption { font-size: 0.92rem; color: var(--dim); text-align: center; }
+.looks figcaption b { color: var(--ink); font-weight: 600; margin-right: 6px; }
+.dictation .columns { margin-top: 28px; }
+
+/* OmanAI's own window: one picture of it, then three sheets */
+.home-window .lede { margin-top: 22px; }
+.window-shot { margin: 48px auto 0; max-width: 720px; }
+.window-shot img { width: 100%; height: auto; border-radius: 22px; box-shadow: var(--edge), var(--lift); }
+.home-window .columns { margin-top: 36px; }
 
 /* Privacy: three sheets */
 .columns { display: grid; gap: 16px; margin-top: 56px; }

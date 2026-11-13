@@ -560,3 +560,14 @@ The maintainer asked for less of a shadow behind the Floating look's words, with
   - over a dark window, 0.17 to 0.20 and 14.2:1 to 12.8:1, so less is darkened where nothing needed it.
 - **Where a macOS lacks the filter,** the even darkening of 0.4.4 stands in.
 - **The numbers sit together in `FloatingBackdrop`,** read from the environment, so variants can be drawn side by side with the same code as the app.
+
+## 2026-11-13 — The website shows 0.4.5
+
+The maintainer asked for the website to be updated and its recordings filmed again. The rest is the assistant's.
+
+- **Dictation gets a clip in the header,** a fifth after Compose: words appear in the pill under the menu bar icon, then go into the chat drawn under it. It also gets a fifth use case, ✨ and a rewrite in the Work style, and a section of its own with pictures of the Card and Floating looks.
+- **OmanAI's window gets a section** after dictation, with one picture of it and three short lists: words and time, what the writing needed, and transcripts. The picture shows made-up use, never the maintainer's.
+- **Every recording and panel picture is filmed again,** so the panel on the site is the one people install: without the gear, with the chip memory and the round microphone of 0.4.4.
+- **The docs follow 0.4.5:** a section for OmanAI's window, keys held together, words that wait for a field, Settings opened from the menu bar icon or the window, and transcripts kept in the window.
+- **Old recordings and pictures are deleted** once nothing names them, and new ones get new names, because Cloudflare keeps a file for a week.
+

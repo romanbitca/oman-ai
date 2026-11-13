@@ -15,7 +15,7 @@
 <meta name="theme-color" content="#f4f6fa">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../styles.css?v=4">
+<link rel="stylesheet" href="../styles.css?v=5">
 <link rel="stylesheet" href="../docs.css?v=4">
 </head>
 <body>
@@ -74,6 +74,8 @@
       <a href="#result">The result</a>
       <a href="#compose">Compose</a>
       <a href="#pin">Pinning the panel</a>
+      <a href="#dictation">Dictation</a>
+      <a href="#window">OmanAI's window</a>
       <a href="#styles">Teaching a style</a>
       <a href="#settings">Settings</a>
       <a href="#shortcuts">Shortcuts</a>
@@ -106,13 +108,12 @@
       <h2>The panel</h2>
       <p>Select some text in any app and click the wave, or press the shortcut you gave to <strong>Open OmanAI</strong>. The panel opens under the menu bar. With text selected it shows the screen below. With nothing selected it opens on <a href="#compose">Compose</a>.</p>
       <figure class="narrow">
-        <img src="../media/panel-home.webp" width="1080" height="800" loading="lazy" alt="The panel with a selection: the selected text, a field to describe a change, Proofread, Rewrite and Explain, style chips, context switches and Compose">
+        <img src="../media/panel-home-3.webp" width="1080" height="800" loading="lazy" alt="The panel with a selection: the selected text, a field to describe a change, Proofread, Rewrite and Explain, style chips, context switches and Compose">
         <figcaption>The panel with text selected.</figcaption>
       </figure>
       <dl class="controls">
         <div><dt>Your text</dt><dd>The top tile shows the app you are in and the first lines of what you selected, so you can see what OmanAI will work on.</dd></div>
         <div><dt>Pin <small>top right</small></dt><dd>Keeps the panel open as a small floating window. See <a href="#pin">Pinning the panel</a>.</dd></div>
-        <div><dt>Gear <small>top right</small></dt><dd>Opens <a href="#settings">Settings</a>.</dd></div>
         <div><dt>Describe your change</dt><dd>Type what you want, such as "shorter" or "warmer, and add a thank you", and press Return. It rewrites the text with that instruction, in the chosen style.</dd></div>
         <div><dt>Proofread</dt><dd>Fixes spelling, grammar and punctuation and keeps your wording.</dd></div>
         <div><dt>Rewrite</dt><dd>Rewrites the text in the chosen style.</dd></div>
@@ -133,7 +134,7 @@
       </dl>
       <p>While OmanAI writes, the answer streams into the panel inside a glowing edge. <strong>Stop</strong> cancels it and takes you back.</p>
       <figure class="narrow">
-        <img src="../media/panel-working-2.webp" width="1080" height="560" loading="lazy" alt="The panel while an answer is being written, with a Stop button">
+        <img src="../media/panel-working-3.webp" width="1080" height="560" loading="lazy" alt="The panel while an answer is being written, with a Stop button">
       </figure>
     </section>
 
@@ -145,7 +146,7 @@
         <div><dt>Your styles</dt><dd>One chip for each style you made. With many styles the row scrolls sideways, and it opens scrolled to the one that is chosen.</dd></div>
         <div><dt>Create a style</dt><dd>Shown while you have no styles. It opens Settings, where you <a href="#styles">teach your first one</a>.</dd></div>
       </dl>
-      <p>OmanAI remembers the style you last used in each app, so Slack can keep one style and Mail another. A style you used is chosen again the next time you open the panel in that app. You can turn this off, or set a default style, in <a href="#settings-styles">Settings</a>.</p>
+      <p>OmanAI remembers the chip you chose last in each app, As written included, so Slack can keep one style and Mail another. A click on a chip is remembered at once, even if you then close the panel without writing anything. A style's own shortcut rewrites once and leaves the chip as it was. An app you never chose a chip in starts on the default style. You can turn this off, or set the default style, in <a href="#settings-styles">Settings</a>.</p>
     </section>
 
     <section id="context">
@@ -162,7 +163,7 @@
     <section id="result">
       <h2>The result</h2>
       <figure class="narrow">
-        <img src="../media/panel-result.webp" width="1080" height="640" loading="lazy" alt="The result screen: Back, Show original, the new text, Replace, Copy, Try again and a field to make a change">
+        <img src="../media/panel-result-3.webp" width="1080" height="640" loading="lazy" alt="The result screen: Back, Show original, the new text, Replace, Copy, Try again and a field to make a change">
       </figure>
       <dl class="controls">
         <div><dt>Back <small>‹</small></dt><dd>Returns to the screen you came from. Your selection is still there.</dd></div>
@@ -184,17 +185,17 @@
       <p>Replace and Copy always give the corrected text, never the struck-through words. A change of spacing alone is not marked. If a proofread changed more than half of the words, marks would cover everything, so the header offers Show original instead.</p>
       <div class="pair">
         <figure>
-          <img src="../media/panel-proofread.webp" width="1080" height="640" loading="lazy" alt="A proofread in the panel: the header says 4 changes, and the four corrected words are tinted">
+          <img src="../media/panel-proofread-3.webp" width="1080" height="640" loading="lazy" alt="A proofread in the panel: the header says 4 changes, and the four corrected words are tinted">
           <figcaption>At once: the changed words are tinted and the header counts them.</figcaption>
         </figure>
         <figure>
-          <img src="../media/panel-proofread-changes.webp" width="1080" height="640" loading="lazy" alt="The same proofread after a click on the count: each word that was replaced is struck through before its correction">
+          <img src="../media/panel-proofread-changes-3.webp" width="1080" height="640" loading="lazy" alt="The same proofread after a click on the count: each word that was replaced is struck through before its correction">
           <figcaption>The count clicked: the words they replaced, struck through.</figcaption>
         </figure>
       </div>
       <h3>After Explain</h3>
       <figure class="narrow">
-        <img src="../media/panel-explain.webp" width="1080" height="800" loading="lazy" alt="An explanation in the panel, with Copy and Try again">
+        <img src="../media/panel-explain-3.webp" width="1080" height="800" loading="lazy" alt="An explanation in the panel, with Copy and Try again">
         <figcaption>An explanation has Copy and Try again, and no Replace.</figcaption>
       </figure>
     </section>
@@ -203,7 +204,7 @@
       <h2>Compose</h2>
       <p>Compose writes something new from a short request. It opens when you click the wave with nothing selected, when you press Compose in the panel, or from its own shortcut.</p>
       <figure class="narrow">
-        <img src="../media/panel-compose.webp" width="1080" height="780" loading="lazy" alt="The Compose screen: a request being typed, style chips, context switches and Write">
+        <img src="../media/panel-compose-3.webp" width="1080" height="780" loading="lazy" alt="The Compose screen: a request being typed, style chips, context switches and Write">
       </figure>
       <dl class="controls">
         <div><dt>What do you want to write?</dt><dd>Describe the message in a line or two, for example "tell Dan I can't make the 3pm sync and ask him for the notes".</dd></div>
@@ -223,6 +224,82 @@
         <li>Press the pin again to let it go.</li>
       </ul>
       <p>To start every panel pinned, turn on <strong>Keep open when I click elsewhere</strong> in Settings.</p>
+    </section>
+
+    <section id="dictation">
+      <h2>Dictation</h2>
+      <p>Dictation turns what you say into text wherever your cursor is: in a chat, an email, a document or OmanAI's own panel. Every model runs on your Mac, so the sound never leaves it, and the sound is never kept.</p>
+      <h3>Starting and finishing</h3>
+      <dl class="controls">
+        <div><dt>Hold to dictate</dt><dd>Hold its shortcut, or keys on their own such as Right ⌥, or Right ⌥ with Right ⌘, while you speak. Let go and the words go in at your cursor.</dd></div>
+        <div><dt>A long dictation</dt><dd>Press its shortcut, or tap its keys, to start. Press or tap again, or click Done, to put the words in.</dd></div>
+        <div><dt>The same keys for both</dt><dd>A tap starts a long dictation, and holding them dictates until you let go.</dd></div>
+        <div><dt>The wave in the menu bar</dt><dd>Moves with your voice while you dictate. Click it to put the words in.</dd></div>
+        <div><dt>In the panel</dt><dd>The microphone beside each field fills that field as you speak. The shortcuts and keys do the same while the panel is open.</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Throws the words away. Nothing goes in.</dd></div>
+      </dl>
+      <p>No shortcut or key is set when you install OmanAI. Choose them in Settings, under <a href="#shortcuts">Shortcuts</a>. The first time you dictate, macOS asks whether OmanAI may use the microphone.</p>
+      <h3>The pill</h3>
+      <p>While you dictate into another app, a small glass pill shows your words as they are said, the newest in view, up to ten lines. Each word fades in as it arrives. During a long dictation it has three buttons:</p>
+      <dl class="controls">
+        <div><dt>× <small>faint red</small></dt><dd>Cancel: throws the words away.</dd></div>
+        <div><dt>✨</dt><dd>Finishes and opens your words in the panel, as if you had selected them: Proofread, Rewrite in a style, Explain, or Compose with them as a reference. <strong>Insert</strong> then puts the result at your cursor.</dd></div>
+        <div><dt>✓</dt><dd>Done: puts the words in at your cursor.</dd></div>
+        <div><dt>The seconds</dt><dd>How long it has listened. A spinner in place of the wave means the model is still loading. It listens all the while, and your words follow.</dd></div>
+      </dl>
+      <p>Choose the look and where it shows in Settings, under Dictation, Look. The Floating look darkens only what is bright behind the words, as much as white words need, and leaves dark windows alone.</p>
+      <div class="pair">
+        <figure>
+          <img src="../media/dictate-card-look-1.webp" width="1000" height="320" loading="lazy" alt="The Card look: a row with the wave and the seconds, and the words in a glass card below">
+          <figcaption>Card, under the menu bar icon.</figcaption>
+        </figure>
+        <figure>
+          <img src="../media/dictate-floating-1.webp" width="1000" height="320" loading="lazy" alt="The Floating look at the bottom of the screen: the words on a soft blur above a capsule with the wave and the seconds">
+          <figcaption>Floating, at the bottom of the screen.</figcaption>
+        </figure>
+      </div>
+      <h3 id="waiting-words">When there is nowhere to type</h3>
+      <p>If nothing that takes text has the cursor when you finish, such as the desktop, a list or a web page with no field chosen, your words wait in the pill, which says <strong>Click in a field, then Paste</strong>. Click into a field and they go in there by themselves, in the same app or another. In Slack and other apps that don't say where their cursor is, click into the field and press <strong>Paste</strong>. <strong>Copy</strong> copies the words and closes the pill, and × throws them away. After a minute the words are copied for you. The transcript is kept either way.</p>
+      <h3>Choosing a model</h3>
+      <p>Choose a model in Settings, under Dictation, Model. A model you haven't downloaded is downloaded first, from Hugging Face, and then prepared for your Mac's Neural Engine once; Settings says <strong>Preparing…</strong> meanwhile. Live models show your words as you say them. The others read what you said again about every second, so their words follow a moment later, often more accurately.</p>
+      <div class="table-scroll">
+        <table class="table">
+          <thead><tr><th scope="col">Model</th><th scope="col">Words show</th><th scope="col">Download</th><th scope="col">Languages</th><th scope="col">Best for</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Apple</th><td>As you speak</td><td>None. macOS fetches each language once</td><td>68, one at a time</td><td>Starting at once, on macOS 26 or later</td></tr>
+            <tr><th scope="row">Parakeet Unified</th><td>As you speak</td><td>About 610 MB</td><td>English</td><td>English, fastest</td></tr>
+            <tr><th scope="row">Nemotron Unified</th><td>Within a second</td><td>About 620 MB</td><td>25 European ones, chosen or worked out</td><td>European languages, live</td></tr>
+            <tr><th scope="row">Parakeet Ultra</th><td>A moment later</td><td>About 630 MB</td><td>25 European ones, worked out as you speak</td><td>European languages, most accurate</td></tr>
+            <tr><th scope="row">Parakeet TDT v2</th><td>A moment later</td><td>About 465 MB</td><td>English</td><td>English, word for word</td></tr>
+            <tr><th scope="row">Whisper Large v3</th><td>A few seconds later</td><td>About 950 MB</td><td>About 100, chosen or worked out</td><td>The most languages, most accurate in many</td></tr>
+            <tr><th scope="row">Whisper Large v3 Turbo</th><td>A second or two later</td><td>About 630 MB</td><td>About 100, chosen or worked out</td><td>Any other language, faster</td></tr>
+            <tr><th scope="row">Parakeet Redux</th><td>A moment later</td><td>About 220 MB</td><td>25 European ones, worked out as you speak</td><td>A small download, on macOS 15 or later</td></tr>
+            <tr><th scope="row">Whisper Small</th><td>A second or two later</td><td>About 220 MB</td><td>About 100, chosen or worked out</td><td>A small download, less accurate</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each model has its own language list. Where a model can work the language out, Automatic is first. The list of models names which of your own languages, the ones in macOS's Language &amp; Region settings, each model knows.</p>
+      <h3>Copy last transcript</h3>
+      <p>Compose has <strong>Copy last transcript</strong> at the bottom left. It copies the words of your last dictation, or after a restart the newest transcript kept.</p>
+    </section>
+
+    <section id="window">
+      <h2>OmanAI's window</h2>
+      <p>Open OmanAI again while it runs, from Spotlight or the Applications folder, or right-click the wave in the menu bar and choose <strong>Open OmanAI</strong>. Its window shows what you dictated and wrote with OmanAI, and every transcript you kept.</p>
+      <figure class="window narrow">
+        <img src="../media/home-window-light-1.webp" width="1200" height="1557" loading="lazy" alt="OmanAI's window: the words spoken this month drawn as a wave, the streak, the speed against typing, fixes by kind, how many corrections a proofread needs, the apps dictated in, a map of the year and the transcripts by day">
+      </figure>
+      <dl class="controls">
+        <div><dt>This week, This month, All time</dt><dd>Chooses the stretch every tile counts.</dd></div>
+        <div><dt>Words spoken</dt><dd>The words you dictated, with how many dictations, how long you spoke and the time saved. The wave draws the stretch a day, a week or a month at a time; point along it to read each one.</dd></div>
+        <div><dt>Streak</dt><dd>Days in a row with a dictation or a piece of writing, with this week's days as dots. Until today is over, yesterday's run still counts.</dd></div>
+        <div><dt>Speed</dt><dd>Your words a minute while dictating, against typing at 40 words a minute, the usual pace for an adult. Pauses count, so it reads a little lower than you speak.</dd></div>
+        <div><dt>The tiles below</dt><dd>Three chosen by what there is to say: fixes by kind, how many corrections a proofread needs and whether that is going down, the apps you dictate in, the time saved, or a way to start proofreading.</dd></div>
+        <div><dt>The year</dt><dd>A square for each day of the last 53 weeks, darker for more, counting words or fixes. Point at a square to read its day.</dd></div>
+        <div><dt>Transcripts</dt><dd>Day by day, newest first, with a search field above. Point at one for Copy, click it to see all of a long one, and right-click to delete it. The menu that says how many are kept chooses how many to keep: none, the last 10, the last 50 or all of them, and deletes them all.</dd></div>
+        <div><dt>Settings <small>top right</small></dt><dd>Opens <a href="#settings">Settings</a>.</dd></div>
+      </dl>
+      <p>Time saved and pages are worked out, not measured: against typing at 40 words a minute, and at 275 words a page. Every dictation is counted without its words, so the numbers stay when you delete transcripts or keep none.</p>
     </section>
 
     <section id="styles">
@@ -250,7 +327,7 @@
 
     <section id="settings">
       <h2>Settings</h2>
-      <p>Open Settings with the gear in the panel. It has six pages.</p>
+      <p>Right-click the wave in the menu bar and choose <strong>OmanAI Settings…</strong>, or click the gear in <a href="#window">OmanAI's window</a>. Settings has seven pages.</p>
 
       <h3 id="settings-general">General</h3>
       <figure class="window narrow">
@@ -290,6 +367,18 @@
         <div><dt>Remember the last style in each app</dt><dd>On by default. Turn it off and every panel starts on the default style.</dd></div>
       </dl>
 
+      <h3 id="settings-dictation">Dictation</h3>
+      <figure class="window narrow">
+        <img src="../media/settings-dictation-model-light-2.webp" width="1200" height="1416" loading="lazy" alt="The Model part of the Dictation page: the language, when to free the memory, and the models in three groups">
+      </figure>
+      <p>The page has four parts, chosen at its top. Transcripts are in <a href="#window">OmanAI's window</a>.</p>
+      <dl class="controls">
+        <div><dt>Model</dt><dd>The language the chosen model listens for, and when to free the memory a downloaded model takes: right away, after a while or never. A model kept in memory starts at once. Below, every model, in three groups: Live, Accurate and Small. Click one to choose it; the ⋯ menu deletes a download.</dd></div>
+        <div><dt>Look</dt><dd>Card or Floating, each with a picture, and where the words show: under the menu bar icon or at the bottom of the screen.</dd></div>
+        <div><dt>Words</dt><dd>Your own words, such as names, written your way when a model hears something close. Remove filler words such as um and uh. Add a space after. Then press Return or ⌘Return, to send a message in apps where that sends.</dd></div>
+        <div><dt>Sound</dt><dd>The microphone: the one in System Settings, or one you choose, used whenever it is connected. A sound when listening starts and stops. Mute the Mac while you dictate, so music and videos go quiet and come back when you finish.</dd></div>
+      </dl>
+
       <h3 id="settings-shortcuts">Shortcuts</h3>
       <p>See <a href="#shortcuts">Shortcuts</a> below.</p>
 
@@ -324,7 +413,7 @@
     <section id="shortcuts">
       <h2>Shortcuts</h2>
       <figure class="window narrow">
-        <img src="../media/settings-shortcuts-light.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page of Settings">
+        <img src="../media/settings-shortcuts-light-3.webp" width="1200" height="1416" loading="lazy" alt="The Shortcuts page of Settings">
       </figure>
       <p>Every action can have a shortcut that works anywhere on your Mac. None is set when you install OmanAI, so it never takes a combination another app is using.</p>
       <div class="table-scroll">
@@ -337,6 +426,8 @@
             <tr><th scope="row">Explain selection</th><td>Explains the selected text at once.</td></tr>
             <tr><th scope="row">Compose</th><td>Opens the panel on Compose.</td></tr>
             <tr><th scope="row">Rewrite as …</th><td>One for each of your styles: rewrites the selection in that style at once.</td></tr>
+            <tr><th scope="row">Hold to dictate</th><td>Listens while you hold it, and puts the words in when you let go. See <a href="#dictation">Dictation</a>.</td></tr>
+            <tr><th scope="row">Start or stop a long dictation</th><td>Press once to start and again to put the words in.</td></tr>
           </tbody>
         </table>
       </div>
@@ -344,6 +435,8 @@
       <dl class="controls">
         <div><dt>Record Shortcut</dt><dd>Click it and press the keys. <kbd>Esc</kbd> cancels. A shortcut needs a modifier such as ⌘, ⌥ or ⌃, unless it is a function key.</dd></div>
         <div><dt>The × button</dt><dd>Removes a shortcut.</dd></div>
+        <div><dt>Or hold keys on their own</dt><dd>Under Hold to dictate, click <strong>Record Keys</strong>, hold Control, Option or Command keys, left or right, one or more together, and let go. Pressed with another key, as in ⌥E, they still type as usual and start nothing.</dd></div>
+        <div><dt>Or tap keys on their own</dt><dd>Under the long dictation, recorded the same way: a quick tap of the keys starts it, and another tap puts the words in.</dd></div>
         <div><dt>A warning under a row</dt><dd>Another app already uses that combination, so macOS did not give it to OmanAI. Choose a different one.</dd></div>
       </dl>
       <p><kbd>⌘C</kbd> and <kbd>⌘V</kbd> can't be shortcuts, because OmanAI uses them to copy and paste. If you give an action a combination another action had, it moves.</p>
@@ -375,7 +468,8 @@
       <dl class="controls">
         <div><dt>On your Mac</dt><dd>Styles, settings and the spending log are in <code>~/Library/Application Support/oman/writing.sqlite</code>. The spending log keeps each request's date, model and token counts, never its text. Your API key is in the Keychain.</dd></div>
         <div><dt>Sent to Anthropic</dt><dd>With a Claude model, each request sends the text you selected or asked for, the messages of the chosen style, and the context you switched on. It goes straight from your Mac to Anthropic with your key. There is no server of ours in between.</dd></div>
-        <div><dt>Never sent</dt><dd>With Apple's on-device model, nothing leaves your Mac. OmanAI has no analytics and no account. Apart from your requests, it only contacts GitHub to check for updates.</dd></div>
+        <div><dt>Dictation</dt><dd>What you say is turned into text on your Mac, and the sound is never kept or sent. Kept transcripts, text only, are in the same database; choose how many to keep, or none, in <a href="#window">OmanAI's window</a>. Each dictation is also counted there without its words: when, how many words, how long and in which app. Models are downloaded from Hugging Face only when you choose one, into <code>~/Library/Application Support/oman/SpeechModels</code>.</dd></div>
+        <div><dt>Never sent</dt><dd>With Apple's on-device model, nothing leaves your Mac. OmanAI has no analytics and no account. Apart from your requests, it only contacts GitHub to check for updates, and Hugging Face when you download a dictation model.</dd></div>
       </dl>
     </section>
 
@@ -389,6 +483,10 @@
         <div><dt>The Screen picture shows the wrong thing</dt><dd>A large popup in front of your window, such as an emoji picker, can be what gets captured. The panel shows the whole picture before it is sent, so check it.</dd></div>
         <div><dt>A shortcut does nothing</dt><dd>Another app may own that combination. The Shortcuts page shows a warning under the row when macOS refused it.</dd></div>
         <div><dt>The on-device model is not available</dt><dd>It needs macOS 26 or later on a Mac that supports Apple Intelligence, with Apple Intelligence turned on in System Settings. Right after turning it on, the model can take a while to download.</dd></div>
+        <div><dt>Dictation says it can't use the microphone</dt><dd>Allow OmanAI in System Settings, under Privacy &amp; Security, Microphone. Settings in OmanAI has a button that opens the page.</dd></div>
+        <div><dt>The first dictation with a new model takes a while</dt><dd>macOS prepares a downloaded model for the Neural Engine the first time it loads, which can take from seconds to several minutes on older Macs. It normally happens right after the download, while Settings says Preparing…, and is kept for later. The pill shows a spinner while a model loads, and it already listens.</dd></div>
+        <div><dt>Typing an accent starts a dictation for a moment</dt><dd>With Option on its own for Hold to dictate, holding Option a little before the letter, as some keyboards do for accents, starts a dictation until the letter cancels it. Choose a Command key instead.</dd></div>
+        <div><dt>Keys on their own do nothing</dt><dd>Watching keys on their own uses the Accessibility permission. Check it in Settings, under Key &amp; Permissions, and that the keys are recorded under Shortcuts.</dd></div>
         <div><dt>Accessibility is on but OmanAI says it isn't</dt><dd>macOS ties the permission to the exact copy of the app. Use the copy in your Applications folder, and if you replaced the app by hand, turn the switch off and on again in System Settings.</dd></div>
       </dl>
       <p>More details, and the edges we know about, are in the <a href="https://github.com/romanbitca/oman-ai/blob/main/KNOWN_ISSUES.md">list of known issues</a>. If something else is wrong, <a href="https://github.com/romanbitca/oman-ai/issues/new/choose">open an issue</a>.</p>
@@ -401,7 +499,7 @@
       <ol>
         <li>In Settings, under Key &amp; Permissions, press Remove to delete your API key from the Keychain.</li>
         <li>Quit OmanAI from the General page, and move it from Applications to the Trash.</li>
-        <li>To delete your styles and settings too, remove the folder <code>~/Library/Application Support/oman</code>.</li>
+        <li>To delete your styles, settings, transcripts and dictation models too, remove the folder <code>~/Library/Application Support/oman</code>.</li>
       </ol>
     </section>
   </main>

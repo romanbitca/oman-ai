@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-13 — The website shows 0.4.5: dictation, OmanAI's window and new recordings
+
+- The maintainer asked for the website to be updated and its recordings filmed. The drafts for dictation from 0.4.0, which waited for films, were taken up from the `dictation` branch onto `main`
+- The film scripts were checked off every display first, then the maintainer said yes to one run on their screen while they kept off the keyboard. It took 167 seconds and filmed all seven recordings and two Settings pages (see KNOWN_ISSUES.md)
+- The header has a dictation clip, Use cases a fifth case, and the home page a section for OmanAI's window. The docs gained the window, keys held together and words that wait, and lost the panel's gear
+- Found that transcript times in OmanAI's window wrap with a 12-hour clock (see KNOWN_ISSUES.md)
+- Checked in headless Chromium at two widths: each clip plays, the chat under the header changes at its paste, and every picture the pages name is there
+
 ## 2026-11-13 — 0.4.5: a lighter background behind the Floating look's words
 
 - The maintainer had asked for less of a shadow behind the Floating look's words, with variants. Away from home, they said the variants could be tried on their screen if it wasn't locked, that the assistant should choose the best, and that a release should follow
