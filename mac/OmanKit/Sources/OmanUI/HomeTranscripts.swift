@@ -7,6 +7,32 @@ struct HomeTranscripts: View {
     @Bindable var model: HomeViewModel
     @State private var hovered: UUID?
 
+    static let timeFontSize: CGFloat = 13
+    @MainActor private static var timeWidths: [String: CGFloat] = [:]
+
+    /// Wide enough for the longest time the clock writes in `locale`, such as "12:58 PM" where it has twelve hours,
+    /// and never narrower than the 44 points a 24-hour clock needs.
+    static func timeWidth(locale: Locale) -> CGFloat {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: timeFontSize, weight: .regular)
+        let style = Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, timeZone: .gmt)
+        // Each hour of a day at :58 takes in the widest hours and both halves of a 12-hour clock.
+        let widest = (0..<24).map { hour in
+            let time = Date(timeIntervalSinceReferenceDate: Double(hour * 3600 + 58 * 60)).formatted(style)
+            return NSAttributedString(string: time, attributes: [.font: font]).size().width
+        }.max() ?? 0
+        return max(44, (widest + 2).rounded(.up))
+    }
+
+    /// `timeWidth(locale:)` for this Mac's clock, worked out once for each region and hour cycle.
+    @MainActor static func currentTimeWidth() -> CGFloat {
+        let locale = Locale.current
+        let key = "\(locale.identifier) \(locale.hourCycle)"
+        if let width = timeWidths[key] { return width }
+        let width = timeWidth(locale: locale)
+        timeWidths[key] = width
+        return width
+    }
+
     /// `pointingAt` starts with the pointer on a transcript, for drawing the list with its Copy button showing.
     init(model: HomeViewModel, pointingAt: UUID? = nil) {
         self.model = model
@@ -46,12 +72,14 @@ struct HomeTranscripts: View {
                     .padding(.horizontal, 14)
                     .padding(.top, 10)
                     .padding(.bottom, 4)
+                let timeWidth = Self.currentTimeWidth()
                 ForEach(Array(day.items.enumerated()), id: \.element.id) { index, dictation in
                     let isHovered = hovered == dictation.id
                     // The line between two rows goes while either is under the pointer, so the highlight stands alone.
                     let above = index > 0 ? day.items[index - 1].id : nil
                     HomeTranscriptRow(
                         dictation: dictation,
+                        timeWidth: timeWidth,
                         appURL: model.appURL(named: dictation.appName),
                         isHovered: isHovered,
                         isCopied: model.copiedID == dictation.id,
@@ -147,6 +175,7 @@ struct HomeTranscripts: View {
 
 private struct HomeTranscriptRow: View {
     let dictation: SavedDictation
+    let timeWidth: CGFloat
     let appURL: URL?
     let isHovered: Bool
     let isCopied: Bool
@@ -175,10 +204,10 @@ private struct HomeTranscriptRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             Text(dictation.date.formatted(date: .omitted, time: .shortened))
-                .font(.system(size: 13))
+                .font(.system(size: HomeTranscripts.timeFontSize))
                 .monospacedDigit()
                 .foregroundStyle(HomePalette.soft)
-                .frame(width: 44, alignment: .leading)
+                .frame(width: timeWidth, alignment: .leading)
                 .padding(.top, 1)
             VStack(alignment: .leading, spacing: 5) {
                 Text(dictation.text)
