@@ -10,6 +10,8 @@ public enum PanelField: Equatable, Sendable {
     case instruction
     case composePrompt
     case adjustment
+    /// The iPhone's text to work on, which takes the place of a selection there.
+    case workingText
 }
 
 public enum DictationMode: Equatable, Sendable {

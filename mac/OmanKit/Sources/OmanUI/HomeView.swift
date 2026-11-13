@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -80,7 +84,7 @@ struct HomeView: View {
         }
         .foregroundStyle(HomePalette.ink)
         .background(HomePalette.page)
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: Platform.didBecomeActive)) { _ in
             model.reload()
         }
         .withoutSystemWritingTools()

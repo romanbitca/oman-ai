@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 enum Liquid {
@@ -88,6 +92,7 @@ struct LiquidGlassChoice: Equatable {
     }
 }
 
+#if os(macOS)
 /// Moves the window when dragged. Placed behind controls, so they keep working.
 struct WindowDragArea: NSViewRepresentable {
     final class DragView: NSView {
@@ -101,6 +106,12 @@ struct WindowDragArea: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView { DragView() }
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
+#else
+/// The iPhone's screens don't move, so there is nothing to drag.
+struct WindowDragArea: View {
+    var body: some View { Color.clear }
+}
+#endif
 
 /// The centre line of the corner grip, concentric with the corner of the tile.
 private struct CornerArc: Shape {
@@ -305,6 +316,7 @@ struct LiquidGlow<S: InsettableShape>: View {
     }
 }
 
+#if os(macOS)
 private struct SpinningColors: NSViewRepresentable {
     let isSpinning: Bool
 
@@ -376,3 +388,71 @@ private final class SpinningColorsView: NSView {
         gradient.add(spin, forKey: Self.spinKey)
     }
 }
+#else
+private struct SpinningColors: UIViewRepresentable {
+    let isSpinning: Bool
+
+    func makeUIView(context: Context) -> SpinningColorsView {
+        SpinningColorsView()
+    }
+
+    func updateUIView(_ view: SpinningColorsView, context: Context) {
+        view.isSpinning = isSpinning
+    }
+}
+
+/// The iPhone's version of the turning colours: the same conic gradient, turned by Core Animation.
+private final class SpinningColorsView: UIView {
+    private static let spinKey = "spin"
+    private let gradient = CAGradientLayer()
+
+    var isSpinning = true {
+        didSet {
+            if isSpinning != oldValue { updateSpin() }
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        isUserInteractionEnabled = false
+        backgroundColor = .clear
+        gradient.type = .conic
+        gradient.startPoint = CGPoint(x: 0.5, y: 0.5)
+        gradient.endPoint = CGPoint(x: 1, y: 0.5)
+        gradient.colors = Liquid.iridescence.map { UIColor($0).cgColor }
+        layer.addSublayer(gradient)
+    }
+
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let side = (bounds.width * bounds.width + bounds.height * bounds.height).squareRoot()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        gradient.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+        gradient.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        CATransaction.commit()
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        updateSpin()
+    }
+
+    private func updateSpin() {
+        gradient.removeAnimation(forKey: Self.spinKey)
+        guard isSpinning, window != nil else { return }
+        let spin = CABasicAnimation(keyPath: "transform.rotation.z")
+        spin.fromValue = 0
+        // UIKit's layers turn the other way round from AppKit's, so this is clockwise too.
+        spin.toValue = 2 * Double.pi
+        spin.duration = 3.2
+        spin.repeatCount = .infinity
+        gradient.add(spin, forKey: Self.spinKey)
+    }
+}
+#endif
+

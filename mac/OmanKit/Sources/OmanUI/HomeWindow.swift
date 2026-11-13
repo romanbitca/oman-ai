@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import SwiftUI
 
@@ -75,3 +76,4 @@ public final class HomeWindowController: NSWindowController, NSToolbarDelegate {
         window?.makeFirstResponder(nil)
     }
 }
+#endif
