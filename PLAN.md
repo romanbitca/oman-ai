@@ -178,7 +178,7 @@ Acceptance:
 
 ---
 
-## W14: The person's own actions [IN PROGRESS]
+## W15: The person's own actions [IN PROGRESS]
 
 Instructions written once in Settings, such as "Make it shorter" or "Turn into bullet points", run on the selection from the panel or from a shortcut, as saved versions of Describe your change.
 
