@@ -4,6 +4,14 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-14 — An installer: the disk image
+
+- The maintainer sent a screenshot of another app's disk image and asked for one for OmanAI, a direct download link on the website, and both kept up to date
+- Added `scripts/make-dmg.sh`, which lays out OmanAI beside Applications over a picture of OmanAI's own, and made every release sign, notarize and staple the image and publish it with its version and as `OmanAI.dmg` (see DECISIONS.md)
+- With the maintainer's yes, dmgbuild 1.6.7 and its two helpers were downloaded from PyPI into a throwaway folder; the release installs the same versions, checked by hash
+- With their yes, the image was opened once in Finder on their screen to check the window (see KNOWN_ISSUES.md)
+- The website's buttons move to the image once a release has one
+
 ## 2026-11-13 — Transcript times fit a 12-hour clock
 
 - The maintainer said yes to publishing the website and to fixing the times that wrapped in OmanAI's window. The website went live by fast-forward, as commit f3badb6; Coolify deployed it in 28 seconds, and from outside each page names the new media, every picture loads and every clip answers a request for part of it

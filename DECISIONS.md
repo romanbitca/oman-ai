@@ -571,3 +571,14 @@ The maintainer asked for the website to be updated and its recordings filmed aga
 - **The docs follow 0.4.5:** a section for OmanAI's window, keys held together, words that wait for a field, Settings opened from the menu bar icon or the window, and transcripts kept in the window.
 - **Old recordings and pictures are deleted** once nothing names them, and new ones get new names, because Cloudflare keeps a file for a week.
 
+## 2026-11-14 — OmanAI is installed from a disk image
+
+The maintainer asked for an installer like other Mac apps have, a direct download link on the website, and both kept up to date. The rest is the assistant's.
+
+- **A disk image, not an installer package.** It holds OmanAI beside a link to Applications, over a picture that says "Drag OmanAI to Applications" with an arrow from one to the other. That is how Mac apps are usually installed, and it needs no administrator password and leaves nothing behind.
+- **The picture is OmanAI's own,** light, with the website's soft teal, blue and violet, and drawn at 1x and 2x. Finder's path and status bars, which some people keep on, cover its bottom 60 points, so nothing there matters.
+- **Every release makes one.** `release.sh` puts the stapled app into the image, then signs, notarizes and staples the image itself, so Gatekeeper accepts it before it is opened. The release carries it as `OmanAI-x.y.z.dmg` and as `OmanAI.dmg`.
+- **One address for the website:** `releases/latest/download/OmanAI.dmg`, which GitHub always sends to the newest release's `OmanAI.dmg`. The site never needs a new link, and its script shows the version and size it gets from GitHub.
+- **Updates keep using the zip.** The feed is made from a folder without the image in it, so Sparkle never offers the disk image.
+- **dmgbuild lays out the window** by writing the `.DS_Store` itself, where scripting Finder needs a window on the screen and is known to be unreliable on GitHub's machines. It and its two helpers are pinned by version and hash, and installed into a throwaway folder for each build.
+

@@ -13,10 +13,12 @@ REPO="${GITHUB_REPOSITORY:-romanbitca/oman-ai}"
 TAG="v$VERSION"
 NAME="OmanAI-$VERSION"
 
-if [ ! -f "$OUT/$NAME.zip" ]; then
-    echo "Can't find $OUT/$NAME.zip. Build it with scripts/release.sh first." >&2
-    exit 1
-fi
+for FILE in "$NAME.zip" "$NAME.dmg"; do
+    if [ ! -f "$OUT/$FILE" ]; then
+        echo "Can't find $OUT/$FILE. Build it with scripts/release.sh first." >&2
+        exit 1
+    fi
+done
 OUT="$(cd "$OUT" && pwd)"
 FEED="$OUT/feed"
 PACKAGES="$OUT/packages"
@@ -48,5 +50,15 @@ printf %s "$SPARKLE_PRIVATE_KEY" | "$GENERATE_APPCAST" \
     "$FEED"
 
 gh release upload "$TAG" --repo "$REPO" "$FEED/$NAME.zip" "$FEED/appcast.xml"
+
+# The disk image goes up twice: with its version, and as OmanAI.dmg, which the website links to through
+# releases/latest/download/OmanAI.dmg, so that one address always gives the newest version. It stays out of the
+# feed's folder, so the update feed keeps offering the zip alone.
+LATEST="$OUT/latest"
+rm -rf "$LATEST"
+mkdir -p "$LATEST"
+cp "$OUT/$NAME.dmg" "$LATEST/OmanAI.dmg"
+gh release upload "$TAG" --repo "$REPO" "$OUT/$NAME.dmg" "$LATEST/OmanAI.dmg"
+
 gh release edit "$TAG" --repo "$REPO" --draft=false --latest
 echo "Published $TAG"
