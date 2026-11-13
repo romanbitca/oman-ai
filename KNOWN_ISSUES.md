@@ -4,6 +4,28 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-13 — Quick fix: what has been tried, and what hasn't
+
+Tried: 34 tests, with fakes for the app being written in and for the model. They cover the shortcut that is a quick fix and the one that isn't, the request it sends, the template it follows, the paste, each case in which nothing is pasted, the icon's states and how long each lasts, a second press, a click while it works, the panel opening, Settings' switch, and the panel showing each kind of last quick fix. Every test of the package passes, and the app builds.
+
+Not yet tried, because it needs the app on the maintainer's screen:
+- The shortcut in real apps, such as Slack, Mail, Notes and a page in a browser, and ⌘Z in each afterwards.
+- The icon's rocking wave, check mark and exclamation mark in the menu bar, and Show Last Quick Fix in its menu.
+- What VoiceOver says.
+- Settings' new switch, and the panel showing the last quick fix.
+
+Known limits:
+- The paste is plain text, as Replace's is, so formatting such as bold or a link inside the selection is lost when something is corrected. Nothing is pasted when nothing was corrected.
+- ⌘Z is the app's own. Mac apps take a paste back in one step; a web editor may not, and that hasn't been tried.
+- In Electron apps the selection is read with ⌘C twice, once at the start and once just before the paste, as Replace reads it. A clipboard history app may note those brief copies.
+- A correction of spacing alone counts as nothing to correct, as in the panel's count of changes, so it isn't pasted.
+- A text shorter than 16 words is pasted even when most of its words changed, because the panel's measure starts at 16 words.
+- The last quick fix lives in memory, so quitting OmanAI loses it.
+- Reading the selection also notes where the cursor is, as opening the panel does. With a pinned panel open on another app, its Insert then can't tell that the cursor moved there, and doesn't ask for its second press.
+- On Haiku a short proofread takes about 1.7 seconds and a long email about 5 while the wave rocks. Apple's model takes 5 to 9 seconds for its first request after a pause.
+
+---
+
 ## 2026-11-12 — Words that wait for a field: what has been tried, and what hasn't
 
 Tried: tests for each answer, a paste when a field gets the cursor with the space after and Return, Copy, ×, the minute, and opening the panel or starting a dictation meanwhile; and the rules for each role. What apps answer was read, without changing anything, from the apps open on this Mac while it was locked, so every one answered as an app in the background: Slack and the other Electron apps said nothing had focus, and so did Mail; Notes, Telegram, WhatsApp and Messages named the app itself, and the Finder named its desktop, a group with the subrole AXDesktop and a text range. Messages didn't answer within the 0.25 seconds the first time it was asked, which counts as can't be told. The app's own reader, built on its own, sorted them as the rules say: the Electron apps can't be told, the desktop takes no text. Asking an app took 20 to 130 milliseconds.

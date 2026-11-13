@@ -204,7 +204,15 @@ final class FakeSystem: SystemBridging {
 
     func openMicrophoneSettings() { microphoneSettingsOpened += 1 }
     func setLaunchAtLogin(_ enabled: Bool) throws { isLaunchAtLoginEnabled = enabled }
-    func captureSelection() async -> SelectionCapture { SelectionCapture(app: nil, text: nil) }
+
+    /// What reading the selection finds. Nothing, unless a test says otherwise.
+    var selection = SelectionCapture(app: nil, text: nil)
+    var captureCount = 0
+
+    func captureSelection() async -> SelectionCapture {
+        captureCount += 1
+        return selection
+    }
 
     func replaceSelection(expected: String, with text: String, in app: SourceApp) async -> InsertOutcome {
         replaceCalls.append((expected, text, app))
@@ -625,6 +633,17 @@ final class FakeDictationPresenter: DictationPresenting {
 }
 
 @MainActor
+final class FakeQuickFixPresenter: QuickFixPresenting {
+    var statuses: [QuickFixStatus] = []
+    var announcements: [String] = []
+
+    func showQuickFixStatus(_ status: QuickFixStatus, announcement: String?) {
+        statuses.append(status)
+        if let announcement { announcements.append(announcement) }
+    }
+}
+
+@MainActor
 final class Harness {
     let writing = FakeWriting()
     let styles = FakeStyles()
@@ -638,6 +657,7 @@ final class Harness {
     let dictations = FakeDictations()
     let actions = FakeActions()
     let dictationPresenter = FakeDictationPresenter()
+    let quickFixPresenter = FakeQuickFixPresenter()
 
     static let slack = SourceApp(name: "Slack", bundleID: "com.tinyspeck.slackmacgap", processID: 42)
 
@@ -670,6 +690,13 @@ final class Harness {
 
     func makePanel() -> PanelViewModel {
         PanelViewModel(services: services, presenter: presenter)
+    }
+
+    /// A quick fix wired to a panel, as the app shell does it.
+    func makeQuickFix(panel: PanelViewModel? = nil) -> QuickFixController {
+        let controller = QuickFixController(services: services, presenter: quickFixPresenter)
+        panel?.quickFix = controller
+        return controller
     }
 
     func makeSettings() -> SettingsViewModel {

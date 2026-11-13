@@ -25,6 +25,17 @@ Date-stamped log of what each work session accomplished.
 - Found that transcript times in OmanAI's window wrap with a 12-hour clock (see KNOWN_ISSUES.md)
 - Checked in headless Chromium at two widths: each clip plays, the chat under the header changes at its paste, and every picture the pages name is there
 
+## 2026-11-13 — Quick fix: Proofread puts its corrections straight back
+
+- Built the second item of the research report on competitors, for the next version: an option that lets Proofread's global shortcut correct the selection and paste it back without opening the panel. The choices are in DECISIONS.md, and the phase is W14 in PLAN.md
+- The Shortcuts tab has a Quick fix switch under "Proofread selection", off at first. With it on, the shortcut reads the selection, proofreads it as the panel would with the app's template, and pastes it back the way Replace does, so ⌘Z in the app brings back the original
+- Nothing is pasted when nothing is selected, there was nothing to correct, the selection changed or another app is in front, most of the words changed, the app is a terminal, or the request failed
+- The menu bar icon's wave rocks while it works. A check mark shows for 3 seconds when it is done, and an exclamation mark stays until clicked when nothing was pasted. VoiceOver says how each one ended. A click on the mark, or Show Last Quick Fix in the icon's right-click menu, shows the last quick fix on the panel's Proofread result screen
+- `QuickFixController` in OmanUI holds the logic. The panel and the quick fix now share `TemplateMemory` for the template an app opens on
+- 34 new tests, and all 609 of the package pass. The app builds, and its build copy was unregistered and deleted. The icon's states were drawn off the screen and looked at, light and dark
+- The documentation's Shortcuts section and the README describe Quick fix
+- Not verified: anything on the screen, above all the shortcut in real apps and ⌘Z afterwards (see KNOWN_ISSUES.md). Not merged or released
+
 ## 2026-11-13 — 0.4.5: a lighter background behind the Floating look's words
 
 - The maintainer had asked for less of a shadow behind the Floating look's words, with variants. Away from home, they said the variants could be tried on their screen if it wasn't locked, that the assistant should choose the best, and that a release should follow

@@ -65,17 +65,20 @@ struct PanelResultView: View {
             }
 
             HStack(spacing: PanelMetrics.gap) {
-                // An explanation is only for reading, so there is nothing to put back in the app.
-                if !model.isExplanation {
+                // An explanation is only for reading, and a quick fix that went in is in the app already, so there
+                // is nothing to put back.
+                if !model.isExplanation, !model.showsQuickFixInPlace {
                     LiquidButton(title: model.primaryActionTitle, prominent: true) { model.applyResult() }
                         .disabled(!model.canApplyResult)
                 }
                 LiquidButton(title: "Copy", symbol: "doc.on.doc") { model.copyResult() }
-                LiquidButton(title: "Try again", symbol: "arrow.trianglehead.2.clockwise") { model.tryAgain() }
+                if !model.showsQuickFixInPlace {
+                    LiquidButton(title: "Try again", symbol: "arrow.trianglehead.2.clockwise") { model.tryAgain() }
+                }
             }
             .labelStyle(.titleOnly)
 
-            if !model.isExplanation {
+            if !model.isExplanation, !model.showsQuickFixInPlace {
                 PanelInputField(
                     symbol: "sparkle",
                     prompt: "Make a change…",

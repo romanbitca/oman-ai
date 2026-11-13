@@ -582,3 +582,36 @@ The maintainer asked for an installer like other Mac apps have, a direct downloa
 - **Updates keep using the zip.** The feed is made from a folder without the image in it, so Sparkle never offers the disk image.
 - **dmgbuild lays out the window** by writing the `.DS_Store` itself, where scripting Finder needs a window on the screen and is known to be unreliable on GitHub's machines. It and its two helpers are pinned by version and hash, and installed into a throwaway folder for each build.
 
+## 2026-11-13 — Quick fix: Proofread puts its corrections straight back
+
+The second build in the research report on competitors: an option on a global shortcut that proofreads the selection and pastes the corrected text back over it without opening the panel, as Tidy, Raycast, Kerlig's headless mode and Fluent do. The maintainer asked for it to be built and for the choices to be made and recorded here.
+
+- **An option on Proofread's shortcut.** The Shortcuts tab has a Quick fix switch right under "Proofread selection", off at first. With it on, that shortcut corrects the selection where it is and opens no panel. The panel's own Proofread button and every other shortcut are unchanged. With the panel open and holding the keyboard, the shortcut proofreads in the panel as before, as a dictation goes into the panel's field then.
+- **Proofread only.** Templates' shortcuts don't get it, nor do Rewrite and Explain. A template's shortcut is a rewrite, and a rewrite changes the wording, while the people the report quotes accept a silent replace only for small edits. Explain is never pasted, and Compose has nothing to replace.
+- **The template of the app still counts.** The proofread follows the template the app's panel would open on, the chip chosen there or the default from Settings, so a template's habits with capital letters, apostrophes and full stops hold as they do in the panel.
+- **The same proofread as the panel's:** the same request, model and quality. A cut-off answer is never pasted, and the answer is cleaned as the panel cleans it before anything is pasted.
+- **Pasted the way Replace pastes.** The selection is read again just before, and nothing is pasted if it changed. The paste is a ⌘V, so ⌘Z in the app brings back what was there, and the clipboard is given back afterwards.
+- **Nothing is pasted when:**
+  - nothing is selected: the alert sound plays, the icon shows an exclamation mark for 2 seconds, and nothing is asked of the model;
+  - the proofread found nothing to correct, counted as the panel counts changes, so the text keeps any formatting a plain paste would drop;
+  - the selection changed while it worked, or another app is in front by then, which isn't brought back to the front;
+  - the proofread changed more than half of the words of a text of 16 words or more, the measure at which the panel shows the original instead of marks. A proofread shouldn't do that, so it waits for a look;
+  - the app is a terminal, where the panel asks for a second press before a paste;
+  - the request failed, or the key or the Accessibility permission is missing.
+- **The menu bar icon:**
+  - while it works, the wave rocks steadily from side to side, unlike a dictation's, which follows the voice. With Reduce Motion it stays still and faint;
+  - done shows a check mark for 3 seconds;
+  - nothing pasted shows an exclamation mark in a triangle. It stays until the icon is clicked, the panel opens, or another quick fix or a dictation starts, so a failure isn't missed;
+  - VoiceOver reads the icon's state, and says how each quick fix ended.
+- **One thing at a time.**
+  - A second press while one works does nothing.
+  - A click on the icon while it works stops it before anything is pasted, and opens the panel on the same text with Proofread running there.
+  - Opening the panel any other way, or starting a dictation, stops it too, since its paste must not land in the panel. A paste already under way finishes.
+  - During a dictation the shortcut only plays the alert sound. Words waiting for a field are copied first, as when the panel opens.
+- **The last quick fix in the panel.** A click on the icon while its check mark or exclamation mark shows, or Show Last Quick Fix in the icon's right-click menu, opens the panel on it. It is the Proofread result screen, with the changes marked as Settings says and a line saying what became of it:
+  - one that went in, or found nothing to correct, is only for reading. It has Copy, and no Replace, Try again or change, since its text is in the app already. The line says that ⌘Z in the app brings back what the person wrote;
+  - one that wasn't pasted has Replace, which puts it in once the same text is selected again, and Try again and a change as after any proofread;
+  - one that failed shows its error, with Try again.
+  The panel itself gets no new row: the menu bar icon is where a quick fix shows, so it is where the way back to it starts.
+- **Kept in memory only,** until OmanAI quits or the next quick fix ends, and never stored. Spending and OmanAI's window count it as they count a proofread from the panel: a text written, and a fix put back when it was pasted.
+- **A missing key or permission keeps nothing,** so a click on the icon opens the panel, whose setup says what is missing.
