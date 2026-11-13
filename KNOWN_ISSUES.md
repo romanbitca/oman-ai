@@ -53,7 +53,9 @@ What is still not as it should be:
 
 ## 2026-11-13 — Transcript times wrap with a 12-hour clock
 
-In OmanAI's window each transcript's time sits in a column 44 points wide (`HomeTranscripts.swift`). With a 24-hour clock "9:40" fits. With a 12-hour clock, as in US English, "9:12 AM" breaks onto two lines. Seen in a picture of the window drawn with US English. Not fixed yet.
+In OmanAI's window each transcript's time sat in a column 44 points wide (`HomeTranscripts.swift`). With a 24-hour clock "9:40" fits. With a 12-hour clock, as in US English, "9:12 AM" broke onto two lines. Seen in a picture of the window drawn with US English.
+
+Fixed after 0.4.5: the column is as wide as the longest time the clock writes in the Mac's region, such as "12:58 PM", measured in the label's own font, and never under 44 points. Drawn again in US English, every time fits on one line and the transcripts start in one column. Worked out once for each region and hour cycle, so a clock changed while OmanAI runs gets its width too.
 
 ---
 

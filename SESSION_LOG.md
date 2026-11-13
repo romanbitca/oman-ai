@@ -4,6 +4,11 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-13 — Transcript times fit a 12-hour clock
+
+- The maintainer said yes to publishing the website and to fixing the times that wrapped in OmanAI's window. The website went live by fast-forward, as commit f3badb6; Coolify deployed it in 28 seconds, and from outside each page names the new media, every picture loads and every clip answers a request for part of it
+- The time column in OmanAI's window now fits the longest time the clock writes, measured in the label's font, and stays at 44 points for a 24-hour clock. Two tests cover US and UK English, and the window drawn in US English shows every time on one line
+
 ## 2026-11-13 — The website shows 0.4.5: dictation, OmanAI's window and new recordings
 
 - The maintainer asked for the website to be updated and its recordings filmed. The drafts for dictation from 0.4.0, which waited for films, were taken up from the `dictation` branch onto `main`
