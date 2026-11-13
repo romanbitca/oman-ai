@@ -66,7 +66,7 @@ struct PanelResultView: View {
 
             HStack(spacing: PanelMetrics.gap) {
                 // An explanation is only for reading, so there is nothing to put back in the app.
-                if !model.isExplanation {
+                if !model.isOnlyToRead {
                     LiquidButton(title: model.primaryActionTitle, prominent: true) { model.applyResult() }
                         .disabled(!model.canApplyResult)
                 }
@@ -75,7 +75,7 @@ struct PanelResultView: View {
             }
             .labelStyle(.titleOnly)
 
-            if !model.isExplanation {
+            if !model.isOnlyToRead {
                 PanelInputField(
                     symbol: "sparkle",
                     prompt: "Make a change…",

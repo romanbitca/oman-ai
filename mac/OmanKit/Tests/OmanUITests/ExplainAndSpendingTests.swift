@@ -38,7 +38,7 @@ import Testing
         model.explain()
         await finish(model)
 
-        #expect(model.isExplanation)
+        #expect(model.isOnlyToRead)
         #expect(model.canApplyResult == false)
         #expect(model.originalText == "can we move it to monday?")
 

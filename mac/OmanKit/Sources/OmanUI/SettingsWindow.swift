@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum SettingsPage: String, CaseIterable, Identifiable {
-    case general, writing, dictation, styles, shortcuts, access, spending
+    case general, writing, dictation, styles, actions, shortcuts, access, spending
 
     var id: String { rawValue }
 
@@ -13,6 +13,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .writing: "Writing"
         case .dictation: "Dictation"
         case .styles: "Styles"
+        case .actions: "Actions"
         case .shortcuts: "Shortcuts"
         case .access: "Key & Permissions"
         case .spending: "Spending"
@@ -25,6 +26,7 @@ enum SettingsPage: String, CaseIterable, Identifiable {
         case .writing: "pencil.line"
         case .dictation: "mic"
         case .styles: "quote.opening"
+        case .actions: "sparkles"
         case .shortcuts: "command"
         case .access: "key"
         case .spending: "chart.bar"
@@ -163,6 +165,7 @@ private struct SettingsPageView: View {
         case .writing: WritingSettingsView(model: model)
         case .dictation: DictationSettingsView(model: model)
         case .styles: StylesSettingsView(model: model)
+        case .actions: ActionsSettingsView(model: model)
         case .shortcuts: ShortcutsSettingsView(model: model)
         case .access: AccessSettingsView(model: model)
         case .spending: SpendingSettingsView(model: model)

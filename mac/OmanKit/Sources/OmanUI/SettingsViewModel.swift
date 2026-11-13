@@ -26,6 +26,10 @@ public final class SettingsViewModel {
     private(set) var styleError: String?
     var newSampleText = ""
 
+    /// The person's own actions, in the order they were made.
+    private(set) var customActions: [CustomAction] = []
+    private(set) var customActionError: String?
+
     var tryItText = ""
     private(set) var tryItResult = ""
     private(set) var tryItError: String?
@@ -104,6 +108,13 @@ public final class SettingsViewModel {
         }
         if !styles.contains(where: { $0.id == selectedStyleID }) {
             selectedStyleID = styles.first?.id
+        }
+        do {
+            customActions = try services.customActions?.loadCustomActions() ?? []
+            customActionError = nil
+        } catch {
+            customActions = []
+            customActionError = error.localizedDescription
         }
         reloadSpending()
     }
@@ -473,6 +484,7 @@ public final class SettingsViewModel {
         case .rewrite: "Rewrite selection"
         case .compose: "Compose"
         case .style(let id): "Rewrite as \(styles.first { $0.id == id }?.displayName ?? "style")"
+        case .custom(let id): customActions.first { $0.id == id }?.displayName ?? "Your action"
         case .acceptResult: "Replace or Insert"
         case .copyResult: "Copy result"
         case .tryAgain: "Try again"
@@ -484,7 +496,7 @@ public final class SettingsViewModel {
     }
 
     var globalShortcutActions: [ShortcutAction] {
-        ShortcutAction.globalActions + styles.map { .style($0.id) }
+        ShortcutAction.globalActions + styles.map { .style($0.id) } + customActions.map { .custom($0.id) }
     }
 
     func startRecording(_ action: ShortcutAction) {
@@ -615,6 +627,50 @@ public final class SettingsViewModel {
             styleError = nil
         } catch {
             styleError = error.localizedDescription
+        }
+    }
+
+    // MARK: Your actions
+
+    /// Makes a new action, to be edited in its sheet, and returns its identifier.
+    @discardableResult
+    func createCustomAction() -> UUID {
+        let action = CustomAction(name: "New action")
+        customActions.append(action)
+        persist(action)
+        return action.id
+    }
+
+    /// Every change is saved as it is made, as a style's are.
+    func updateCustomAction(id: UUID, _ change: (inout CustomAction) -> Void) {
+        guard let index = customActions.firstIndex(where: { $0.id == id }) else { return }
+        change(&customActions[index])
+        persist(customActions[index])
+    }
+
+    /// Its shortcut goes with it.
+    func deleteCustomAction(id: UUID) {
+        do {
+            try services.customActions?.deleteCustomAction(id: id)
+            customActions.removeAll { $0.id == id }
+            customActionError = nil
+            if recordingAction == .custom(id) {
+                recordingAction = nil
+            }
+            preferences.setCombo(nil, for: .custom(id))
+            savePreferences()
+            registerShortcuts()
+        } catch {
+            customActionError = error.localizedDescription
+        }
+    }
+
+    private func persist(_ action: CustomAction) {
+        do {
+            try services.customActions?.saveCustomAction(action)
+            customActionError = nil
+        } catch {
+            customActionError = error.localizedDescription
         }
     }
 
