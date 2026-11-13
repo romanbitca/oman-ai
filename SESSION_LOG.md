@@ -38,12 +38,13 @@ Date-stamped log of what each work session accomplished.
 
 ## 2026-11-13 — The person's own actions, saved in Settings and run from the panel or a shortcut
 
-- Built item 3 of the research report on competitors for the next version: instructions such as "Make it shorter", written once in Settings and run on the selection. The choices are in DECISIONS.md and the phase is W14 in PLAN.md
+- Built item 3 of the research report on competitors for the next version: instructions such as "Make it shorter", written once in Settings and run on the selection. The choices are in DECISIONS.md and the phase is W15 in PLAN.md, after Quick fix's W14 in its own pull request
 - New: an action with a name, an instruction and a result that is pasted or only read; a `custom_actions` table (migration v8); a shortcut for each action, `ShortcutAction.custom`; an Actions tab in Settings with a sheet for each action, and the actions' rows in the Shortcuts tab; one line of chips under Proofread, Rewrite and Explain in the panel; rules of their own for an answer that is only read, for Claude and for Apple's model
 - An action whose result is pasted sends exactly what typing its instruction into Describe your change sends: one test compares the two requests the panel makes, and another the prompts, byte for byte
 - 43 new tests; all 618 pass. The app builds, and its build copy and its Sparkle `Updater.app` were unregistered and deleted
 - Drawn off the screen, light and dark: the Actions tab, its sheet and the Shortcuts tab, with all eight tabs fitting the toolbar; and the panel's home screen, for its layout only, since glass isn't drawn there
 - Not verified: the panel's new tile on the screen; the real models' answers to an action whose answer is only read, since `LiveWritingTests` and its four new cases need a key; the sheet's shortcut recorder and the delete alert by hand
+- Merged, as a trial in a copy that was thrown away, with Quick fix's pull request #23: the four record files and six lines of the panel's code conflict, because #23 adds its own condition where this branch renamed `isExplanation`. With both kept, all 652 tests of the two together pass. The phase is W15 so that the two plans' entries both fit
 - Not merged or released
 
 ## 2026-11-13 — 0.4.5: a lighter background behind the Floating look's words
