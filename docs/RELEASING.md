@@ -81,12 +81,16 @@ git push origin v0.2.0
 The [Release workflow](../.github/workflows/release.yml) then runs three jobs:
 
 1. **check** makes sure the tag is on `main` and runs the tests. It has no access to any secret.
-2. **build** waits for your approval, then builds the app, signs it with Developer ID, notarizes it with Apple and staples the ticket.
-3. **publish** waits for your approval, then creates a GitHub release with generated notes, `OmanAI-0.2.0.zip` and a signed `appcast.xml`.
+2. **build** waits for your approval, then builds the app, signs it with Developer ID, notarizes it with Apple and staples the ticket. It then puts the app in a disk image, `OmanAI-0.2.0.dmg`, and signs, notarizes and staples that too.
+3. **publish** waits for your approval, then creates a GitHub release with generated notes, `OmanAI-0.2.0.zip`, a signed `appcast.xml`, and the disk image twice: as `OmanAI-0.2.0.dmg` and as `OmanAI.dmg`.
 
 GitHub emails you when a job is waiting. Open the run and press **Review deployments**. There are two approvals because building and publishing run on separate machines, so nothing that runs during the build can reach the key that signs updates or the permission to publish.
 
 The build number comes from the version, so `0.2.0` becomes `2000`. Version numbers must only ever go up.
+
+The website's Download buttons point to `https://github.com/romanbitca/oman-ai/releases/latest/download/OmanAI.dmg`, which GitHub sends to the `OmanAI.dmg` of the newest release, so the site never needs a new link. Updates inside the app use the zip and the feed, never the disk image.
+
+The disk image is made by `mac/scripts/make-dmg.sh`: OmanAI beside a link to Applications, over the picture in `mac/dmg`. `dmg/background.html` is that picture's source, drawn at 660 by 400 points as `background.png` and at twice the size as `background@2x.png`. `dmg/settings.py` places the icons where the picture's arrow begins and ends.
 
 ## How updates reach people
 
@@ -106,13 +110,14 @@ The setup script also saves your notary key for `release.sh`. From `mac/`:
 SPARKLE_PUBLIC_KEY="$(build/packages/artifacts/sparkle/Sparkle/bin/generate_keys -p)" scripts/release.sh 0.2.0
 ```
 
-The signed app ends up in `mac/build/release/export`. `release.sh` empties its output folder first, and refuses a folder that already holds other files.
+The signed app ends up in `mac/build/release/export`, and the zip and the disk image in `mac/build/release`. Making the disk image needs Python 3, which macOS offers to install with the Command Line Tools. `release.sh` empties its output folder first, and refuses a folder that already holds other files.
 
 ## Pinned build tools and libraries
 
 - GRDB and Sparkle are pinned to exact commits, in `mac/OmanKit/Package.swift` and `mac/project.yml`. To move to a newer version, change the commit there and run the tests. `Package.resolved` is not committed, because Xcode and `swift test` each rewrite it their own way.
 - The workflows download one XcodeGen release and check its SHA-256. `mac/scripts/install-xcodegen.sh` holds the version and the checksum, and says how to change them.
 - The actions in `.github/workflows` are pinned to commits.
+- dmgbuild, which lays out the disk image, and the two packages it needs are pinned by version and hash in `mac/dmg/requirements.txt`, and installed into a throwaway folder for each build. To move them on, take each new wheel's SHA-256 from its page on PyPI and change both there.
 
 ## Forks
 

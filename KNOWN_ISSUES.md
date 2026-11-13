@@ -51,6 +51,20 @@ What is still not as it should be:
 
 ---
 
+## 2026-11-14 — The disk image: what has been tried
+
+Tried:
+- A disk image made by `scripts/make-dmg.sh` from a copy of the installed app: OmanAI, the link to Applications, the volume's icon, the picture at 1x and 2x and the window's layout are all on it, at 9.2 MB.
+- Opened once in Finder on the maintainer's screen, with their yes, light mode, macOS 27: the window shows the picture, and both icons sit at the ends of its arrow. Their Finder shows its path and status bars in every window, which covered the bottom 60 points of the picture. The line of text that was there has been removed.
+- Signing the image ad hoc, and finding the Developer ID certificate for the team the way `release.sh` does.
+
+Not yet tried:
+- Signing with Developer ID and notarizing the image. That first runs in the next release.
+- Dark mode. Finder may write the labels under the icons in white, which would be hard to read on the light picture.
+- Opening the image on macOS 14 to 26.
+
+---
+
 ## 2026-11-13 — Transcript times wrap with a 12-hour clock
 
 In OmanAI's window each transcript's time sits in a column 44 points wide (`HomeTranscripts.swift`). With a 24-hour clock "9:40" fits. With a 12-hour clock, as in US English, "9:12 AM" breaks onto two lines. Seen in a picture of the window drawn with US English. Not fixed yet.
