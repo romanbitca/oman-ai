@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import OmanCore
 import SwiftUI
@@ -101,3 +102,4 @@ extension ProofreadChanges {
         }
     }
 }
+#endif

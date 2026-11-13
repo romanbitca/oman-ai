@@ -1,6 +1,8 @@
 import AudioToolbox
 import AVFoundation
+#if os(macOS)
 import CoreAudio
+#endif
 import Foundation
 import OmanCore
 
@@ -27,7 +29,19 @@ final class MicrophoneCapture: @unchecked Sendable {
     }
 
     func start() throws {
+        #if os(iOS)
+        // On the iPhone the app has to ask for the microphone through its audio session first.
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothHFP])
+            try session.setActive(true, options: [])
+            if let port = AudioDevices.chosenPort() { try? session.setPreferredInput(port) }
+        } catch {
+            throw DictationError.failed("The microphone couldn't be started: \(error.localizedDescription)")
+        }
+        #endif
         let input = engine.inputNode
+        #if os(macOS)
         if var device = AudioDevices.chosenDevice(), let unit = input.audioUnit {
             // When this fails, the microphone chosen in System Settings is used instead.
             AudioUnitSetProperty(
@@ -39,6 +53,7 @@ final class MicrophoneCapture: @unchecked Sendable {
                 UInt32(MemoryLayout<AudioDeviceID>.size)
             )
         }
+        #endif
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
             throw DictationError.noMicrophone
@@ -68,6 +83,10 @@ final class MicrophoneCapture: @unchecked Sendable {
         guard wasRunning else { return }
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
+        #if os(iOS)
+        // Lets music that was playing come back.
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        #endif
     }
 
     private func handle(_ buffer: AVAudioPCMBuffer) {

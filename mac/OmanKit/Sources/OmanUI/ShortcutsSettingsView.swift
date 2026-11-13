@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import OmanCore
 import SwiftUI
@@ -273,3 +274,4 @@ extension View {
         modifier(ShortcutRecording(model: model)).modifier(KeyChordRecording(model: model))
     }
 }
+#endif

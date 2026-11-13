@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -13,7 +17,7 @@ struct HomeTranscripts: View {
     /// Wide enough for the longest time the clock writes in `locale`, such as "12:58 PM" where it has twelve hours,
     /// and never narrower than the 44 points a 24-hour clock needs.
     static func timeWidth(locale: Locale) -> CGFloat {
-        let font = NSFont.monospacedDigitSystemFont(ofSize: timeFontSize, weight: .regular)
+        let font = PlatformFont.monospacedDigitSystemFont(ofSize: timeFontSize, weight: .regular)
         let style = Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, timeZone: .gmt)
         // Each hour of a day at :58 takes in the widest hours and both halves of a 12-hour clock.
         let widest = (0..<24).map { hour in
@@ -113,7 +117,7 @@ struct HomeTranscripts: View {
         Menu {
             Picker("Keep", selection: Binding(
                 get: { model.history },
-                set: { history in if confirmKeeping(history) { model.setHistory(history) } }
+                set: { history in askToKeep(history) }
             )) {
                 ForEach(DictationHistory.allCases) { history in
                     Text(history.displayName).tag(history)
@@ -148,28 +152,25 @@ struct HomeTranscripts: View {
     }
 
     /// Keeping fewer transcripts deletes the older ones, so it asks first.
-    private func confirmKeeping(_ history: DictationHistory) -> Bool {
+    private func askToKeep(_ history: DictationHistory) {
         let count = model.transcriptsDeleted(by: history)
-        guard count > 0 else { return true }
-        let alert = NSAlert()
-        alert.messageText = "Keep only \(history.displayName.lowercased())?"
-        alert.informativeText = count == 1
-            ? "The oldest transcript is deleted. This can't be undone."
-            : "The \(count) oldest transcripts are deleted. This can't be undone."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        return alert.runModal() == .alertSecondButtonReturn
+        guard count > 0 else {
+            model.setHistory(history)
+            return
+        }
+        Platform.confirm(
+            "Keep only \(history.displayName.lowercased())?",
+            detail: count == 1
+                ? "The oldest transcript is deleted. This can't be undone."
+                : "The \(count) oldest transcripts are deleted. This can't be undone."
+        ) { model.setHistory(history) }
     }
 
     private func confirmDeleteAll() {
-        let alert = NSAlert()
-        alert.messageText = "Delete all transcripts?"
-        alert.informativeText = "This can't be undone. The numbers above stay: they are counted without the words."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        if alert.runModal() == .alertSecondButtonReturn {
-            model.deleteAll()
-        }
+        Platform.confirm(
+            "Delete all transcripts?",
+            detail: "This can't be undone. The numbers above stay: they are counted without the words."
+        ) { model.deleteAll() }
     }
 }
 
@@ -292,10 +293,12 @@ struct HomeSearchField: View {
                 .font(.system(size: 13))
                 .focused($isFocused)
                 .focusEffectDisabled()
+                #if os(macOS)
                 .onExitCommand {
                     text = ""
                     isFocused = false
                 }
+                #endif
             if !text.isEmpty {
                 Button {
                     text = ""

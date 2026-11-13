@@ -45,6 +45,37 @@ struct PanelHomeView: View {
         }
     }
 
+    #if os(iOS)
+    /// The iPhone's first tile holds the text to work on, typed, pasted or dictated, where the Mac shows the selection.
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ZStack(alignment: .topLeading) {
+                if model.workingText.isEmpty {
+                    Text("Paste, type or dictate your text")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+                        .padding(.leading, 5)
+                        .allowsHitTesting(false)
+                }
+                TextEditor(text: $model.workingText)
+                    .font(.system(size: 16))
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 96, maxHeight: 220)
+            }
+            HStack(spacing: 8) {
+                LiquidButton(title: "Paste", symbol: "doc.on.clipboard") { model.pasteWorkingText() }
+                if !model.workingText.isEmpty {
+                    LiquidButton(title: "Clear", symbol: "xmark") { model.workingText = "" }
+                }
+                Spacer(minLength: 0)
+                if let dictation = model.dictation {
+                    DictationMicButton(controller: dictation, field: .workingText)
+                }
+            }
+        }
+    }
+    #else
     private var header: some View {
         HStack(alignment: .top, spacing: 9) {
             SourceAppIcon(bundleID: model.capture.app?.bundleID)
@@ -63,6 +94,7 @@ struct PanelHomeView: View {
                 .padding(.trailing, -3)
         }
     }
+    #endif
 
     private var composeRow: some View {
         Button {

@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "OmanKit",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v14), .iOS(.v26)],
     products: [
         .library(name: "OmanCore", targets: ["OmanCore"]),
         .library(name: "ClaudeAPI", targets: ["ClaudeAPI"]),

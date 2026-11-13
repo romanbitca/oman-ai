@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import QuartzCore
 import SwiftUI
 
@@ -24,6 +28,7 @@ extension EnvironmentValues {
     @Entry var floatingBackdrop = FloatingBackdrop()
 }
 
+#if os(macOS)
 /// Blurs and darkens whatever is behind the window, fully in the middle and fading to nothing at the edges of the
 /// ellipse that fills the view, so words can float on it with no box around them. It uses the panel backdrop's
 /// tint-free blur; where that is missing, only the darkening shows.
@@ -122,3 +127,21 @@ final class SoftBlurView: NSView {
         return min(fall * fall * fall * (fall * (fall * 6 - 15) + 10), 1)
     }
 }
+#else
+/// The iPhone's soft blur behind floating words: the system's thin material, full in the middle and fading to nothing
+/// at the edges of the ellipse that fills the view, as the Mac's does.
+struct SoftBlur: View {
+    var look: FloatingBackdrop
+
+    var body: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .overlay(Color.black.opacity(look.fallbackDim * 0.5))
+            .mask(EllipticalGradient(
+                stops: [.init(color: .black, location: 0), .init(color: .black, location: 1.0 / 3), .init(color: .clear, location: 1)],
+                center: .center, startRadiusFraction: 0, endRadiusFraction: 0.5
+            ))
+            .allowsHitTesting(false)
+    }
+}
+#endif

@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -606,8 +610,8 @@ struct HomeAppIcon: View {
     var size: CGFloat = 22
 
     var body: some View {
-        if let url {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+        if let url, let icon = Platform.appIcon(at: url) {
+            Image(platformImage: icon)
                 .resizable()
                 .interpolation(.high)
                 .frame(width: size, height: size)
