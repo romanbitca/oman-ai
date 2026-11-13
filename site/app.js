@@ -562,7 +562,8 @@
     if (note) note.textContent = "Every donation goes to the time it takes to keep OmanAI working and free.";
   }
 
-  // The latest version, asked from GitHub once per visit. Without an answer the links stay on the releases page.
+  // The latest version, asked from GitHub once per visit. Without an answer the links stay on OmanAI.dmg, which
+  // GitHub sends to the newest release.
   function showRelease(release) {
     if (!release || !release.version) return;
     const megabytes = release.size ? ` · ${(release.size / 1048576).toFixed(1)} MB` : "";
@@ -573,7 +574,7 @@
   }
   (async () => {
     try {
-      const kept = sessionStorage.getItem("oman-release");
+      const kept = sessionStorage.getItem("oman-release-2");
       if (kept) { showRelease(JSON.parse(kept)); return; }
     } catch (error) { /* No storage: ask again. */ }
     try {
@@ -582,10 +583,13 @@
       });
       if (!response.ok) return;
       const data = await response.json();
-      const zip = (data.assets || []).find((asset) => /\.zip$/.test(asset.name));
-      const release = { version: String(data.tag_name || "").replace(/^v/, ""), url: zip?.browser_download_url, size: zip?.size };
+      const assets = data.assets || [];
+      // The disk image installs by dragging; a release from before 0.4.6 has only the zip.
+      const file = assets.find((asset) => asset.name === "OmanAI.dmg") || assets.find((asset) => /\.dmg$/.test(asset.name))
+        || assets.find((asset) => /\.zip$/.test(asset.name));
+      const release = { version: String(data.tag_name || "").replace(/^v/, ""), url: file?.browser_download_url, size: file?.size };
       showRelease(release);
-      try { sessionStorage.setItem("oman-release", JSON.stringify(release)); } catch (error) { /* Fine without it. */ }
+      try { sessionStorage.setItem("oman-release-2", JSON.stringify(release)); } catch (error) { /* Fine without it. */ }
     } catch (error) { /* Offline, or GitHub said no. The page works without the number. */ }
   })();
 })();

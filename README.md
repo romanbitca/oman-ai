@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/romanbitca/oman-ai/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/romanbitca/oman-ai/releases/latest/download/OmanAI.dmg"><b>Download</b></a> ·
   <a href="https://oman-ai.romanbitca.com">Website</a> ·
   <a href="https://oman-ai.romanbitca.com/docs/">Documentation</a> ·
   <a href="KNOWN_ISSUES.md">Known issues</a>
@@ -133,9 +133,9 @@ NVIDIA's Parakeet and Nemotron models, and Moondream's [Parakeet Ultra](https://
 
 ## Install
 
-1. Download the latest `OmanAI-x.y.z.zip` from [Releases](https://github.com/romanbitca/oman-ai/releases).
-2. Unzip it and move OmanAI to your Applications folder.
-3. Open it, click the wave in the menu bar and follow the setup.
+1. Download [OmanAI.dmg](https://github.com/romanbitca/oman-ai/releases/latest/download/OmanAI.dmg), the newest version. Every version is also on [Releases](https://github.com/romanbitca/oman-ai/releases), as a disk image and as a zip.
+2. Open it and drag OmanAI onto Applications.
+3. Open OmanAI, click the wave in the menu bar and follow the setup.
 
 OmanAI needs macOS 14 or later.
 
