@@ -192,6 +192,21 @@ Acceptance:
 
 ---
 
+## W14: The person's own actions [IN PROGRESS]
+
+Instructions written once in Settings, such as "Make it shorter" or "Turn into bullet points", run on the selection from the panel or from a shortcut, as saved versions of Describe your change.
+
+Acceptance:
+- Settings has an Actions tab where an action is added, edited in a sheet with its name, instruction, result and shortcut, and deleted after a question
+- An action's result is either pasted with Replace or Insert, as Rewrite's is, or only read, as Explain's is
+- The panel shows the actions on one line under Proofread, Rewrite and Explain, which keep their size and place
+- An action whose result is pasted sends what typing its instruction into Describe your change sends, with the chosen template and context
+- An action whose answer is only read uses the context but not the template, and its answer is never pasted
+- An action's shortcut runs it on the selection from any app
+- Actions and their shortcuts are still there after OmanAI restarts, and a database from 0.4.5 opens with them
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.

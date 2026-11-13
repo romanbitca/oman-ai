@@ -554,6 +554,47 @@ final class FakeActions: ActionStore, @unchecked Sendable {
     }
 }
 
+final class FakeCustomActions: CustomActionStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: [CustomAction] = []
+    private var failure: Error?
+
+    var actions: [CustomAction] { lock.withLock { stored } }
+
+    func seed(_ actions: [CustomAction]) {
+        lock.withLock { stored = actions }
+    }
+
+    func fail(with error: Error?) {
+        lock.withLock { failure = error }
+    }
+
+    func loadCustomActions() throws -> [CustomAction] {
+        try lock.withLock {
+            if let failure { throw failure }
+            return stored
+        }
+    }
+
+    func saveCustomAction(_ action: CustomAction) throws {
+        try lock.withLock {
+            if let failure { throw failure }
+            if let index = stored.firstIndex(where: { $0.id == action.id }) {
+                stored[index] = action
+            } else {
+                stored.append(action)
+            }
+        }
+    }
+
+    func deleteCustomAction(id: UUID) throws {
+        try lock.withLock {
+            if let failure { throw failure }
+            stored.removeAll { $0.id == id }
+        }
+    }
+}
+
 final class FakeDictations: DictationStore, @unchecked Sendable {
     private let lock = NSLock()
     private var stored: [SavedDictation] = []
@@ -656,6 +697,7 @@ final class Harness {
     let speech = FakeSpeech()
     let dictations = FakeDictations()
     let actions = FakeActions()
+    let customActions = FakeCustomActions()
     let dictationPresenter = FakeDictationPresenter()
     let quickFixPresenter = FakeQuickFixPresenter()
 
@@ -676,7 +718,8 @@ final class Harness {
             usage: usage,
             speech: speech,
             dictations: dictations,
-            actions: actions
+            actions: actions,
+            customActions: customActions
         )
     }
 

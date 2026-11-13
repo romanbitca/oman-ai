@@ -25,6 +25,10 @@ struct PanelHomeView: View {
                         .help("See how a reader will understand your text")
                 }
 
+                if !model.customActions.isEmpty {
+                    CustomActionsRow(actions: model.customActions) { model.runCustomAction($0) }
+                }
+
                 PanelControlsGroup {
                     StyleChipsView(
                         styles: model.styles,

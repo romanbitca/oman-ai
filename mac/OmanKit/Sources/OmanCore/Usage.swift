@@ -45,6 +45,8 @@ extension WritingTask {
     /// changes.
     public enum Kind: String, Codable, CaseIterable, Sendable, Identifiable {
         case proofread, rewrite, explain, compose
+        /// The person's own actions, whether their results are pasted or only read.
+        case custom
 
         public var id: String { rawValue }
 
@@ -54,6 +56,7 @@ extension WritingTask {
             case .rewrite: "Rewrite"
             case .explain: "Explain"
             case .compose: "Compose"
+            case .custom: "Your actions"
             }
         }
     }
@@ -64,6 +67,16 @@ extension WritingTask {
         case .rewrite: .rewrite
         case .explain: .explain
         case .compose: .compose
+        case .custom: .custom
+        }
+    }
+
+    /// The answer is for the person to read, and is never pasted: Explain's, and that of an action of theirs that
+    /// says so.
+    public var isOnlyToRead: Bool {
+        switch self {
+        case .explain, .custom(_, _, .read): true
+        case .proofread, .rewrite, .compose, .custom(_, _, .paste): false
         }
     }
 }

@@ -232,7 +232,8 @@ struct HomeSummary: Equatable {
         summary.seconds = inSpan.reduce(0) { $0 + $1.duration }
         summary.fixes = Fixes(
             proofread: fixed.filter { $0.kind == .proofread }.count,
-            rewritten: fixed.filter { $0.kind == .rewrite }.count,
+            // An action of the person's own that was put back rewrote their text with its instruction.
+            rewritten: fixed.filter { $0.kind == .rewrite || $0.kind == .custom }.count,
             composed: fixed.filter { $0.kind == .compose }.count
         )
 

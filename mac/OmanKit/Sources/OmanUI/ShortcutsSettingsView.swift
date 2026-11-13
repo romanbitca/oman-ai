@@ -49,12 +49,14 @@ struct ShortcutsSettingsView: View {
 struct ShortcutRow: View {
     let model: SettingsViewModel
     let action: ShortcutAction
+    /// In place of the action's name, where the row sits with the action itself.
+    var title: String?
 
     var body: some View {
         LabeledContent {
             recorder
         } label: {
-            Text(model.title(for: action))
+            Text(title ?? model.title(for: action))
             if model.failedShortcuts.contains(action) {
                 Text("Another app is already using this shortcut.")
             }

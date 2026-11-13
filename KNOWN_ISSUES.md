@@ -26,6 +26,29 @@ Known limits:
 
 ---
 
+## 2026-11-13 — The person's own actions: what has been tried, and what hasn't
+
+Tried:
+- Tests for keeping actions: their order, a change keeping an action's place, deleting, a result kind from a newer version, a database as 0.4.5 left it and one from the first version.
+- Tests for the shortcut: its key, recording it, a combination moving from one action to another, and an action's deletion taking its shortcut with it.
+- Tests for running an action from the panel and from a shortcut: the request each kind sends, compared with the rewrite typed into Describe your change; Replace, Make a change and Try again; an answer to read never pasted; no selection, no instruction, a deleted action; what Spending and OmanAI's window count.
+- Drawn off the screen, light and dark: the Actions tab, its sheet for each kind of result and for a new action, and the Shortcuts tab. All eight tabs fit the toolbar.
+- The panel's home screen drawn off the screen with and without actions, for its layout: the line sits under Proofread, Rewrite and Explain, lines up with the template chips and fades at its right end. Glass isn't drawn off the screen, and the colour of text on it there is not what the screen shows, so drawn in identical tiles the action chips were compared with the template chips: they came out the same.
+
+Not yet tried:
+- The real models' answers to an action whose answer is only read. Its rules are new; `LiveWritingTests` has four cases for actions, which run only with a key.
+- The panel with actions on the screen: the glass of the new tile, pressing a chip, and the instruction shown under the pointer.
+- The sheet by hand: recording a shortcut in it, and the alert that asks before an action is deleted.
+
+Known limits:
+- Actions stay in the order they were made; there is no way to move one.
+- With nothing selected the panel opens in Compose, which has no actions.
+- An answer to read is shown as plain text, so Markdown that a model writes anyway shows as typed.
+- Spending counts every action together, as Your actions, not one by one.
+- An action uses the model chosen in Settings; a model for each action is item 5 of the research report.
+
+---
+
 ## 2026-11-12 — Words that wait for a field: what has been tried, and what hasn't
 
 Tried: tests for each answer, a paste when a field gets the cursor with the space after and Return, Copy, ×, the minute, and opening the panel or starting a dictation meanwhile; and the rules for each role. What apps answer was read, without changing anything, from the apps open on this Mac while it was locked, so every one answered as an app in the background: Slack and the other Electron apps said nothing had focus, and so did Mail; Notes, Telegram, WhatsApp and Messages named the app itself, and the Finder named its desktop, a group with the subrole AXDesktop and a text range. Messages didn't answer within the 0.25 seconds the first time it was asked, which counts as can't be told. The app's own reader, built on its own, sorted them as the rules say: the Electron apps can't be told, the desktop takes no text. Asking an app took 20 to 130 milliseconds.

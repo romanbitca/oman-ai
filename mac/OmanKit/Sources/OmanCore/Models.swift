@@ -46,6 +46,32 @@ public struct WritingStyle: Identifiable, Equatable, Sendable {
     }
 }
 
+/// One of the person's own actions: a name and an instruction, written once in Settings and run on a selection
+/// from the panel or from a shortcut. It is a saved version of what is typed into the panel's Describe your change.
+public struct CustomAction: Identifiable, Equatable, Sendable {
+    /// What becomes of an action's result.
+    public enum Output: String, Codable, CaseIterable, Sendable, Identifiable {
+        /// Replace or Insert can put it in the app, as with Rewrite.
+        case paste
+        /// It is only shown in the panel, to read and copy, as Explain's answer is.
+        case read
+
+        public var id: String { rawValue }
+    }
+
+    public let id: UUID
+    public var name: String
+    public var instruction: String
+    public var output: Output
+
+    public init(id: UUID = UUID(), name: String, instruction: String = "", output: Output = .paste) {
+        self.id = id
+        self.name = name
+        self.instruction = instruction
+        self.output = output
+    }
+}
+
 public struct SourceApp: Equatable, Sendable {
     public let name: String
     public let bundleID: String?
@@ -132,6 +158,9 @@ public enum WritingTask: Equatable, Sendable {
     case compose(request: String, selectedText: String?)
     /// Tells the person how a reader will understand their text. The answer is for them alone, never pasted.
     case explain(text: String)
+    /// One of the person's own actions, carried out on the text. With `.paste` it is sent as the rewrite that typing
+    /// its instruction into the panel sends. With `.read` the answer is for the person alone, as Explain's is.
+    case custom(text: String, instruction: String, output: CustomAction.Output)
 }
 
 public struct Refinement: Equatable, Sendable {
@@ -289,6 +318,8 @@ public struct KeyCombo: Codable, Hashable, Sendable {
 public enum ShortcutAction: Hashable, Sendable {
     case openPanel, proofread, rewrite, explain, compose
     case style(UUID)
+    /// One of the person's own actions, run on the selection.
+    case custom(UUID)
     case acceptResult, copyResult, tryAgain, toggleOriginal
     /// Held down while the person speaks. Letting go puts the words in.
     case dictateHold
@@ -304,7 +335,7 @@ public enum ShortcutAction: Hashable, Sendable {
 
     public var isGlobal: Bool {
         switch self {
-        case .openPanel, .proofread, .rewrite, .explain, .compose, .style: true
+        case .openPanel, .proofread, .rewrite, .explain, .compose, .style, .custom: true
         case .dictateHold, .dictateLong, .cancelDictation: true
         case .acceptResult, .copyResult, .tryAgain, .toggleOriginal: false
         }
@@ -325,6 +356,7 @@ public enum ShortcutAction: Hashable, Sendable {
         case .explain: "explain"
         case .compose: "compose"
         case .style(let id): "style:\(id.uuidString)"
+        case .custom(let id): "custom:\(id.uuidString)"
         case .acceptResult: "acceptResult"
         case .copyResult: "copyResult"
         case .tryAgain: "tryAgain"
@@ -336,9 +368,10 @@ public enum ShortcutAction: Hashable, Sendable {
     }
 
     public init?(storageKey: String) {
-        if storageKey.hasPrefix("style:") {
-            guard let id = UUID(uuidString: String(storageKey.dropFirst("style:".count))) else { return nil }
-            self = .style(id)
+        for (prefix, make) in [("style:", ShortcutAction.style), ("custom:", ShortcutAction.custom)]
+        where storageKey.hasPrefix(prefix) {
+            guard let id = UUID(uuidString: String(storageKey.dropFirst(prefix.count))) else { return nil }
+            self = make(id)
             return
         }
         let saved = Self.globalActions + Self.panelActions + Self.dictationActions

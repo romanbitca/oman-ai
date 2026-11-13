@@ -65,9 +65,9 @@ struct PanelResultView: View {
             }
 
             HStack(spacing: PanelMetrics.gap) {
-                // An explanation is only for reading, and a quick fix that went in is in the app already, so there
-                // is nothing to put back.
-                if !model.isExplanation, !model.showsQuickFixInPlace {
+                // What is only to read has nothing to put back in the app, and a quick fix that went in is in
+                // the app already.
+                if !model.isOnlyToRead, !model.showsQuickFixInPlace {
                     LiquidButton(title: model.primaryActionTitle, prominent: true) { model.applyResult() }
                         .disabled(!model.canApplyResult)
                 }
@@ -78,7 +78,7 @@ struct PanelResultView: View {
             }
             .labelStyle(.titleOnly)
 
-            if !model.isExplanation, !model.showsQuickFixInPlace {
+            if !model.isOnlyToRead, !model.showsQuickFixInPlace {
                 PanelInputField(
                     symbol: "sparkle",
                     prompt: "Make a change…",
