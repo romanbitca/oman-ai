@@ -1,0 +1,8 @@
+// Signing for the iPhone app. The simulator needs none. To run OmanAI on a phone, copy Signing.example.xcconfig to
+// Signing.xcconfig beside project.yml, which git ignores, put your team in it, and run xcodegen generate again.
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM =
+// Empty, so CloudKit is never asked for a container the build isn't entitled to. See docs/ICLOUD.md.
+OMAN_ICLOUD_CONTAINER =
+
+#include? "../Signing.xcconfig"

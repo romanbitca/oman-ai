@@ -55,6 +55,10 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            if let sync = model.sync {
+                CloudSyncSection(sync: sync)
+            }
+
             if model.canUpdate {
                 Section("Updates") {
                     Toggle(

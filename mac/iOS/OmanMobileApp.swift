@@ -2,12 +2,14 @@ import ClaudeAPI
 import OmanCore
 import OmanSpeech
 import OmanStorage
+import OmanSync
 import OmanUI
 import SwiftUI
 
 @main
 struct OmanMobileApp: App {
     @State private var app = MobileApp()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -16,6 +18,9 @@ struct OmanMobileApp: App {
                     router: shell.router, panel: shell.panel, dictation: shell.dictation, home: shell.home,
                     settings: shell.settings
                 )
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { app.cloud?.syncIfStale() }
+                }
             } else {
                 ContentUnavailableView(
                     "OmanAI couldn't start",
@@ -41,21 +46,26 @@ final class MobileApp {
 
     private(set) var shell: Shell?
     private(set) var failure: String?
+    /// Syncing through iCloud, in a build signed for it.
+    private(set) var cloud: CloudSync?
 
     init() {
         do {
             let database = try OmanDatabase.openDefault()
+            let cloud = CloudSync.make(styles: database, actions: database, settings: database)
+            let stores: any StyleStore & CustomActionStore & AppSettingsStore = cloud?.stores ?? database
             let services = AppServices(
                 writing: WritingRouter(usage: database),
-                styles: database,
-                settings: database,
+                styles: stores,
+                settings: stores,
                 apiKeys: KeychainAPIKeyStore(),
                 system: MobileSystemBridge(),
                 usage: database,
                 speech: SpeechService(),
                 dictations: database,
                 actions: database,
-                customActions: database
+                customActions: stores,
+                sync: cloud
             )
             let router = MobileRouter()
             let panel = PanelViewModel(services: services, presenter: router)
@@ -63,10 +73,16 @@ final class MobileApp {
             panel.dictation = dictation
             dictation.panel = panel
             router.panel = panel
-            shell = Shell(
-                router: router, panel: panel, dictation: dictation, home: HomeViewModel(services: services),
-                settings: SettingsViewModel(services: services)
-            )
+            let home = HomeViewModel(services: services)
+            let settings = SettingsViewModel(services: services)
+            shell = Shell(router: router, panel: panel, dictation: dictation, home: home, settings: settings)
+            cloud?.onRemoteChange = {
+                panel.reloadChoices()
+                settings.reloadSyncedData()
+                home.reload()
+            }
+            cloud?.start()
+            self.cloud = cloud
         } catch {
             failure = "Its database couldn't be opened: \(error.localizedDescription)"
         }

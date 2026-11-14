@@ -119,6 +119,20 @@ public final class SettingsViewModel {
         reloadSpending()
     }
 
+    /// Reads again what syncing can change: the styles, the actions and the settings. A key being typed, and the
+    /// sample being written, stay.
+    public func reloadSyncedData() {
+        preferences = (try? services.settings.preferences()) ?? preferences
+        if let styles = try? services.styles.loadStyles() { self.styles = styles }
+        if !styles.contains(where: { $0.id == selectedStyleID }) {
+            selectedStyleID = styles.first?.id
+        }
+        if let actions = try? services.customActions?.loadCustomActions() { customActions = actions }
+    }
+
+    /// Syncing through iCloud, in builds that can.
+    var sync: (any CloudSyncing)? { services.sync }
+
     private func loadAPIKey() -> String? {
         guard let key = try? services.apiKeys.loadAPIKey(), !key.isEmpty else { return nil }
         return key

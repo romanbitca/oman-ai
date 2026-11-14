@@ -22,6 +22,7 @@ struct MobileSettingsScreen: View {
                 styles
                 actions
                 if model.offersDictation { dictation }
+                if let sync = model.sync { CloudSyncSection(sync: sync) }
                 about
             }
             .navigationTitle("Settings")
@@ -111,7 +112,7 @@ struct MobileSettingsScreen: View {
         } header: {
             Text("Actions")
         } footer: {
-            Text("Your own instructions, such as Make it shorter, run from the panel's first screen.")
+            Text("Your own instructions, such as Make it shorter, run on your text in Write.")
         }
     }
 
@@ -151,8 +152,12 @@ struct MobileSettingsScreen: View {
     private var about: some View {
         Section {
             LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
-            Link("Website", destination: URL(string: "https://oman-ai.romanbitca.com")!)
-            Link("Source code", destination: URL(string: "https://github.com/romanbitca/oman-ai")!)
+            if let website = URL(string: "https://oman-ai.romanbitca.com") {
+                Link("Website", destination: website)
+            }
+            if let source = URL(string: "https://github.com/romanbitca/oman-ai") {
+                Link("Source code", destination: source)
+            }
         } header: {
             Text("OmanAI")
         } footer: {
