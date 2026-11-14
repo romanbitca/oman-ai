@@ -45,12 +45,22 @@ struct HomeTranscripts: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            #if os(iOS)
+            // A phone is too narrow for the search beside the title and the menu: it takes a row of its own.
+            HStack(alignment: .center, spacing: 10) {
+                Text("Transcripts").font(.system(size: 19, weight: .bold))
+                Spacer(minLength: 8)
+                keepMenu
+            }
+            HomeSearchField(text: $model.search, width: nil)
+            #else
             HStack(alignment: .center, spacing: 10) {
                 Text("Transcripts").font(.system(size: 19, weight: .bold))
                 Spacer(minLength: 8)
                 HomeSearchField(text: $model.search)
                 keepMenu
             }
+            #endif
             sheet
             if let error = model.error {
                 Text(error).font(.callout).foregroundStyle(.red)
@@ -148,7 +158,11 @@ struct HomeTranscripts: View {
     private var keptText: String {
         let count = model.transcripts.count
         if count == 0 { return model.history == .off ? "None kept" : "Nothing kept yet" }
+        #if os(macOS)
         return "\(count.formatted()) kept on this Mac"
+        #else
+        return "\(count.formatted()) kept on this iPhone"
+        #endif
     }
 
     /// Keeping fewer transcripts deletes the older ones, so it asks first.
@@ -277,6 +291,8 @@ private struct HomeTranscriptRow: View {
 /// The search field over the transcripts: a capsule in the page's own look.
 struct HomeSearchField: View {
     @Binding var text: String
+    /// Nil fills the width it is given.
+    var width: CGFloat? = 200
     @FocusState private var isFocused: Bool
 
     private static let height: CGFloat = 28
@@ -311,7 +327,8 @@ struct HomeSearchField: View {
             }
         }
         .padding(.horizontal, 10)
-        .frame(width: 200, height: Self.height)
+        .frame(width: width, height: Self.height)
+        .frame(maxWidth: width == nil ? .infinity : nil)
         .background(shape.fill(HomePalette.card))
         .overlay {
             shape.strokeBorder(isFocused ? HomePalette.copy : HomePalette.edge, lineWidth: isFocused ? 1.5 : 1)

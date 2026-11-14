@@ -420,7 +420,11 @@ public enum DictationError: Error, Equatable, Sendable {
     public var message: String {
         switch self {
         case .microphoneDenied:
+            #if os(macOS)
             "OmanAI isn't allowed to use the microphone. Allow it in System Settings, under Privacy & Security."
+            #else
+            "OmanAI isn't allowed to use the microphone. Allow it in Settings, under Privacy & Security."
+            #endif
         case .noMicrophone:
             "No microphone was found."
         case .modelNotReady(let model):

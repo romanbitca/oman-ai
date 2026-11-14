@@ -352,13 +352,12 @@ struct HomeSpeedTile: View {
                     HomeLabel(symbol: "bolt.fill", title: "Speed", color: HomePalette.teal)
                     Spacer(minLength: 4)
                     if let times = summary.timesFasterThanTyping {
-                        Text("\(HomeFormat.times(times)) typing")
-                            .font(.system(size: 11.5, weight: .semibold))
-                            .foregroundStyle(HomePalette.teal)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(HomePalette.copy.opacity(0.13)))
-                            .help("Against typing at \(Int(HomeSummary.typingSpeed)) words a minute, the usual figure for an adult.")
+                        // On a phone's narrow tile only the figure fits; the bars below say against what.
+                        ViewThatFits(in: .horizontal) {
+                            timesChip("\(HomeFormat.times(times)) typing")
+                            timesChip(HomeFormat.times(times))
+                        }
+                        .help("Against typing at \(Int(HomeSummary.typingSpeed)) words a minute, the usual figure for an adult.")
                     }
                 }
                 if let speed = summary.speed {
@@ -380,6 +379,17 @@ struct HomeSpeedTile: View {
             }
             .accessibilityElement(children: .combine)
         }
+    }
+
+    private func timesChip(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11.5, weight: .semibold))
+            .foregroundStyle(HomePalette.teal)
+            .lineLimit(1)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(HomePalette.copy.opacity(0.13)))
+            .fixedSize()
     }
 
     private func bar(_ name: String, share: Double, fill: AnyShapeStyle) -> some View {
@@ -529,6 +539,9 @@ struct HomeFixesTile: View {
                             HStack(spacing: 5) {
                                 Circle().fill(kind.color).frame(width: 7, height: 7)
                                 Text("\(kind.count.formatted()) \(kind.name)").font(.system(size: 11.5)).foregroundStyle(HomePalette.dim).lineLimit(1)
+                                    #if os(iOS)
+                                    .minimumScaleFactor(0.7)
+                                    #endif
                             }
                         }
                     }
