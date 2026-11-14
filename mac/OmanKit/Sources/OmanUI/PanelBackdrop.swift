@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 
 /// The numbers behind the panel's backdrop, measured from Control Center on macOS 27 with a checkerboard behind it.
@@ -221,3 +222,4 @@ public final class PanelBackdrop {
         )
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import QuartzCore
 
@@ -95,3 +96,4 @@ enum BackdropBlur {
         filterClass?.perform(makeFilter, with: type)?.takeUnretainedValue() as? NSObject
     }
 }
+#endif

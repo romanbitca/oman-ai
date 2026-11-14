@@ -178,6 +178,29 @@ public protocol AppUpdating: AnyObject {
     func checkForUpdates()
 }
 
+/// How syncing through the person's iCloud is going.
+public enum CloudSyncStatus: Equatable, Sendable {
+    case off
+    /// Checking the account, or sending and fetching changes.
+    case syncing
+    case upToDate
+    /// No one is signed in to iCloud on this device.
+    case noAccount
+    /// iCloud can't be used here now, with a sentence that says why.
+    case unavailable(String)
+}
+
+/// Implemented by builds that can reach iCloud: keeps the person's templates, actions and shared settings the same on
+/// each of their devices. Builds without an iCloud container don't have one.
+@MainActor
+public protocol CloudSyncing: AnyObject {
+    var isOn: Bool { get }
+    var status: CloudSyncStatus { get }
+    func setOn(_ on: Bool)
+    /// Sends what changed here and fetches what changed elsewhere, now rather than at the next chance.
+    func syncNow()
+}
+
 @MainActor
 public struct AppServices {
     public let writing: any WritingService
@@ -193,6 +216,8 @@ public struct AppServices {
     public let actions: (any ActionStore)?
     /// The person's own actions, made in Settings.
     public let customActions: (any CustomActionStore)?
+    /// Syncs through iCloud, in builds that can.
+    public let sync: (any CloudSyncing)?
 
     public init(
         writing: any WritingService,
@@ -205,7 +230,8 @@ public struct AppServices {
         speech: (any SpeechRecognizing)? = nil,
         dictations: (any DictationStore)? = nil,
         actions: (any ActionStore)? = nil,
-        customActions: (any CustomActionStore)? = nil
+        customActions: (any CustomActionStore)? = nil,
+        sync: (any CloudSyncing)? = nil
     ) {
         self.writing = writing
         self.styles = styles
@@ -218,5 +244,6 @@ public struct AppServices {
         self.dictations = dictations
         self.actions = actions
         self.customActions = customActions
+        self.sync = sync
     }
 }

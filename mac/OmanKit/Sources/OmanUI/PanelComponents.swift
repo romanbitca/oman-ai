@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -116,6 +120,10 @@ struct PanelHeaderButtons: View {
     let model: PanelViewModel
 
     var body: some View {
+        // The iPhone's panel is the app itself, so there is nothing to pin.
+        #if os(iOS)
+        EmptyView()
+        #else
         HStack(spacing: 0) {
             PanelIconButton(
                 symbol: model.isPinned ? "pin.fill" : "pin",
@@ -124,6 +132,7 @@ struct PanelHeaderButtons: View {
                 model.togglePin()
             }
         }
+        #endif
     }
 }
 
@@ -132,7 +141,7 @@ struct SourceAppIcon: View {
 
     var body: some View {
         if let image {
-            Image(nsImage: image)
+            Image(platformImage: image)
                 .resizable()
                 .interpolation(.high)
                 .frame(width: 20, height: 20)
@@ -140,11 +149,9 @@ struct SourceAppIcon: View {
         }
     }
 
-    private var image: NSImage? {
-        guard let bundleID,
-              let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-        else { return nil }
-        return NSWorkspace.shared.icon(forFile: url.path)
+    private var image: PlatformImage? {
+        guard let bundleID else { return nil }
+        return Platform.appIcon(bundleID: bundleID)
     }
 }
 

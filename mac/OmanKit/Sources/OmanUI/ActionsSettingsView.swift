@@ -1,4 +1,9 @@
+#if os(macOS)
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -148,3 +153,4 @@ struct ActionEditorView: View {
         model.deleteCustomAction(id: action.id)
     }
 }
+#endif

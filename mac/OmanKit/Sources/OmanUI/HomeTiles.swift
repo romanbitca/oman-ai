@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -204,9 +208,13 @@ struct HomeHeroTile: View {
     }
 
     private var welcome: String {
+        #if os(iOS)
+        return "Tap Dictate and talk, or proofread a text in Write. What you do is counted here."
+        #else
         let speak = dictationKeys.map { "Hold \($0) and talk" } ?? "Dictate from the menu bar"
         let fix = proofreadKeys.map { "select text and press \($0)" } ?? "select text and open OmanAI from the menu bar"
         return "\(speak), or \(fix). What you do is counted here."
+        #endif
     }
 
     private var title: String {
@@ -344,13 +352,12 @@ struct HomeSpeedTile: View {
                     HomeLabel(symbol: "bolt.fill", title: "Speed", color: HomePalette.teal)
                     Spacer(minLength: 4)
                     if let times = summary.timesFasterThanTyping {
-                        Text("\(HomeFormat.times(times)) typing")
-                            .font(.system(size: 11.5, weight: .semibold))
-                            .foregroundStyle(HomePalette.teal)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(HomePalette.copy.opacity(0.13)))
-                            .help("Against typing at \(Int(HomeSummary.typingSpeed)) words a minute, the usual figure for an adult.")
+                        // On a phone's narrow tile only the figure fits; the bars below say against what.
+                        ViewThatFits(in: .horizontal) {
+                            timesChip("\(HomeFormat.times(times)) typing")
+                            timesChip(HomeFormat.times(times))
+                        }
+                        .help("Against typing at \(Int(HomeSummary.typingSpeed)) words a minute, the usual figure for an adult.")
                     }
                 }
                 if let speed = summary.speed {
@@ -374,6 +381,17 @@ struct HomeSpeedTile: View {
         }
     }
 
+    private func timesChip(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11.5, weight: .semibold))
+            .foregroundStyle(HomePalette.teal)
+            .lineLimit(1)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(HomePalette.copy.opacity(0.13)))
+            .fixedSize()
+    }
+
     private func bar(_ name: String, share: Double, fill: AnyShapeStyle) -> some View {
         HStack(spacing: 7) {
             Text(name)
@@ -390,17 +408,25 @@ struct HomeSpeedTile: View {
 
 /// For someone who has never dictated: how to start.
 struct HomeDictateTipTile: View {
+    #if os(iOS)
+    static func title(keys: String?) -> String { "Tap Dictate and talk" }
+    static let detail = "Your words show as you say them, and are copied when you finish."
+    #else
+    static func title(keys: String?) -> String { keys.map { "Hold \($0) and speak" } ?? "Choose a key to hold in Settings" }
+    static let detail = "Your words are typed where the cursor is."
+    #endif
+
     let keys: String?
 
     var body: some View {
         HomeTile(height: HomeMetrics.smallHeight) {
             VStack(alignment: .leading, spacing: 0) {
                 HomeLabel(symbol: "mic.fill", title: "Dictate", color: HomePalette.teal)
-                Text(keys.map { "Hold \($0) and speak" } ?? "Choose a key to hold in Settings")
+                Text(Self.title(keys: keys))
                     .font(.system(size: 15, weight: .semibold))
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 8)
-                Text("Your words are typed where the cursor is.")
+                Text(Self.detail)
                     .font(.system(size: 12))
                     .foregroundStyle(HomePalette.dim)
                     .fixedSize(horizontal: false, vertical: true)
@@ -513,6 +539,9 @@ struct HomeFixesTile: View {
                             HStack(spacing: 5) {
                                 Circle().fill(kind.color).frame(width: 7, height: 7)
                                 Text("\(kind.count.formatted()) \(kind.name)").font(.system(size: 11.5)).foregroundStyle(HomePalette.dim).lineLimit(1)
+                                    #if os(iOS)
+                                    .minimumScaleFactor(0.7)
+                                    #endif
                             }
                         }
                     }
@@ -606,8 +635,8 @@ struct HomeAppIcon: View {
     var size: CGFloat = 22
 
     var body: some View {
-        if let url {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+        if let url, let icon = Platform.appIcon(at: url) {
+            Image(platformImage: icon)
                 .resizable()
                 .interpolation(.high)
                 .frame(width: size, height: size)

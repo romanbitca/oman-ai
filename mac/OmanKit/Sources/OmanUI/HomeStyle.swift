@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 /// The colours of OmanAI's own window, each in a light and a dark form, and the brand's two gradients.
@@ -35,7 +39,9 @@ enum HomePalette {
     static let fix3 = dynamic(light: 0x8A72F6, dark: 0x8A7BF6)
     static let fix4 = dynamic(light: 0x5B4CF5, dark: 0xB9B0FF)
 
+    #if os(macOS)
     static var pageNSColor: NSColor { nsDynamic(light: 0xF4F6FA, dark: 0x17181B) }
+    #endif
 
     /// The first tile: OmanAI's teal into blue, with violet rising from one corner and light falling on the other.
     static var heroFill: some View {
@@ -74,6 +80,7 @@ enum HomePalette {
 
     static let barFill = LinearGradient(colors: [mint, blue], startPoint: .leading, endPoint: .trailing)
 
+    #if os(macOS)
     private static func dynamic(light: UInt32, dark: UInt32, lightAlpha: CGFloat = 1, darkAlpha: CGFloat = 1) -> Color {
         Color(nsColor: nsDynamic(light: light, dark: dark, lightAlpha: lightAlpha, darkAlpha: darkAlpha))
     }
@@ -88,6 +95,18 @@ enum HomePalette {
             )
         }
     }
+    #else
+    private static func dynamic(light: UInt32, dark: UInt32, lightAlpha: CGFloat = 1, darkAlpha: CGFloat = 1) -> Color {
+        Color(uiColor: UIColor { traits in
+            let isDark = traits.userInterfaceStyle == .dark
+            let hex = isDark ? dark : light
+            return UIColor(
+                red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                blue: CGFloat(hex & 0xFF) / 255, alpha: isDark ? darkAlpha : lightAlpha
+            )
+        })
+    }
+    #endif
 }
 
 extension Color {

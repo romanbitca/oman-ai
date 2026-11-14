@@ -1,3 +1,4 @@
+#if os(macOS)
 import AppKit
 import OmanCore
 import SwiftUI
@@ -54,6 +55,10 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            if let sync = model.sync {
+                CloudSyncSection(sync: sync)
+            }
+
             if model.canUpdate {
                 Section("Updates") {
                     Toggle(
@@ -101,3 +106,4 @@ extension ProofreadChanges {
         }
     }
 }
+#endif

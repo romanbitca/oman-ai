@@ -38,6 +38,8 @@ struct PanelSetupView: View {
                     }
                 }
 
+                // The iPhone reads no other app, so it needs no Accessibility.
+                #if !os(iOS)
                 VStack(alignment: .leading, spacing: 7) {
                     HStack {
                         stepTitle("Accessibility", isDone: model.isAccessibilityGranted)
@@ -48,6 +50,7 @@ struct PanelSetupView: View {
                     }
                     NoticeText(text: "OmanAI needs this to read your selection and paste the result.")
                 }
+                #endif
             }
         }
     }

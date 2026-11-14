@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -126,14 +130,13 @@ private struct StyleEditorView: View {
     /// A style and its messages can't be brought back, so macOS's own alert asks first. Cancel is the button
     /// that Return presses.
     private func askToDelete() {
-        let alert = NSAlert()
-        alert.messageText = "Delete “\(style.displayName)”?"
-        alert.informativeText = "Its messages and its shortcut go with it. This can't be undone."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        guard alert.runModal() == .alertSecondButtonReturn else { return }
-        onClose()
-        model.deleteSelectedStyle()
+        Platform.confirm(
+            "Delete “\(style.displayName)”?",
+            detail: "Its messages and its shortcut go with it. This can't be undone."
+        ) {
+            onClose()
+            model.deleteSelectedStyle()
+        }
     }
 
     private var messages: some View {

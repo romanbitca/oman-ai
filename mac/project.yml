@@ -39,6 +39,8 @@ targets:
         product: OmanUI
       - package: OmanKit
         product: OmanSpeech
+      - package: OmanKit
+        product: OmanSync
       - package: Sparkle
         product: Sparkle
     info:
@@ -58,6 +60,9 @@ targets:
         SUVerifyUpdateBeforeExtraction: true
         SURequireSignedFeed: true
         NSMicrophoneUsageDescription: OmanAI listens while you dictate and turns what you say into text, on this Mac.
+        # Empty unless the build is signed for iCloud, so CloudKit is never asked for a container it isn't entitled
+        # to. See docs/ICLOUD.md.
+        OmanICloudContainer: "$(OMAN_ICLOUD_CONTAINER)"
     entitlements:
       path: App/Oman.entitlements
       properties:
@@ -78,3 +83,64 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         DEVELOPMENT_TEAM: ""
         PROVISIONING_PROFILE_SPECIFIER: ""
+        # A build signed for iCloud sets this and CODE_SIGN_ENTITLEMENTS=App/OmanCloud.entitlements. See docs/ICLOUD.md.
+        OMAN_ICLOUD_CONTAINER: ""
+  # The iPhone app: the same package and icon, with screens of its own. See DECISIONS.md, 2026-11-14.
+  OmanMobile:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: iOS
+      - path: App/AppIcon.icon
+        type: file
+        buildPhase: resources
+    dependencies:
+      - package: OmanKit
+        product: OmanCore
+      - package: OmanKit
+        product: ClaudeAPI
+      - package: OmanKit
+        product: OmanStorage
+      - package: OmanKit
+        product: OmanUI
+      - package: OmanKit
+        product: OmanSpeech
+      - package: OmanKit
+        product: OmanSync
+    configFiles:
+      Debug: Config/OmanMobile.xcconfig
+      Release: Config/OmanMobile.xcconfig
+    info:
+      path: iOS/Info.plist
+      properties:
+        CFBundleDisplayName: OmanAI
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSApplicationCategoryType: public.app-category.productivity
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSMicrophoneUsageDescription: OmanAI listens while you dictate and turns what you say into text, on this iPhone.
+        NSSpeechRecognitionUsageDescription: Apple's speech model turns what you say into text, on this iPhone.
+        # iCloud tells the app when styles, actions or settings change on another device.
+        UIBackgroundModes:
+          - remote-notification
+        OmanICloudContainer: "$(OMAN_ICLOUD_CONTAINER)"
+    settings:
+      base:
+        PRODUCT_NAME: OmanAI
+        PRODUCT_BUNDLE_IDENTIFIER: com.romanbitca.oman
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        # Signing, and iCloud, come from Config/OmanMobile.xcconfig and the Signing.xcconfig it takes in.

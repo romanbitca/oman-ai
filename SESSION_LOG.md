@@ -4,6 +4,19 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-14 — OmanAI on the iPhone, and syncing through iCloud
+
+- The maintainer asked, for overnight, for an iPhone version with everything OmanAI does, as easy to use and like the Mac's in look, for optional syncing through iCloud, and for the new icon everywhere. Branch `iphone`, on top of `release-0.4.6`, which has the new icon. The choices are in DECISIONS.md
+- The package builds for iOS 26 as well as macOS 14. What only a Mac has is behind `#if os(macOS)`, and `Platform.swift` covers images, fonts, app icons and questions on both. The iPhone app, target `OmanMobile`, has four tabs: Write, Dictate, Home and Settings. It reuses the panel's, dictation's, the window's and Settings' view models
+- Added `OmanSync`: CloudKit's sync engine in a zone of its own, records for styles, actions and the shared settings in encrypted fields, newest change wins, settings field by field, and a ledger of changes in `sync.json`. A switch in Settings on both devices, off by default, shown only in builds signed for the container. 27 tests
+- The iPhone app gets a team and iCloud from `mac/Signing.xcconfig`, which git ignores; `Signing.example.xcconfig` shows how. docs/IPHONE.md says how to run it, and docs/ICLOUD.md how syncing works and what the maintainer has to set up for a Mac release to sync
+- In the simulator, headless: each tab drawn, and Home with made-up numbers in the simulator's own database. Fixed what that showed: Home ran wider than the phone once transcripts were kept, two half-width tiles cut their words, tiles ran under the clock, the lone English tile was cut off, nothing closed the keyboard in Write, Apple's model showed the framework's raw error, and messages said Mac or System Settings on the phone
+- The iPhone's Settings gained what the Mac's had and it lacked: how long Claude thinks, the language to write in, the rules, the default style, Try it in a style, and Spending. Write, Dictate and Home were also drawn in dark
+- Apple's model fails in the iOS 26.3 simulator on macOS 27 (see KNOWN_ISSUES.md). Dictation and Claude weren't tried there: one would record the Mac's microphone, the other needs a key typed into the phone
+- Every test passes, and the Mac and iPhone apps build. Not merged, released or pushed to `main`
+
+---
+
 ## 2026-11-14 — A new app icon: the menu bar's wave on blue
 
 - The maintainer asked for the app icon to match the menu bar icon, a white wave on slate blue, everywhere it shows. Branch `new-icon`, from `main` at f3badb6. The choices are in DECISIONS.md

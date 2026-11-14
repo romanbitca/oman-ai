@@ -207,6 +207,36 @@ Acceptance:
 
 ---
 
+## W16: The iPhone app [IN PROGRESS]
+
+OmanAI on the iPhone, with what the Mac app does and the same look, built from the same package. See DECISIONS.md, 2026-11-14, and docs/IPHONE.md.
+
+Acceptance:
+- The app has four tabs: Write, Dictate, Home and Settings
+- Write takes pasted, typed or dictated text and runs Proofread, Rewrite, Explain, Compose and the person's actions on it, with their styles and context, through Claude or Apple's on-device model; Use puts a result back in the box and Copy copies it
+- Dictate shows the words as they are said with every dictation model the Mac has, copies them at the end, and hands them to Proofread or Rewrite
+- Home shows the Mac window's counts, map and transcripts
+- Settings has the Mac's choices, except those only a Mac has: shortcuts, the pill, Accessibility, the screen, opening at login, updates and remembering the style in each app
+- The app has the Mac's icon and its glass look, in light and dark
+- It runs in the simulator without signing, and on a phone with the person's own team from a file git ignores
+
+---
+
+## W17: Syncing through iCloud [IN PROGRESS]
+
+The person's styles, actions and writing settings, the same on each of their devices through their own iCloud, when they turn it on. See DECISIONS.md, 2026-11-14, and docs/ICLOUD.md.
+
+Acceptance:
+- Settings has a Sync with iCloud switch, off by default, in builds signed for OmanAI's iCloud container, and nowhere else
+- A style, an action or a shared setting changed on one device shows on the other, and a deletion on one deletes on the other
+- When both changed, the newer change wins: a style or an action whole, settings one at a time
+- Turning syncing on for the first time keeps the settings the person changed over the ones still at their defaults, whichever device is first
+- What the person wrote is in CloudKit's encrypted fields
+- The API key, transcripts, dictation models and the device's own settings stay on each device
+- Signing out of iCloud, or deleting OmanAI's data from it, keeps everything on the device
+
+---
+
 ## P1: Skeleton [DONE 2026-04-28]
 
 Set up Electron app: electron-vite, TypeScript, React 18, Tailwind, shadcn/ui, Zustand, ESLint, Prettier.
