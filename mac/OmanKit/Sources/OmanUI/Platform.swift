@@ -26,6 +26,15 @@ extension Image {
 /// What the Mac and the iPhone do differently, behind one name, so the views that share them say it once.
 @MainActor
 enum Platform {
+    /// What this device is called in OmanAI's sentences.
+    static var deviceName: String {
+        #if canImport(AppKit)
+        "Mac"
+        #else
+        UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
+        #endif
+    }
+
     /// Posted when OmanAI comes to the front again, so counts and lists can be read afresh.
     static var didBecomeActive: Notification.Name {
         #if canImport(AppKit)

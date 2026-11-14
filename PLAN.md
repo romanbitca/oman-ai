@@ -216,7 +216,7 @@ Acceptance:
 - Write takes pasted, typed or dictated text and runs Proofread, Rewrite, Explain, Compose and the person's actions on it, with their styles and context, through Claude or Apple's on-device model; Use puts a result back in the box and Copy copies it
 - Dictate shows the words as they are said with every dictation model the Mac has, copies them at the end, and hands them to Proofread or Rewrite
 - Home shows the Mac window's counts, map and transcripts
-- Settings has the Mac's choices, except those only a Mac has: shortcuts, the pill, Accessibility, the screen, opening at login and updates
+- Settings has the Mac's choices, except those only a Mac has: shortcuts, the pill, Accessibility, the screen, opening at login, updates and remembering the style in each app
 - The app has the Mac's icon and its glass look, in light and dark
 - It runs in the simulator without signing, and on a phone with the person's own team from a file git ignores
 
