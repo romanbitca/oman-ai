@@ -12,6 +12,7 @@ struct MobileSettingsScreen: View {
         NavigationStack(path: $path) {
             Form {
                 writing
+                writingChoices
                 Section {
                     Picker("Show what Proofread changed", selection: model.preference(\.proofreadChanges)) {
                         ForEach(ProofreadChanges.allCases) { Text($0.displayName).tag($0) }
@@ -22,6 +23,11 @@ struct MobileSettingsScreen: View {
                 styles
                 actions
                 if model.offersDictation { dictation }
+                Section {
+                    NavigationLink("Spending", value: MobileSettingsPage.spending)
+                } footer: {
+                    Text("What Claude cost, and how many texts you put back.")
+                }
                 if let sync = model.sync { CloudSyncSection(sync: sync) }
                 about
             }
@@ -32,6 +38,7 @@ struct MobileSettingsScreen: View {
                 case .action(let id): MobileActionEditor(model: model, id: id)
                 case .dictationModels: MobileDictationModels(model: model)
                 case .dictationWords: MobileDictationWords(model: model)
+                case .spending: SpendingSettingsView(model: model)
                 }
             }
         }
@@ -75,8 +82,50 @@ struct MobileSettingsScreen: View {
         }
     }
 
+    /// The Mac's Writing page, under the model and the key: how long Claude thinks, the language to write in, and
+    /// the rules every rewrite follows.
+    @ViewBuilder
+    private var writingChoices: some View {
+        if !model.selectedModel.isLocal {
+            Section {
+                Picker("How long Claude thinks", selection: model.preference(\.quality)) {
+                    ForEach(WritingQuality.allCases) { quality in
+                        Text(quality.displayName).tag(quality)
+                    }
+                }
+            } footer: {
+                Text("\(model.preferences.quality.detail) Proofread always takes the time to check, whatever is chosen here.")
+            }
+        }
+        Section {
+            LabeledContent("Always write in") {
+                TextField("Always write in", text: model.preference(\.outputLanguage), prompt: Text("The language of your text"))
+                    .multilineTextAlignment(.trailing)
+                    .autocorrectionDisabled()
+            }
+        }
+        Section {
+            TextEditor(text: model.preference(\.customInstructions))
+                .frame(minHeight: 88)
+                .overlay(alignment: .topLeading) {
+                    if model.preferences.customInstructions.isEmpty {
+                        Text("For example: use British spelling and never use exclamation marks.")
+                            .foregroundStyle(.tertiary)
+                            .padding(.top, 8)
+                            .padding(.leading, 5)
+                            .allowsHitTesting(false)
+                    }
+                }
+        } header: {
+            Text("Always follow these rules")
+        } footer: {
+            Text("Applies to Rewrite and Compose. Proofread only fixes mistakes.")
+        }
+    }
+
     // MARK: Styles and actions
 
+    @ViewBuilder
     private var styles: some View {
         Section {
             ForEach(model.styles) { style in
@@ -98,6 +147,18 @@ struct MobileSettingsScreen: View {
             Text("Styles")
         } footer: {
             Text("A style rewrites in the voice of real messages you paste into it.")
+        }
+        if !model.styles.isEmpty {
+            Section {
+                Picker("Default style", selection: model.preference(\.defaultStyleID)) {
+                    Text("As written").tag(UUID?.none)
+                    ForEach(model.styles) { style in
+                        Text(style.displayName).tag(UUID?.some(style.id))
+                    }
+                }
+            } footer: {
+                Text("Write starts with it until you choose another style there, which it then keeps.")
+            }
         }
     }
 
@@ -171,6 +232,7 @@ enum MobileSettingsPage: Hashable {
     case action(UUID)
     case dictationModels
     case dictationWords
+    case spending
 }
 
 /// A style: its name, a note, and the real messages it is built from.
@@ -208,6 +270,18 @@ private struct MobileStyleEditor: View {
                     Text("Messages")
                 } footer: {
                     Text(model.sampleSummary)
+                }
+                Section("Try it") {
+                    TextField("Type a sentence to rewrite in this style", text: $model.tryItText, axis: .vertical)
+                        .lineLimit(1...4)
+                    Button(model.isTrying ? "Writing…" : "Try") { model.tryIt() }
+                        .disabled(model.tryItText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.isTrying)
+                    if !model.tryItResult.isEmpty {
+                        Text(model.tryItResult).textSelection(.enabled)
+                    }
+                    if let error = model.tryItError {
+                        Text(error).font(.footnote).foregroundStyle(.red)
+                    }
                 }
                 Section {
                     Button("Delete Style", role: .destructive) {

@@ -29,100 +29,114 @@ struct SpendingSettingsView: View {
     private var note: String {
         let counted = "A fix is a text OmanAI wrote that you put back into an app with Replace or Insert, with any "
             + "model. Fixes are counted from version 0.4.1 on. Money is estimated from the tokens Anthropic reports "
-            + "for each Claude request, at list prices; Apple's on-device model is free. Only OmanAI on this Mac "
-            + "is counted, and never the text itself."
+            + "for each Claude request, at list prices; Apple's on-device model is free. Only OmanAI on this "
+            + "\(Platform.deviceName) is counted, and never the text itself."
         return model.spending.hasEntries ? counted : "Nothing yet. " + counted
     }
 
     var body: some View {
-        SettingsForm {
-            Section {
-                Picker("Period", selection: $period) {
-                    ForEach(SpendingSummary.Period.allCases) { period in
-                        Text(period.title).tag(period)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+        #if os(macOS)
+        SettingsForm { sections }
+            .onAppear { model.reloadSpending() }
+        #else
+        // On the iPhone the page is one of Settings' own, opened from its list.
+        Form { sections }
+            .navigationTitle("Spending")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear { model.reloadSpending() }
+        #endif
+    }
 
-                HStack(alignment: .top, spacing: 32) {
-                    SpendingFigure(
-                        color: SpendingChart.spentColor,
-                        value: SpendingFormat.amount(summary.cost),
-                        detail: spentDetail,
-                        secondary: summary.tokens > 0 ? SpendingFormat.tokens(summary.tokens) : nil
-                    )
-                    SpendingFigure(
-                        color: SpendingChart.fixesColor,
-                        value: summary.fixes.formatted(),
-                        detail: fixesDetail,
-                        secondary: writtenDetail
-                    )
-                    Spacer(minLength: 0)
+    @ViewBuilder
+    private var sections: some View {
+        Section {
+            Picker("Period", selection: $period) {
+                ForEach(SpendingSummary.Period.allCases) { period in
+                    Text(period.title).tag(period)
                 }
-                .padding(.vertical, 2)
-
-                SpendingChart(bars: summary.bars, period: period)
-
-                if let error = model.spendingError {
-                    SettingsError(text: error)
-                }
-            } footer: {
-                Text(note)
             }
+            // Five choices are too many side by side on a phone, which shows them in a menu.
+            #if os(macOS)
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            #endif
 
-            if !summary.kinds.isEmpty || summary.unsplitCost > 0 {
-                Section("By action") {
-                    ForEach(summary.kinds) { kind in
-                        LabeledContent(kind.kind.displayName) {
-                            HStack(spacing: 14) {
-                                Text(Self.detail(of: kind)).foregroundStyle(.tertiary)
-                                Text(SpendingFormat.amount(kind.cost))
-                                    .monospacedDigit()
-                                    .frame(minWidth: 64, alignment: .trailing)
-                            }
-                        }
-                    }
-                    if summary.unsplitCost > 0 {
-                        LabeledContent {
-                            Text(SpendingFormat.amount(summary.unsplitCost))
+            HStack(alignment: .top, spacing: 32) {
+                SpendingFigure(
+                    color: SpendingChart.spentColor,
+                    value: SpendingFormat.amount(summary.cost),
+                    detail: spentDetail,
+                    secondary: summary.tokens > 0 ? SpendingFormat.tokens(summary.tokens) : nil
+                )
+                SpendingFigure(
+                    color: SpendingChart.fixesColor,
+                    value: summary.fixes.formatted(),
+                    detail: fixesDetail,
+                    secondary: writtenDetail
+                )
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 2)
+
+            SpendingChart(bars: summary.bars, period: period)
+
+            if let error = model.spendingError {
+                SettingsError(text: error)
+            }
+        } footer: {
+            Text(note)
+        }
+
+        if !summary.kinds.isEmpty || summary.unsplitCost > 0 {
+            Section("By action") {
+                ForEach(summary.kinds) { kind in
+                    LabeledContent(kind.kind.displayName) {
+                        HStack(spacing: 14) {
+                            Text(Self.detail(of: kind)).foregroundStyle(.tertiary)
+                            Text(SpendingFormat.amount(kind.cost))
                                 .monospacedDigit()
                                 .frame(minWidth: 64, alignment: .trailing)
-                        } label: {
-                            Text("Earlier requests")
-                            Text("From before OmanAI noted what each request was for.")
                         }
                     }
                 }
-            }
-
-            if !summary.apps.isEmpty {
-                Section("By app") {
-                    ForEach(summary.apps.prefix(6)) { app in
-                        LabeledContent(app.name) {
-                            Text("\(SpendingFormat.fixes(app.fixes)) · \(SpendingFormat.written(app.written))")
-                                .foregroundStyle(.tertiary)
-                        }
+                if summary.unsplitCost > 0 {
+                    LabeledContent {
+                        Text(SpendingFormat.amount(summary.unsplitCost))
+                            .monospacedDigit()
+                            .frame(minWidth: 64, alignment: .trailing)
+                    } label: {
+                        Text("Earlier requests")
+                        Text("From before OmanAI noted what each request was for.")
                     }
                 }
             }
+        }
 
-            if !summary.models.isEmpty {
-                Section("By model") {
-                    ForEach(summary.models) { share in
-                        LabeledContent(share.name) {
-                            HStack(spacing: 14) {
-                                Text(SpendingFormat.requests(share.requests)).foregroundStyle(.tertiary)
-                                Text(SpendingFormat.amount(share.cost))
-                                    .monospacedDigit()
-                                    .frame(minWidth: 64, alignment: .trailing)
-                            }
+        if !summary.apps.isEmpty {
+            Section("By app") {
+                ForEach(summary.apps.prefix(6)) { app in
+                    LabeledContent(app.name) {
+                        Text("\(SpendingFormat.fixes(app.fixes)) · \(SpendingFormat.written(app.written))")
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+        }
+
+        if !summary.models.isEmpty {
+            Section("By model") {
+                ForEach(summary.models) { share in
+                    LabeledContent(share.name) {
+                        HStack(spacing: 14) {
+                            Text(SpendingFormat.requests(share.requests)).foregroundStyle(.tertiary)
+                            Text(SpendingFormat.amount(share.cost))
+                                .monospacedDigit()
+                                .frame(minWidth: 64, alignment: .trailing)
                         }
                     }
                 }
             }
         }
-        .onAppear { model.reloadSpending() }
     }
 
     /// "12 written · 9 put back", or for Explain, whose answers are never put back, only how many.
