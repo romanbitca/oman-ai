@@ -2,6 +2,9 @@ import SwiftUI
 
 struct PanelHomeView: View {
     @Bindable var model: PanelViewModel
+    #if os(iOS)
+    @FocusState private var isTyping: Bool
+    #endif
 
     var body: some View {
         PanelScrollArea {
@@ -62,6 +65,7 @@ struct PanelHomeView: View {
                     .font(.system(size: 16))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 96, maxHeight: 220)
+                    .focused($isTyping)
             }
             HStack(spacing: 8) {
                 LiquidButton(title: "Paste", symbol: "doc.on.clipboard") { model.pasteWorkingText() }
@@ -69,6 +73,9 @@ struct PanelHomeView: View {
                     LiquidButton(title: "Clear", symbol: "xmark") { model.workingText = "" }
                 }
                 Spacer(minLength: 0)
+                if isTyping {
+                    LiquidButton(title: "Done", symbol: "keyboard.chevron.compact.down") { isTyping = false }
+                }
                 if let dictation = model.dictation {
                     DictationMicButton(controller: dictation, field: .workingText)
                 }

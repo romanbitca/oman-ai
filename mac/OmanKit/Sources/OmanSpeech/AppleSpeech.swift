@@ -40,7 +40,11 @@ enum AppleSpeech {
         case .supported, .downloading:
             return .needsDownload(bytes: nil)
         case .unsupported:
+            #if os(macOS)
             return .unavailable("This Mac can't run Apple's model for this language.")
+            #else
+            return .unavailable("This iPhone can't run Apple's model for this language.")
+            #endif
         @unknown default:
             return .unavailable("Apple's model isn't available right now.")
         }

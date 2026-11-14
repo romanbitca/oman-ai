@@ -44,7 +44,8 @@ struct MobileHomeScreen: View {
                     let row = Array(wide[start..<min(start + 2, wide.count)])
                     HomeColumns(spans: Array(repeating: 6 / row.count, count: row.count)) {
                         ForEach(Array(row.enumerated()), id: \.offset) { _, tile in
-                            wideTile(tile, isAlone: wide.count == 1)
+                            // Alone in its row a tile lies flat on the Mac, which is too short for a phone's width.
+                            wideTile(tile, isAlone: false)
                         }
                     }
                 }
@@ -59,6 +60,23 @@ struct MobileHomeScreen: View {
             .padding(.bottom, 24)
             .frame(maxWidth: 640)
             .frame(maxWidth: .infinity)
+        }
+        // Tiles scrolled up fade into the page under the clock rather than run into it. iOS's own soft edge only
+        // shows under a bar, and this screen has none.
+        .overlay(alignment: .top) {
+            GeometryReader { proxy in
+                LinearGradient(
+                    stops: [
+                        .init(color: HomePalette.page, location: 0),
+                        .init(color: HomePalette.page, location: 0.55),
+                        .init(color: HomePalette.page.opacity(0), location: 1),
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: proxy.safeAreaInsets.top + 18)
+                .offset(y: -proxy.safeAreaInsets.top)
+            }
+            .allowsHitTesting(false)
         }
         .foregroundStyle(HomePalette.ink)
         .background(HomePalette.page)

@@ -14,7 +14,11 @@ extension DictationModel.Group {
         switch self {
         case .live: "Your words appear while you speak."
         case .accurate: "Your words follow a moment later, read again as you go, which makes them more accurate."
+        #if os(macOS)
         case .small: "Smaller downloads, for a Mac short on space."
+        #else
+        case .small: "Smaller downloads, for an iPhone short on space."
+        #endif
         }
     }
 }
