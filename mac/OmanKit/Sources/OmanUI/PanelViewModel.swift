@@ -149,8 +149,8 @@ public final class PanelViewModel {
     }
 
     /// Reads styles, actions and settings again, keeping the screen and the text. The iPhone's panel stays open in
-    /// its tab while Settings, in another, changes them.
-    func reloadChoices() {
+    /// its tab while Settings, in another, changes them, and a sync can change them while the panel shows.
+    public func reloadChoices() {
         preferences = (try? services.settings.preferences()) ?? AppPreferences()
         selectedModel = (try? services.settings.selectedModel()) ?? .default
         styles = (try? services.styles.loadStyles()) ?? []

@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "SystemBridge", targets: ["SystemBridge"]),
         .library(name: "OmanUI", targets: ["OmanUI"]),
         .library(name: "OmanSpeech", targets: ["OmanSpeech"]),
+        .library(name: "OmanSync", targets: ["OmanSync"]),
     ],
     dependencies: [
         // GRDB 7.12.0, pinned to its commit so a release never picks up code nobody chose.
@@ -42,10 +43,12 @@ let package = Package(
                 .product(name: "WhisperKit", package: "argmax-oss-swift"),
             ]
         ),
+        .target(name: "OmanSync", dependencies: ["OmanCore"]),
         .testTarget(name: "ClaudeAPITests", dependencies: ["ClaudeAPI"]),
         .testTarget(name: "OmanStorageTests", dependencies: ["OmanStorage"]),
         .testTarget(name: "SystemBridgeTests", dependencies: ["SystemBridge"]),
         .testTarget(name: "OmanUITests", dependencies: ["OmanUI"]),
         .testTarget(name: "OmanSpeechTests", dependencies: ["OmanSpeech"]),
+        .testTarget(name: "OmanSyncTests", dependencies: ["OmanSync"]),
     ]
 )

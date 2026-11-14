@@ -1,0 +1,9 @@
+// Copy this file to Signing.xcconfig, in the same folder, and run xcodegen generate. Git ignores the copy.
+
+// Your team's ID, from developer.apple.com, Membership details. A free Apple Account works too, without iCloud.
+DEVELOPMENT_TEAM = ABCDE12345
+
+// To sync styles, actions and settings through iCloud, which needs a paid developer account, take away the two
+// slashes in front of these two lines. Xcode registers the container the first time it signs. See docs/ICLOUD.md.
+// OMAN_ICLOUD_CONTAINER = iCloud.com.romanbitca.oman
+// CODE_SIGN_ENTITLEMENTS = iOS/OmanMobileCloud.entitlements

@@ -28,11 +28,17 @@
 	<string>OmanAI listens while you dictate and turns what you say into text, on this iPhone.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Apple's speech model turns what you say into text, on this iPhone.</string>
+	<key>OmanICloudContainer</key>
+	<string>$(OMAN_ICLOUD_CONTAINER)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
