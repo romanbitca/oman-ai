@@ -187,6 +187,7 @@ Native macOS controls, in light and dark.
 - With Apple's on-device model, your writing stays on your Mac.
 - Dictation listens and turns speech into text on your Mac. The sound is never sent anywhere and never kept. The database keeps the text of each dictation so you can find it again in OmanAI's window; choose there how many to keep, or none, and delete them. For that window's numbers it also keeps, for each dictation, when it was, how many words, how long it took and which app it went to, never the words. These counts stay when a transcript is deleted.
 - The screen is included only when you turn that on, and the panel shows the picture before it is sent.
+- Syncing through iCloud is off unless you turn it on, and only builds signed for OmanAI's iCloud container have the switch. With it on, your styles, actions and writing settings go to your own iCloud, in encrypted fields only your devices can read. Your API key, transcripts and dictation stay on each device. See [docs/ICLOUD.md](docs/ICLOUD.md).
 - There are no analytics and no account. Apart from your writing requests, OmanAI only contacts GitHub to check for updates, and Hugging Face when you download a dictation model.
 
 macOS asks for up to three permissions. Accessibility lets OmanAI read your selection and paste the result. Screen Recording is only needed if you use the Screen switch, and the Microphone only if you dictate.
@@ -211,10 +212,13 @@ swift test
 
 Local builds are signed ad hoc and never update themselves. macOS treats each rebuild as a new app for its privacy permissions, so test Accessibility from a copy in `/Applications`.
 
+The iPhone app is the `OmanMobile` scheme in the same project, for iOS 26 or later. It runs in the simulator without signing; to run it on a phone, see [docs/IPHONE.md](docs/IPHONE.md).
+
 ## How the code is organised
 
 - `mac/App` holds the menu bar item, the panel window and the updater.
-- `mac/OmanKit` is a Swift package with all the logic: `OmanCore` (shared types), `ClaudeAPI` (Claude and Apple's model), `OmanStorage` (database and Keychain), `SystemBridge` (selection, paste, screen, shortcuts) and `OmanUI` (panel and Settings).
+- `mac/iOS` holds the iPhone app's entry point and its way to reach the phone's system.
+- `mac/OmanKit` is a Swift package with all the logic: `OmanCore` (shared types), `ClaudeAPI` (Claude and Apple's model), `OmanStorage` (database and Keychain), `SystemBridge` (selection, paste, screen, shortcuts), `OmanSpeech` (dictation), `OmanSync` (iCloud) and `OmanUI` (panel, Settings, OmanAI's window and the iPhone's screens).
 - `site` holds the website and the documentation: static HTML, CSS and JavaScript with no build step, served by nginx from `site/Dockerfile`.
 - [PLAN.md](PLAN.md), [DECISIONS.md](DECISIONS.md) and [SESSION_LOG.md](SESSION_LOG.md) record the roadmap, the reasoning behind choices and the history of the work. [CLAUDE.md](CLAUDE.md) holds instructions for Claude Code.
 

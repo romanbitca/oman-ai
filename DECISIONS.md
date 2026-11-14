@@ -643,3 +643,39 @@ The maintainer asked for the app icon to match the menu bar icon, one white wave
 - **One file serves macOS and iOS** (`"squares": "shared"`), so the iPhone app can use it as it is. It compiles for iPhone and iPad without a warning, and the Dark, Clear and Tinted looks work on both. In Dark the wave takes the blue, on black.
 - **The website and the README show the same icon:** the favicon, which is also the README's picture, and the logo beside the name at the top of both pages. The favicon adds a soft light along its top edge and a shadow under the wave, as the app's glass has. The pages ask for `favicon.svg?v=2`, so neither Cloudflare nor a browser keeps showing the old one.
 - **The picture shown when the site is shared is `og-2.png`:** the same layout, words and cards as before, with the new icon on blue instead of the old green. It has a new name because Cloudflare keeps a file for a week, and `og.png` is deleted, since nothing names it any more.
+
+## 2026-11-14 — OmanAI on the iPhone
+
+The maintainer asked for an iPhone version that does everything OmanAI does now, opened, dictated into and proofread from, with a design like the Mac's and as easy to use. The choices below are the assistant's.
+
+- **One package for both.** The iPhone app is a second target in `project.yml`, `OmanMobile`, built from the same `OmanKit` as the Mac app. It reuses the panel's, dictation's, the window's and Settings' view models whole, so a change to how a proofread or a dictation works reaches both. What only a Mac has is behind `#if os(macOS)`: the status item, the floating panel, global shortcuts, keys held on their own, the pill, Accessibility, the picture of the screen, opening at login and Sparkle.
+- **iOS 26 and later,** for Liquid Glass, which the Mac panel's look follows, for SwiftUI's new tabs, and for Apple's on-device model and SpeechAnalyzer, which need it anyway.
+- **The same bundle identifier as the Mac app,** `com.romanbitca.oman`, so both are one app to Apple and can share one iCloud container.
+- **Four tabs.**
+  - **Write** is the Mac panel's own screens, with a box on top in place of the selection, since iOS lets no app read or change another app's text. The box takes typed, pasted or dictated text. A result's main button is **Use**, which puts it back in the box for the next step, and Copy takes it away.
+  - **Dictate** has one large microphone button. The words show as they are said, as in the pill, and are copied when the dictation ends. Proofread and Rewrite open Write on them.
+  - **Home** is OmanAI's window: the counts, the map and the transcripts.
+  - **Settings** is the phone's own grouped list, with the Mac's choices except the ones only a Mac has.
+- **The look:** the panel's glass tiles over a soft teal, blue and violet background, the Mac's glass buttons and chips, and the system's tab bar, which iOS 26 draws as glass.
+- **What the system bridge does on the phone:** writing into another app becomes copying, the Accessibility permission counts as given since there is none to ask for, the microphone is asked for through `AVAudioApplication`, and the start and end of a dictation play the system's own sounds.
+- **Not built, and the next steps for getting text in and out without copy and paste:** a share extension, a keyboard, Shortcuts actions, a widget or a control in Control Center.
+- **Not in the App Store.** It is run from Xcode, signed with the person's own team from `mac/Signing.xcconfig`, which git ignores (see docs/IPHONE.md). The simulator needs no signing.
+
+## 2026-11-14 — Syncing through iCloud
+
+The maintainer asked that the person may, or may not, connect their Apple Account and sync everything through iCloud. The choices below are the assistant's.
+
+- **Off until the person turns it on,** with a switch on each device: in Settings, General on the Mac, and in Settings on the iPhone.
+- **What syncs:** the styles, the actions, and the settings that belong to the person: Quality, the language to answer in, the instructions, the default style, whether each app remembers its style, how Proofread shows its changes, the dictation words and whether filler words are taken out.
+- **What doesn't:**
+  - The API key stays in each device's Keychain. It is a secret, and sharing it through iCloud Keychain would need the Mac app and the iPhone app in one keychain group, which a Developer ID app only gets with a provisioning profile.
+  - Transcripts and counts stay on each device, in this version. They are the largest data and the most private, and the window counts what was done on that device.
+  - What belongs to the device stays there: the writing model, since Apple's model runs on some devices and not others, the dictation model and its language, the theme, the panel, shortcuts, the pill, the microphone, sounds, and the style last chosen in each app.
+- **How:** Apple's CloudKit sync engine, `CKSyncEngine`, in a zone of its own, `OmanAI`, in the private database of the person's iCloud, in a new package target, `OmanSync`. Each style and each action is a record, and the settings are one. What the person wrote is in CloudKit's encrypted fields; only the dates of changes are plain.
+- **When both changed, the newer change wins.** A style or an action is taken whole. Settings are weighed one field at a time, so a change to one on the iPhone doesn't undo a change to another on the Mac. At the same date, iCloud's wins, so the second device takes on what the first sent.
+- **A setting changed before anything was noted beats one still at its default.** Without this, a new iPhone turning syncing on after the Mac would have nothing to tell its defaults from the Mac's choices, and could undo them.
+- **A deletion is followed, unless the other device changed the style or action since;** then the change brings it back. Deletions made while syncing was off are sent when it is turned on.
+- **Each change and its date are noted in `sync.json`, beside the database,** whether syncing is on or not, by stores that stand in front of the database's. The database is unchanged. The same file keeps the sync engine's state and the parts of each record iCloud needs.
+- **Changes are fetched** when OmanAI starts, when it comes to the front, and every five minutes while it runs. On the iPhone, iCloud can also tell the app, which has the remote notification background mode.
+- **Signing out of iCloud keeps everything on the device** and forgets what was learnt from that account. Another account signing in gets everything sent again. When OmanAI's data is deleted from iCloud, syncing stops on each device rather than sending it all back.
+- **Only builds signed for the container can sync.** CloudKit stops an app that asks for a container it isn't entitled to, so the container's name comes from the build setting `OMAN_ICLOUD_CONTAINER` through the Info.plist, and is empty unless set. Without it there is no switch and CloudKit is never touched. The iPhone app sets it from `Signing.xcconfig`. The Mac's Developer ID build needs a provisioning profile with iCloud, which only the maintainer can make (see docs/ICLOUD.md), so releases don't sync yet.

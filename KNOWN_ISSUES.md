@@ -4,6 +4,31 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-14 — The iPhone app and syncing through iCloud: what has been tried, and what hasn't
+
+Tried:
+- The iPhone app builds for the simulator, an iPhone 17 Pro with iOS 26.3, and runs in it. Each tab was drawn there, headless, in light: Write, Dictate, Home and Settings, and the icon on the home screen. Home was drawn empty, and with made-up dictations and proofreads put into the simulator's own database.
+- What that showed, and is fixed: Home ran wider than the phone once transcripts were kept, because the search sat beside the title and the menu; the Speed tile's chip and the Fixes tile's legend were cut off at half width; tiles scrolled up ran into the clock; the English tile alone in its row was cut off; nothing closed the keyboard in Write; Apple's model showed the framework's own error text; and messages about the microphone, Apple's models, a small download and the transcripts kept said Mac or System Settings on the phone.
+- Text typed into Write went to Proofread with Apple's model, and came back with the error below.
+- The Mac app builds and every test of the package passes, so the Mac's Home is unchanged apart from the Speed chip, which now drops "typing" only where it doesn't fit.
+- Syncing: 27 tests of `OmanSync`, without CloudKit's servers. They cover which version wins for a style, an action and each setting, a deletion against a change, the first sync from a Mac whose settings were changed and a new iPhone, records written and read back with their encrypted fields, the ledger's file, and the stores noting each change and nothing else. A build without a container never reaches CloudKit.
+
+Not yet tried:
+- The app on a real iPhone, and dictation, which would have recorded the Mac's microphone through the simulator.
+- Apple's on-device model on a phone. In the iOS 26.3 simulator on macOS 27 the model reports itself available, but its host fails with `promptTemplateNotFound` for the safety model, so every request ends with an error. The error comes back as a plain `NSError` in the framework's domain, code -1, which no case of `GenerationError` matches, so OmanAI now says "Apple's on-device model couldn't write this. Try again, or choose Claude in Settings." and logs the error under `apple-model`. The Mac's own model is unaffected.
+- Claude from the phone, which needs an API key typed into it.
+- Syncing end to end: it needs a build signed for the container, an iCloud account on two devices, and, for a Mac release, a Developer ID profile with iCloud (see docs/ICLOUD.md).
+
+Known limits:
+- iOS lets no app read or change another app's text, so text comes into Write by pasting, typing or dictating, and goes out with Copy.
+- With a free Apple Account the app runs for seven days, and can't use iCloud.
+- Builds run from Xcode use CloudKit's development environment and release builds its production one, which keep separate data. A Mac release and an iPhone build from Xcode only see each other's changes when the iPhone's entitlements ask for production.
+- Changes from another device arrive when OmanAI starts, comes to the front or every five minutes. A push from iCloud can bring them sooner on the iPhone, which hasn't been tried.
+- Two edits to the same style on two devices before either syncs keep only the newer one.
+- A setting whose value an older version can't read, such as a choice added later, keeps that version's own value on its device.
+
+---
+
 ## 2026-11-14 — The app icon: a direction macOS ignores, and drawing it without a window
 
 - An Icon Composer file's background gradient is always drawn from top to bottom. Its `orientation` in `icon.json` changes nothing: across, corner to corner and upside down all came out the same, in Icon Composer's `ictool`, in the `.icns` that `actool` makes for macOS 14 and 15, and in macOS 27's own drawing. A gradient on a layer does follow its direction. So `AppIcon.icon` asks for the top left to the bottom right and shows top to bottom
