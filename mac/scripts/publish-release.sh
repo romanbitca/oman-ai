@@ -35,8 +35,15 @@ rm -rf "$FEED"
 mkdir -p "$FEED"
 cp "$OUT/$NAME.zip" "$FEED/"
 
-# A draft isn't "latest", so the app can't see the new feed until the zip is uploaded too.
-gh release create "$TAG" --repo "$REPO" --verify-tag --draft --generate-notes --title "OmanAI $VERSION"
+# A draft isn't "latest", so the app can't see the new feed until the zip is uploaded too. Notes written for this
+# version, in docs/release-notes, say what changed in the person's words, and the update window shows them too.
+# Without them GitHub lists the pull requests merged since the last release.
+NOTES="../docs/release-notes/$VERSION.md"
+if [ -f "$NOTES" ]; then
+    gh release create "$TAG" --repo "$REPO" --verify-tag --draft --notes-file "$NOTES" --title "OmanAI $VERSION"
+else
+    gh release create "$TAG" --repo "$REPO" --verify-tag --draft --generate-notes --title "OmanAI $VERSION"
+fi
 gh release view "$TAG" --repo "$REPO" --json body --jq .body >"$FEED/$NAME.md"
 
 # The app asks for a signed feed (SURequireSignedFeed), so generate_appcast signs the feed and the

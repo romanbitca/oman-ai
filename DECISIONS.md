@@ -643,3 +643,11 @@ The maintainer asked for the app icon to match the menu bar icon, one white wave
 - **One file serves macOS and iOS** (`"squares": "shared"`), so the iPhone app can use it as it is. It compiles for iPhone and iPad without a warning, and the Dark, Clear and Tinted looks work on both. In Dark the wave takes the blue, on black.
 - **The website and the README show the same icon:** the favicon, which is also the README's picture, and the logo beside the name at the top of both pages. The favicon adds a soft light along its top edge and a shadow under the wave, as the app's glass has. The pages ask for `favicon.svg?v=2`, so neither Cloudflare nor a browser keeps showing the old one.
 - **The picture shown when the site is shared is `og-2.png`:** the same layout, words and cards as before, with the new icon on blue instead of the old green. It has a new name because Cloudflare keeps a file for a week, and `og.png` is deleted, since nothing names it any more.
+
+## 2026-11-16 — Notes for each release, and the installer's arrow in the icon's blue
+
+The maintainer said yes to releasing 0.4.6, and asked for its version to show on GitHub and for the installer to look good, with a small instruction to drag OmanAI to Applications.
+
+- **Each release can have notes of its own,** in `docs/release-notes/<version>.md`, written for the people who use OmanAI. The publish job gives them to the GitHub release, and the app's update window shows the same text. Without them it falls back to GitHub's generated notes, which list the pull requests merged since the last release: 0.4.6 reaches `main` by fast-forward, so those would have been empty.
+- **The installer keeps its picture:** "Drag OmanAI to Applications", a line on what to do next, and an arrow between the two icons. The arrow now runs from the slate blue of the new icon into the blue of the Applications folder, where it ran from teal to violet. The soft teal and violet corners stay, as on the website. Also tried: the corner behind the title in the icon's slate blue, which made the picture look grey.
+- The window was checked by building the disk image, reading its layout back, and drawing it with the app's and the folder's real icons, without opening Finder.

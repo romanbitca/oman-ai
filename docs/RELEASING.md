@@ -71,7 +71,7 @@ A release starts from a tag, so who can push one decides who can start a release
 
 ## Publishing a release
 
-Pick the next version number and push a tag from an up-to-date `main`:
+Pick the next version number. Write what changed for the people who use OmanAI in `docs/release-notes/0.2.0.md`, with that number, and get it onto `main`: the release page and the app's update window show it. Without it, the release lists the pull requests merged since the last one. Then push a tag from an up-to-date `main`:
 
 ```bash
 git tag v0.2.0
@@ -82,7 +82,7 @@ The [Release workflow](../.github/workflows/release.yml) then runs three jobs:
 
 1. **check** makes sure the tag is on `main` and runs the tests. It has no access to any secret.
 2. **build** waits for your approval, then builds the app, signs it with Developer ID, notarizes it with Apple and staples the ticket. It then puts the app in a disk image, `OmanAI-0.2.0.dmg`, and signs, notarizes and staples that too.
-3. **publish** waits for your approval, then creates a GitHub release with generated notes, `OmanAI-0.2.0.zip`, a signed `appcast.xml`, and the disk image twice: as `OmanAI-0.2.0.dmg` and as `OmanAI.dmg`.
+3. **publish** waits for your approval, then creates a GitHub release with the version's notes, `OmanAI-0.2.0.zip`, a signed `appcast.xml`, and the disk image twice: as `OmanAI-0.2.0.dmg` and as `OmanAI.dmg`.
 
 GitHub emails you when a job is waiting. Open the run and press **Review deployments**. There are two approvals because building and publishing run on separate machines, so nothing that runs during the build can reach the key that signs updates or the permission to publish.
 
