@@ -69,6 +69,7 @@
       <a href="#start">Getting started</a>
       <a href="#panel">The panel</a>
       <a href="#actions">Proofread, Rewrite, Explain</a>
+      <a href="#your-actions">Your own actions</a>
       <a href="#style-chips">Choosing a style</a>
       <a href="#context">Context</a>
       <a href="#result">The result</a>
@@ -95,6 +96,10 @@
         <li>Open it. OmanAI has no Dock icon and no window: it adds a small wave to your menu bar.</li>
         <li>Click the wave. The first time, the panel walks you through setup.</li>
       </ol>
+      <figure class="narrow">
+        <img src="../media/installer-1.webp" width="1320" height="800" loading="lazy" alt="OmanAI's disk image: the OmanAI app on the left, an arrow, and the Applications folder on the right, under the words Drag OmanAI to Applications">
+        <figcaption>The disk image. Drag OmanAI onto Applications.</figcaption>
+      </figure>
       <h3>Setup</h3>
       <dl class="controls">
         <div><dt>Anthropic API key</dt><dd>Paste a key from the <a href="https://console.anthropic.com/">Anthropic Console</a> and press Save. OmanAI checks the key with Anthropic before storing it in your Mac's Keychain. If you would rather not use a key, choose Apple's on-device model instead.</dd></div>
@@ -118,6 +123,7 @@
         <div><dt>Proofread</dt><dd>Fixes spelling, grammar and punctuation and keeps your wording.</dd></div>
         <div><dt>Rewrite</dt><dd>Rewrites the text in the chosen style.</dd></div>
         <div><dt>Explain</dt><dd>Tells you how a reader will understand the text.</dd></div>
+        <div><dt>Your actions</dt><dd>Your own instructions, on a line of their own under Proofread, Rewrite and Explain, once you have made one. See <a href="#your-actions">Your own actions</a>.</dd></div>
         <div><dt>Style chips</dt><dd>As written and your own styles. One is always chosen. See <a href="#style-chips">Choosing a style</a>.</dd></div>
         <div><dt>Screen, Messages, Clipboard</dt><dd>Three switches that add context. See <a href="#context">Context</a>.</dd></div>
         <div><dt>Compose</dt><dd>Opens the screen for writing something new.</dd></div>
@@ -136,6 +142,19 @@
       <figure class="narrow">
         <img src="../media/panel-working-3.webp" width="1080" height="560" loading="lazy" alt="The panel while an answer is being written, with a Stop button">
       </figure>
+    </section>
+
+    <section id="your-actions">
+      <h2>Your own actions</h2>
+      <p>An action is an instruction you write once, such as "Make it shorter" or "Turn into bullet points", and run on the text you select, from the panel or with a shortcut of its own. It is a saved version of what you would type into Describe your change.</p>
+      <dl class="controls">
+        <div><dt>Making one</dt><dd>In Settings, Actions, press <strong>Add an Action…</strong>, give it a name, write the instruction as you would in Describe your change, and choose what becomes of its result. Every change is saved as you make it.</dd></div>
+        <div><dt>Replace or Insert</dt><dd>The result can go into the app, as Rewrite's does. It is written in the chosen style, with the context that is on, and has Replace, Copy, Try again and Make a change.</dd></div>
+        <div><dt>Only to read</dt><dd>The answer is only shown in the panel, to read and copy, as Explain's is. It uses the context but not your style, and it is never put into the app.</dd></div>
+        <div><dt>In the panel</dt><dd>Your actions sit on a line under Proofread, Rewrite and Explain, in the order you made them, and the line scrolls sideways when there are many. A click runs one on your selection. A sparkle marks an action whose result can go into the app, reading glasses one that is only to read, and pointing at a chip shows its instruction.</dd></div>
+        <div><dt>Shortcut</dt><dd>Give an action a shortcut in its sheet, or on the <a href="#shortcuts">Shortcuts</a> page, and it runs on the selection in any app.</dd></div>
+      </dl>
+      <p>An action needs selected text, as Rewrite does: with nothing selected, its shortcut opens the panel on Compose and runs nothing. An action without an instruction is left out of the panel. On the <a href="#settings-spending">Spending</a> page, what your actions wrote is counted as Your actions.</p>
     </section>
 
     <section id="style-chips">
@@ -327,7 +346,7 @@
 
     <section id="settings">
       <h2>Settings</h2>
-      <p>Right-click the wave in the menu bar and choose <strong>OmanAI Settings…</strong>, or click the gear in <a href="#window">OmanAI's window</a>. Settings has seven pages.</p>
+      <p>Right-click the wave in the menu bar and choose <strong>OmanAI Settings…</strong>, or click the gear in <a href="#window">OmanAI's window</a>. Settings has eight pages.</p>
 
       <h3 id="settings-general">General</h3>
       <figure class="window narrow">
@@ -367,6 +386,13 @@
         <div><dt>Remember the last style in each app</dt><dd>On by default. Turn it off and every panel starts on the default style.</dd></div>
       </dl>
 
+      <h3 id="settings-actions">Actions</h3>
+      <dl class="controls">
+        <div><dt>Edit…</dt><dd>Opens an action's sheet: its name, its instruction, what becomes of its result, and its shortcut. See <a href="#your-actions">Your own actions</a>.</dd></div>
+        <div><dt>Add an Action…</dt><dd>Makes a new action and opens it.</dd></div>
+        <div><dt>Delete Action…</dt><dd>In the sheet. It asks first, and the action's shortcut goes with it.</dd></div>
+      </dl>
+
       <h3 id="settings-dictation">Dictation</h3>
       <figure class="window narrow">
         <img src="../media/settings-dictation-model-light-2.webp" width="1200" height="1416" loading="lazy" alt="The Model part of the Dictation page: the language, when to free the memory, and the models in three groups">
@@ -403,7 +429,7 @@
         <div><dt>Fixes put back</dt><dd>How many texts OmanAI wrote that you put back into an app with Replace or Insert, with any model, and how many it wrote in all.</dd></div>
         <div><dt>Chart</dt><dd>A pair of bars for each hour of today, each day of a week or month, or each month of all time: fixes put back, with their scale on the right, and money spent, with its scale on the left.</dd></div>
         <div><dt>Pointing at a pair</dt><dd>Shows what is behind it: the fixes and the texts written, by action, then what was spent, by model, with the requests and tokens.</dd></div>
-        <div><dt>By action</dt><dd>Proofread, Rewrite, Explain and Compose: how many texts each wrote, how many were put back, and what they cost. A change asked for, or Try again, counts as the action it changes.</dd></div>
+        <div><dt>By action</dt><dd>Proofread, Rewrite, Explain, Compose and Your actions: how many texts each wrote, how many were put back, and what they cost. A change asked for, or Try again, counts as the action it changes.</dd></div>
         <div><dt>By app</dt><dd>The apps you wrote for, most fixes first.</dd></div>
         <div><dt>By model</dt><dd>What Claude cost, split by model, most expensive first.</dd></div>
       </dl>
@@ -426,6 +452,7 @@
             <tr><th scope="row">Explain selection</th><td>Explains the selected text at once.</td></tr>
             <tr><th scope="row">Compose</th><td>Opens the panel on Compose.</td></tr>
             <tr><th scope="row">Rewrite as …</th><td>One for each of your styles: rewrites the selection in that style at once.</td></tr>
+            <tr><th scope="row">Your actions</th><td>One for each of <a href="#your-actions">your own actions</a>: runs it on the selection at once.</td></tr>
             <tr><th scope="row">Hold to dictate</th><td>Listens while you hold it, and puts the words in when you let go. See <a href="#dictation">Dictation</a>.</td></tr>
             <tr><th scope="row">Start or stop a long dictation</th><td>Press once to start and again to put the words in.</td></tr>
           </tbody>

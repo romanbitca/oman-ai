@@ -71,9 +71,10 @@ OmanAI is an early release, so expect rough edges. [KNOWN_ISSUES.md](KNOWN_ISSUE
 - **Rewrite** says the same thing better, in the chosen style, or with an instruction such as "shorter" or "polite but still firm".
 - **Explain** tells you how a reader will understand what you wrote. It is only for you and can never be pasted by mistake.
 - **Compose** writes new text from a short request.
+- **Your own actions**: instructions such as "Make it shorter" or "Turn into bullet points", saved once in Settings and run on the selection from the panel or with a shortcut. A result can go back into the app, as Rewrite's does, or only be shown, as Explain's is.
 - **Dictation** turns what you say into text in any app, on your Mac. Hold Right ⌥ (or other Control, Option or Command keys, one or several together, or a shortcut) while you speak, or tap it for a longer dictation. Your words appear live in a small glass pill, in a card or floating on a soft blur, and are pasted at your cursor. Press ✨ instead to proofread or rewrite them in the panel first. In the panel they go straight into the field you're typing in, and Compose can copy your last transcript.
 - **Context** from the window you are writing in, pasted messages or the clipboard. Only what is switched on is sent, and you see it first.
-- **Shortcuts** for any action and for each of your styles, and a panel you can pin and drag anywhere.
+- **Shortcuts** for any action, for each of your styles and for each of your own actions, and a panel you can pin and drag anywhere.
 - **Spending and fixes** by day, week, month, action, app and model: what each Claude request cost beside how many of OmanAI's texts you put back, with the details of any day on hover.
 - **Your own numbers**, in OmanAI's window: the words you spoke this week, this month or in all, your streak, your speed against typing and the time it saved, where you dictate, how many corrections a proofread of yours needs week by week, and a map of your year with a square for each day. Under them are your transcripts, with search and Copy. Open OmanAI again, or right-click its menu bar icon and choose Open OmanAI.
 
