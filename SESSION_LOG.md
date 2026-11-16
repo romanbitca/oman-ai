@@ -4,6 +4,17 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-16 — 0.4.6 released, with the disk image
+
+- The maintainer said yes to releasing 0.4.6, and asked for its version to show on GitHub and for the installer to look good, with a small instruction to drag OmanAI to Applications
+- `main` was fast-forwarded to `release-0.4.6`: the transcript times, the disk image, Quick fix, your own actions and the new icon. Two commits went on top first: release notes for 0.4.6, which the publish job now uses when a version has them (see DECISIONS.md), and the installer's arrow in the icon's blue
+- The installer was checked without Finder: a disk image built from the release branch, its layout read back from its `.DS_Store`, and its window drawn from the real picture and icons. The arrow first ran from teal to violet; it now runs from the icon's slate blue into the folder's blue
+- Tag `v0.4.6` was pushed and the Release workflow published OmanAI 0.4.6 nineteen minutes later, seven of them waiting for a machine: `OmanAI.dmg` and `OmanAI-0.4.6.dmg`, signed, notarized and stapled, the zip, and the signed feed, with the written notes. GitHub lists it as the latest release, the feed offers 0.4.6 to the app, and the website's address for the disk image leads to it. The repository's About box now links to the website
+- The website went live in two steps: the new icon with the push to `main`, then the download buttons on `OmanAI.dmg`, the disk image in Getting started, and your own actions in the docs and the README, which had not described them
+- PRs #23, #24, #26 and #27 were closed, since their commits reached `main` by cherry-pick; #28 went in as part of the website's step, and #29, the iPhone app, now targets `main`
+
+---
+
 ## 2026-11-14 — A new app icon: the menu bar's wave on blue
 
 - The maintainer asked for the app icon to match the menu bar icon, a white wave on slate blue, everywhere it shows. Branch `new-icon`, from `main` at f3badb6. The choices are in DECISIONS.md
