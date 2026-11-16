@@ -122,9 +122,9 @@ public final class DictationController {
     public var isActive: Bool { phase != .idle && phase != .holding }
 
     /// The pill offers its model switch: turned on in Settings, with another model ready, while a dictation into an
-    /// app starts or listens.
+    /// app listens. Not while it starts: a start begun again could leave two sessions on the microphone.
     public var offersModelSwitch: Bool {
-        showsModelSwitch && readyModels.count > 1 && field == nil && (phase == .starting || phase == .listening)
+        showsModelSwitch && readyModels.count > 1 && field == nil && phase == .listening
     }
 
     /// The words of the last dictation: this one's since OmanAI started, or else the newest transcript kept.
@@ -387,8 +387,8 @@ public final class DictationController {
     /// The pill's model switch: another model listens from here on, and stays chosen for the next dictations. The
     /// words heard so far stay, and the new model hears what follows.
     public func switchModel(to newModel: DictationModel) {
-        guard newModel != model, readyModels.contains(newModel), field == nil,
-              phase == .starting || phase == .listening, switchTask == nil else { return }
+        guard newModel != model, readyModels.contains(newModel), field == nil, phase == .listening,
+              switchTask == nil, let previous = session else { return }
         var stored = (try? services.settings.preferences()) ?? preferences
         stored.dictationModel = newModel
         try? services.settings.setPreferences(stored)
@@ -397,16 +397,6 @@ public final class DictationController {
         modelName = newModel.displayName
         listeningModel = newModel
 
-        guard phase == .listening else {
-            // Not listening yet: it starts again with the new model.
-            startTask?.cancel()
-            let preferences = self.preferences
-            startTask = Task { [weak self] in
-                await self?.begin(preferences: preferences)
-            }
-            return
-        }
-        guard let previous = session else { return }
         session = nil
         updatesTask?.cancel()
         updatesTask = nil

@@ -129,6 +129,26 @@ import Testing
         #expect(controller.phase == .idle)
     }
 
+    @Test func whileTheDictationStartsThereIsNoSwitch() async throws {
+        let harness = Harness()
+        onlyReady([.apple, .whisper], in: harness)
+        harness.speech.holdStarts()
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        #expect(await eventually { controller.readyModels == [.apple, .whisper] })
+        #expect(controller.phase == .starting)
+        #expect(!controller.offersModelSwitch)
+        controller.switchModel(to: .whisper)
+        #expect(controller.listeningModel == .apple)
+
+        harness.speech.releaseStarts()
+        _ = try await listening(harness, controller)
+        #expect(controller.offersModelSwitch)
+        #expect(harness.speech.starts.map(\.model) == [.apple])
+        #expect(try harness.settings.preferences().dictationModel == .apple)
+    }
+
     @Test func aModelThatIsNotReadyCannotBeChosen() async throws {
         let harness = Harness()
         onlyReady([.apple, .whisper], in: harness)
