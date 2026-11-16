@@ -651,3 +651,12 @@ The maintainer said yes to releasing 0.4.6, and asked for its version to show on
 - **Each release can have notes of its own,** in `docs/release-notes/<version>.md`, written for the people who use OmanAI. The publish job gives them to the GitHub release, and the app's update window shows the same text. Without them it falls back to GitHub's generated notes, which list the pull requests merged since the last release: 0.4.6 reaches `main` by fast-forward, so those would have been empty.
 - **The installer keeps its picture:** "Drag OmanAI to Applications", a line on what to do next, and an arrow between the two icons. The arrow now runs from the slate blue of the new icon into the blue of the Applications folder, where it ran from teal to violet. The soft teal and violet corners stay, as on the website. Also tried: the corner behind the title in the icon's slate blue, which made the picture look grey.
 - The window was checked by building the disk image, reading its layout back, and drawing it with the app's and the folder's real icons, without opening Finder.
+
+## 2026-11-17 — "Copied" at the top of a result, for two seconds
+
+The maintainer sent a screenshot of a result with an arrow from the "Copied" line under the text to the top bar, and asked for it to show there for a few seconds.
+
+- **Copy says "Copied" in the result's top bar, beside the pin, for two seconds,** with a checkmark that fades in and out. It no longer adds a line under the text, so Replace, Copy and Try again stay where they are. Two seconds matches the app's other Copied marks: Copy last transcript, and Copy on a transcript in the window.
+- **A line already under the text stays when Copy is pressed,** such as "Hidden characters were removed from this result." Before, Copied took its place; taking it away now would move the buttons up.
+- **A new result, Back, or the panel opening again clears it,** so Copied never stands over text that wasn't copied.
+- Replaced and Inserted, which a pinned panel shows under the text after putting a result in, stay where they are: the request was about Copied.
