@@ -108,14 +108,15 @@ struct CustomActionPromptTests {
         )
     }
 
-    @Test func anActionToReadSendsTheScreenshotFirstAndAsksAtTheQualitysEffort() throws {
+    /// Its instruction is the person's own, so it is thought through as a proofread is, whatever quality is set.
+    @Test func anActionToReadSendsTheScreenshotFirstAndThinksFirst() throws {
         let json = try body(
             of: WritingRequest(task: reading(), context: WritingContext(screenshot: screenshot), model: .haiku, quality: .balanced)
         )
         let messages = try #require(json["messages"] as? [[String: Any]])
         let content = try #require(messages.first?["content"] as? [[String: Any]])
         #expect(content.map { $0["type"] as? String } == ["image", "text"])
-        #expect((json["output_config"] as? [String: Any])?["effort"] as? String == "medium")
+        #expect((json["output_config"] as? [String: Any])?["effort"] as? String == "high")
     }
 
     @Test func textToWorkOnCannotCloseItsTagOrForgeAnInstruction() {

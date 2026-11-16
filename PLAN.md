@@ -156,6 +156,7 @@ Acceptance:
 - Compose's Copy last transcript copies the last dictation
 - Settings chooses the microphone, sounds, muting the Mac while listening, a space after the words and Return or ⌘Return after them
 - The model list groups nine models as Live, Accurate and Small and says in words how soon each one's words show, which of the person's languages it knows and how big it is
+- With more than one model downloaded, a chip after the pill's seconds shows the model listening and switches to another, keeping the words heard so far; Settings can turn it off
 - Where nothing that takes text has the cursor, the words wait in the pill until a field gets it and they go in there, or until Paste, Copy, × or a minute
 
 ---
@@ -204,6 +205,7 @@ Acceptance:
 - An action whose answer is only read uses the context but not the template, and its answer is never pasted
 - An action's shortcut runs it on the selection from any app
 - Actions and their shortcuts are still there after OmanAI restarts, and a database from 0.4.5 opens with them
+- An action that asks for a length or a form, such as five words or one sentence, gets it, on dictated words too
 
 ---
 

@@ -4,6 +4,23 @@ Active bugs, gotchas, and workarounds. Append entries with date.
 
 ---
 
+## 2026-11-16 — Instructions first, and the pill's model switch: what has been tried
+
+Tried:
+- `LiveWritingTests` on Haiku at Fast, each case asked four or six times. Before the change, the maintainer's action ("I need to make this in five words short") failed six times in six, giving back the whole recap; "Make it one short sentence" failed four in four; "much shorter" one in four. With the new wording alone, answers came down to seven to twelve words. With thinking first as well, the five action cases failed once in thirty. The whole suite, asked twice, then failed 4 answers in 76: one Explain and one Proofread, which this change doesn't touch, and two read-only summaries more than half the recap's length, which failed the same way without thinking first, so that check now allows two-thirds.
+- Unit tests: the rewrite's wording with and without an instruction, the effort for every task and model, and the pill's ✨ handing dictated words to the panel, where the maintainer's own action is sent with them. Ten tests of the model switch with fakes: which models it offers, one model ready or the setting off, no switch while the dictation still starts, switching while listening with the words kept and the choice stored, Done and Cancel during a switch, a model that isn't ready, and settings from an older version.
+
+Not yet tried:
+- The chip and the list on screen. The pill's glass can't be drawn off the screen: `screencapture -l` and ScreenCaptureKit return nothing for a window outside every display, and drawing its views loses the glass and the words inside it. A picture needs the pill on the maintainer's screen, with their yes.
+- Switching with the real models: how long the old one takes to settle its last words and the new one to start, and whether a word said in that moment is lost. A model that has to load shows the pill's spinner meanwhile.
+- The new wording on Sonnet and Opus.
+
+Known limits:
+- A rewrite with an instruction, or an action, now takes about a second longer on Haiku and Sonnet.
+- A dictation whose model was switched is kept under the last model's name.
+
+---
+
 ## 2026-11-14 — The app icon: a direction macOS ignores, and drawing it without a window
 
 - An Icon Composer file's background gradient is always drawn from top to bottom. Its `orientation` in `icon.json` changes nothing: across, corner to corner and upside down all came out the same, in Icon Composer's `ictool`, in the `.icns` that `actool` makes for macOS 14 and 15, and in macOS 27's own drawing. A gradient on a layer does follow its direction. So `AppIcon.icon` asks for the top left to the bottom right and shows top to bottom

@@ -74,6 +74,10 @@ struct DictationSettingsView: View {
                 Text("Free the memory")
                 Text("A model kept in memory starts at once. macOS looks after Apple's itself.")
             }
+            Toggle(isOn: model.preference(\.showsModelSwitch)) {
+                Text("Switch models from the pill")
+                Text("A chip after the seconds shows the model listening. Click it to listen with another one you have downloaded.")
+            }
             if let error = model.dictationError {
                 SettingsError(text: error)
             }

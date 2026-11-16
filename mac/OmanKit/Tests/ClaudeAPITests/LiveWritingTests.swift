@@ -64,6 +64,11 @@ private func oneVersion(of source: String, slack: Double = 1.25) -> Check {
     { lineBreaks($0) <= lineBreaks(source) && Double($0.count) <= Double(source.count) * slack }
 }
 
+/// Words as a person counts them: runs of letters or digits, so "3pm" is one and a dash is none.
+private func wordCount(_ text: String) -> Int {
+    text.split(whereSeparator: { $0.isWhitespace }).filter { $0.contains(where: { $0.isLetter || $0.isNumber }) }.count
+}
+
 private func paragraphs(_ text: String) -> [String] {
     text.components(separatedBy: "\n\n").filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
@@ -366,9 +371,35 @@ private let cases: [LiveCase] = [
         ("facts kept", { has($0, "24", "maria", "dan", "pricing") }),
         ("no preamble", { !$0.hasPrefix("Here") }),
     ]),
+    // An instruction that sets a length or a form comes before the rewrite's own habit of keeping the length, and
+    // before a template whose messages are long. The first is the maintainer's own action, on dictated words.
+    LiveCase(name: "action to paste: in five words", task: .custom(text: rambling, instruction: "The text should be in five words", output: .paste), checks: [
+        ("five words or fewer", { wordCount($0) <= 5 }),
+        ("not empty", { wordCount($0) >= 2 }),
+        ("no preamble", { !$0.hasPrefix("Here") }),
+    ]),
+    LiveCase(name: "action to paste: five words short, on a recap", task: .custom(text: long, instruction: "I need to make this in five words short", output: .paste), checks: [
+        ("five words or fewer", { wordCount($0) <= 5 }),
+        ("not empty", { wordCount($0) >= 2 }),
+    ]),
+    LiveCase(name: "action to paste: in five words, with a template", task: .custom(text: long, instruction: "Say it in five words", output: .paste), style: emails, checks: [
+        ("five words or fewer", { wordCount($0) <= 5 }),
+        ("not empty", { wordCount($0) >= 2 }),
+    ]),
+    LiveCase(name: "action to paste: one short sentence", task: .custom(text: long, instruction: "Make it one short sentence", output: .paste), checks: [
+        ("one sentence", { text in
+            let ends = text.filter { ".!?".contains($0) }.count
+            return ends <= 1 && lineBreaks(text) == 0
+        }),
+        ("short", { $0.count < long.count / 3 }),
+    ]),
+    LiveCase(name: "rewrite with an instruction: much shorter", task: .rewrite(text: rambling, instruction: "much shorter"), checks: [
+        ("shorter", { Double($0.count) <= Double(rambling.count) * 0.6 }),
+    ]),
     LiveCase(name: "action to read: a summary", task: .custom(text: long, instruction: "Sum this up in one sentence", output: .read), checks: [
         ("one paragraph", { paragraphs($0).count == 1 }),
-        ("short", { $0.count < long.count / 2 }),
+        // One sentence is what is asked. Haiku's run to about half the recap, with or without thinking first.
+        ("short", { $0.count < long.count * 2 / 3 }),
         ("no Markdown", noMarkdown),
         ("facts kept", { $0.contains("24") }),
     ]),

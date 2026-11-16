@@ -481,7 +481,15 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
         language: DictationLanguage,
         words: [String]
     ) async throws -> any DictationSession {
-        try lock.withLock {
+        await withCheckedContinuation { continuation in
+            let goesOn = lock.withLock { () -> Bool in
+                guard holdsStarts else { return true }
+                startHold = continuation
+                return false
+            }
+            if goesOn { continuation.resume() }
+        }
+        return try lock.withLock {
             if let startError { throw startError }
             let session = FakeDictationSession()
             started.append((model, language))
@@ -489,6 +497,21 @@ final class FakeSpeech: SpeechRecognizing, @unchecked Sendable {
             made.append(session)
             return session
         }
+    }
+
+    private var holdsStarts = false
+    private var startHold: CheckedContinuation<Void, Never>?
+
+    /// Sessions wait to start until `releaseStarts()`, to see a dictation that is still starting.
+    func holdStarts() { lock.withLock { holdsStarts = true } }
+
+    func releaseStarts() {
+        let waiting = lock.withLock { () -> CheckedContinuation<Void, Never>? in
+            holdsStarts = false
+            defer { startHold = nil }
+            return startHold
+        }
+        waiting?.resume()
     }
 
     private var startWords: [[String]] = []

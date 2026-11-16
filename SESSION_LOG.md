@@ -4,6 +4,17 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-16 — Instructions come first, and the pill switches models
+
+- The maintainer's action asking for five words, run on dictated words from the pill's ✨, came back about as long as the text, and they asked for a quick switch between downloaded models in the pill. Branch `pill-model-switch`, from `main` after 0.4.6. The choices are in DECISIONS.md
+- Found the cause in the rewrite task, which kept "roughly its length" whatever the instruction said, and showed it with new live cases, the maintainer's own action among them. The task now puts an instruction first, and instructions are thought through first as a proofread is
+- Added a chip with the model's name after the seconds in the pill, a list of the ready models in its place when clicked, switching that keeps the words heard so far, and a switch for it in Settings, under Dictation, Model
+- Rereading the switch found that one chosen while the dictation was still starting could leave two sessions on the microphone, so the chip now shows only once the pill listens
+- Tests: the wording, the effort, ✨ to an action with the maintainer's own instruction, and ten for the model switch. Every test passes and the Mac app builds. The look on screen waits for the maintainer's yes (see KNOWN_ISSUES.md)
+- Meanwhile, research into dictation and writing apps for five new features, building on the report of 12 November
+
+---
+
 ## 2026-11-16 — 0.4.6 released, with the disk image
 
 - The maintainer said yes to releasing 0.4.6, and asked for its version to show on GitHub and for the installer to look good, with a small instruction to drag OmanAI to Applications

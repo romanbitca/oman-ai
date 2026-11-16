@@ -188,6 +188,21 @@ public enum DictationModel: String, Codable, CaseIterable, Sendable, Identifiabl
         }
     }
 
+    /// A name short enough for the chip in the pill, beside the seconds.
+    public var shortName: String {
+        switch self {
+        case .apple: "Apple"
+        case .parakeetEnglish: "Parakeet"
+        case .nemotron: "Nemotron"
+        case .parakeet: "Parakeet Ultra"
+        case .parakeetEnglishV2: "Parakeet v2"
+        case .whisperLarge: "Whisper Large"
+        case .whisper: "Whisper Turbo"
+        case .parakeetSmall: "Parakeet Redux"
+        case .whisperSmall: "Whisper Small"
+        }
+    }
+
     /// One line for the list of models in Settings.
     public var summary: String {
         switch self {
