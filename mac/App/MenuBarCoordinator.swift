@@ -222,6 +222,14 @@ final class MenuBarCoordinator: NSObject, PanelPresenting, DictationPresenting, 
     }
 
     /// OmanAI's own window: what it did, how the person's writing goes, and their transcripts.
+    /// Changes made on another device were written here: what is open reads them again. A shortcut whose style or
+    /// action was deleted there does nothing until the shortcuts are next registered.
+    func syncedDataChanged() {
+        panelModel?.reloadChoices()
+        settingsModel?.reloadSyncedData()
+        homeModel?.reload()
+    }
+
     func openHome() {
         dismissPanel()
         let model = homeModel ?? HomeViewModel(services: services)

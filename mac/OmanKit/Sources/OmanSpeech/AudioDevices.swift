@@ -1,3 +1,4 @@
+#if os(macOS)
 import CoreAudio
 import Foundation
 import OmanCore
@@ -68,3 +69,30 @@ enum AudioDevices {
         return value.takeRetainedValue() as String
     }
 }
+#else
+import AVFoundation
+import Foundation
+import OmanCore
+import os
+
+/// The iPhone's microphones, as its audio session lists them, and the one Settings chose for dictation.
+enum AudioDevices {
+    /// The chosen microphone's port identifier, or nil for the one iOS picks.
+    private static let chosen = OSAllocatedUnfairLock<String?>(initialState: nil)
+
+    static var chosenMicrophone: String? {
+        get { chosen.withLock { $0 } }
+        set { chosen.withLock { $0 = newValue } }
+    }
+
+    static func microphones() -> [Microphone] {
+        (AVAudioSession.sharedInstance().availableInputs ?? []).map { Microphone(id: $0.uid, name: $0.portName) }
+    }
+
+    /// The chosen microphone while it is connected, otherwise nil for iOS's own choice.
+    static func chosenPort() -> AVAudioSessionPortDescription? {
+        guard let uid = chosenMicrophone else { return nil }
+        return AVAudioSession.sharedInstance().availableInputs?.first { $0.uid == uid }
+    }
+}
+#endif

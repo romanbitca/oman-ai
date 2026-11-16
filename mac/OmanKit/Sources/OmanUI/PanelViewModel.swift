@@ -137,6 +137,42 @@ public final class PanelViewModel {
         }
     }
 
+    /// The iPhone has no other app's selection to read: the text to work on is typed, pasted or dictated into the
+    /// panel itself, and stands where a selection would.
+    public var workingText: String {
+        get { capture.text ?? "" }
+        set {
+            let text = newValue.isEmpty ? nil : newValue
+            guard text != capture.text else { return }
+            capture = SelectionCapture(app: capture.app, text: text)
+        }
+    }
+
+    /// Reads styles, actions and settings again, keeping the screen and the text. The iPhone's panel stays open in
+    /// its tab while Settings, in another, changes them, and a sync can change them while the panel shows.
+    public func reloadChoices() {
+        preferences = (try? services.settings.preferences()) ?? AppPreferences()
+        selectedModel = (try? services.settings.selectedModel()) ?? .default
+        styles = (try? services.styles.loadStyles()) ?? []
+        if let id = selectedStyleID, !styles.contains(where: { $0.id == id }) {
+            selectedStyleID = preselectedStyleID()
+        }
+        customActions = ((try? services.customActions?.loadCustomActions()) ?? []).filter { !$0.instruction.trimmed.isEmpty }
+        hasClipboardCandidate = services.system.hasClipboardText
+        // A key saved, or the on-device model chosen, in Settings lets the panel past its first steps.
+        if screen == .setup { route() }
+    }
+
+    /// Puts the clipboard's text in the iPhone's text box, in place of what was there.
+    func pasteWorkingText() {
+        guard let text = services.system.clipboardText() else {
+            notice = "There is no text on the clipboard."
+            return
+        }
+        workingText = text
+        notice = nil
+    }
+
     /// Opens on words just dictated, to proofread or rewrite them before they go in where the cursor is.
     public func begin(withDictatedText text: String, from app: SourceApp?) {
         if let app {
@@ -251,6 +287,7 @@ public final class PanelViewModel {
     func text(in field: PanelField) -> String {
         switch field {
         case .instruction: instruction
+        case .workingText: workingText
         case .composePrompt: composePrompt
         case .adjustment: adjustment
         }
@@ -259,6 +296,7 @@ public final class PanelViewModel {
     func setText(_ text: String, in field: PanelField) {
         switch field {
         case .instruction: instruction = text
+        case .workingText: workingText = text
         case .composePrompt: composePrompt = text
         case .adjustment: adjustment = text
         }
@@ -314,7 +352,12 @@ public final class PanelViewModel {
             startSetupPolling()
             return
         }
+        #if os(iOS)
+        // On the iPhone the first screen holds the text to work on, so it is there even while that is empty.
+        let destination: PanelScreen = .home
+        #else
         let destination: PanelScreen = capture.text != nil ? .home : .compose
+        #endif
         baseScreen = destination
         screen = destination
     }
@@ -383,7 +426,11 @@ public final class PanelViewModel {
     // MARK: Navigation
 
     var sourceAppName: String? { capture.app?.name }
+    #if os(iOS)
+    var canGoBackFromCompose: Bool { true }
+    #else
     var canGoBackFromCompose: Bool { capture.text != nil }
+    #endif
     var canCompose: Bool { !composePrompt.trimmed.isEmpty }
     var selectedStyle: WritingStyle? { styles.first { $0.id == selectedStyleID } }
 
@@ -663,8 +710,13 @@ public final class PanelViewModel {
         lastRequest?.task.isOnlyToRead ?? false
     }
 
+    #if os(iOS)
+    var primaryActionTitle: String { "Use" }
+    var canApplyResult: Bool { !isOnlyToRead && !showsQuickFixInPlace && !draft.isEmpty }
+    #else
     var primaryActionTitle: String { lastTaskIsCompose || isDictated ? "Insert" : "Replace" }
     var canApplyResult: Bool { capture.app != nil && !isOnlyToRead && !showsQuickFixInPlace }
+    #endif
 
     var originalText: String? {
         switch lastRequest?.task {
@@ -703,6 +755,13 @@ public final class PanelViewModel {
 
     func applyResult() {
         guard !isOnlyToRead else { return }
+        #if os(iOS)
+        // There is no app to put it in: the result takes the place of the text, to copy, share or change again.
+        workingText = draft
+        notice = nil
+        backToHome()
+        return
+        #else
         if SensitiveApps.isTerminal(bundleID: capture.app?.bundleID), !terminalPasteConfirmed {
             terminalPasteConfirmed = true
             let app = capture.app?.name ?? "a terminal"
@@ -715,6 +774,7 @@ public final class PanelViewModel {
         } else {
             replace()
         }
+        #endif
     }
 
     private func replace() {

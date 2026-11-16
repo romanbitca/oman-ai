@@ -3,20 +3,25 @@ import ClaudeAPI
 import OmanCore
 import OmanSpeech
 import OmanStorage
+import OmanSync
 import SystemBridge
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: MenuBarCoordinator?
+    private var cloud: CloudSync?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
         do {
             let database = try OmanDatabase.openDefault()
+            // In a build signed for iCloud, styles, actions and settings go through the sync, which notes each change.
+            let cloud = CloudSync.make(styles: database, actions: database, settings: database)
+            let stores: any StyleStore & CustomActionStore & AppSettingsStore = cloud?.stores ?? database
             let services = AppServices(
                 writing: WritingRouter(usage: database),
-                styles: database,
-                settings: database,
+                styles: stores,
+                settings: stores,
                 apiKeys: KeychainAPIKeyStore(),
                 system: MacSystemBridge(),
                 updates: UpdaterController.makeIfConfigured(),
@@ -24,15 +29,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 speech: SpeechService(),
                 dictations: database,
                 actions: database,
-                customActions: database
+                customActions: stores,
+                sync: cloud
             )
-            coordinator = MenuBarCoordinator(services: services)
+            let coordinator = MenuBarCoordinator(services: services)
+            self.coordinator = coordinator
+            self.cloud = cloud
+            cloud?.onRemoteChange = { [weak coordinator] in coordinator?.syncedDataChanged() }
+            cloud?.start()
         } catch {
             let alert = NSAlert(error: error)
             alert.messageText = "OmanAI couldn't open its database."
             alert.runModal()
             NSApp.terminate(nil)
         }
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        cloud?.syncIfStale()
     }
 
     /// Opening OmanAI while it runs shows its own window. Without this, macOS would bring back the Settings window, which

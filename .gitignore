@@ -35,6 +35,8 @@ out/
 *.p8
 *.cer
 *.mobileprovision
+# a developer's own team and iCloud choice for the iPhone app, from mac/Signing.example.xcconfig
+mac/Signing.xcconfig
 
 # claude code per-machine settings
 .claude/settings.local.json

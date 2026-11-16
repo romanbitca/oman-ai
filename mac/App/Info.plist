@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>OmanAI listens while you dictate and turns what you say into text, on this Mac.</string>
+	<key>OmanICloudContainer</key>
+	<string>$(OMAN_ICLOUD_CONTAINER)</string>
 	<key>SUAutomaticallyUpdate</key>
 	<true/>
 	<key>SUEnableAutomaticChecks</key>

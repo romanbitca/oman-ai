@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -113,9 +117,9 @@ private struct ScreenshotThumbnail: View {
     let screenshot: ScreenshotAttachment
 
     var body: some View {
-        if let image = NSImage(data: screenshot.jpegData) {
+        if let image = PlatformImage(data: screenshot.jpegData) {
             // The whole picture, uncropped: this is exactly what will be sent.
-            Image(nsImage: image)
+            Image(platformImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .keepingOwnColors()

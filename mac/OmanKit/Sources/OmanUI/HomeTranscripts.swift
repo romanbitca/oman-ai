@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -13,7 +17,7 @@ struct HomeTranscripts: View {
     /// Wide enough for the longest time the clock writes in `locale`, such as "12:58 PM" where it has twelve hours,
     /// and never narrower than the 44 points a 24-hour clock needs.
     static func timeWidth(locale: Locale) -> CGFloat {
-        let font = NSFont.monospacedDigitSystemFont(ofSize: timeFontSize, weight: .regular)
+        let font = PlatformFont.monospacedDigitSystemFont(ofSize: timeFontSize, weight: .regular)
         let style = Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, timeZone: .gmt)
         // Each hour of a day at :58 takes in the widest hours and both halves of a 12-hour clock.
         let widest = (0..<24).map { hour in
@@ -41,12 +45,22 @@ struct HomeTranscripts: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            #if os(iOS)
+            // A phone is too narrow for the search beside the title and the menu: it takes a row of its own.
+            HStack(alignment: .center, spacing: 10) {
+                Text("Transcripts").font(.system(size: 19, weight: .bold))
+                Spacer(minLength: 8)
+                keepMenu
+            }
+            HomeSearchField(text: $model.search, width: nil)
+            #else
             HStack(alignment: .center, spacing: 10) {
                 Text("Transcripts").font(.system(size: 19, weight: .bold))
                 Spacer(minLength: 8)
                 HomeSearchField(text: $model.search)
                 keepMenu
             }
+            #endif
             sheet
             if let error = model.error {
                 Text(error).font(.callout).foregroundStyle(.red)
@@ -113,7 +127,7 @@ struct HomeTranscripts: View {
         Menu {
             Picker("Keep", selection: Binding(
                 get: { model.history },
-                set: { history in if confirmKeeping(history) { model.setHistory(history) } }
+                set: { history in askToKeep(history) }
             )) {
                 ForEach(DictationHistory.allCases) { history in
                     Text(history.displayName).tag(history)
@@ -144,32 +158,33 @@ struct HomeTranscripts: View {
     private var keptText: String {
         let count = model.transcripts.count
         if count == 0 { return model.history == .off ? "None kept" : "Nothing kept yet" }
+        #if os(macOS)
         return "\(count.formatted()) kept on this Mac"
+        #else
+        return "\(count.formatted()) kept on this iPhone"
+        #endif
     }
 
     /// Keeping fewer transcripts deletes the older ones, so it asks first.
-    private func confirmKeeping(_ history: DictationHistory) -> Bool {
+    private func askToKeep(_ history: DictationHistory) {
         let count = model.transcriptsDeleted(by: history)
-        guard count > 0 else { return true }
-        let alert = NSAlert()
-        alert.messageText = "Keep only \(history.displayName.lowercased())?"
-        alert.informativeText = count == 1
-            ? "The oldest transcript is deleted. This can't be undone."
-            : "The \(count) oldest transcripts are deleted. This can't be undone."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        return alert.runModal() == .alertSecondButtonReturn
+        guard count > 0 else {
+            model.setHistory(history)
+            return
+        }
+        Platform.confirm(
+            "Keep only \(history.displayName.lowercased())?",
+            detail: count == 1
+                ? "The oldest transcript is deleted. This can't be undone."
+                : "The \(count) oldest transcripts are deleted. This can't be undone."
+        ) { model.setHistory(history) }
     }
 
     private func confirmDeleteAll() {
-        let alert = NSAlert()
-        alert.messageText = "Delete all transcripts?"
-        alert.informativeText = "This can't be undone. The numbers above stay: they are counted without the words."
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Delete").hasDestructiveAction = true
-        if alert.runModal() == .alertSecondButtonReturn {
-            model.deleteAll()
-        }
+        Platform.confirm(
+            "Delete all transcripts?",
+            detail: "This can't be undone. The numbers above stay: they are counted without the words."
+        ) { model.deleteAll() }
     }
 }
 
@@ -276,6 +291,8 @@ private struct HomeTranscriptRow: View {
 /// The search field over the transcripts: a capsule in the page's own look.
 struct HomeSearchField: View {
     @Binding var text: String
+    /// Nil fills the width it is given.
+    var width: CGFloat? = 200
     @FocusState private var isFocused: Bool
 
     private static let height: CGFloat = 28
@@ -292,10 +309,12 @@ struct HomeSearchField: View {
                 .font(.system(size: 13))
                 .focused($isFocused)
                 .focusEffectDisabled()
+                #if os(macOS)
                 .onExitCommand {
                     text = ""
                     isFocused = false
                 }
+                #endif
             if !text.isEmpty {
                 Button {
                     text = ""
@@ -308,7 +327,8 @@ struct HomeSearchField: View {
             }
         }
         .padding(.horizontal, 10)
-        .frame(width: 200, height: Self.height)
+        .frame(width: width, height: Self.height)
+        .frame(maxWidth: width == nil ? .infinity : nil)
         .background(shape.fill(HomePalette.card))
         .overlay {
             shape.strokeBorder(isFocused ? HomePalette.copy : HomePalette.edge, lineWidth: isFocused ? 1.5 : 1)

@@ -1,4 +1,9 @@
+#if os(macOS)
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import OmanCore
 import SwiftUI
 
@@ -738,24 +743,6 @@ private struct WordToken: View {
     }
 }
 
-extension DictationModel.Group {
-    var title: String {
-        switch self {
-        case .live: "Live"
-        case .accurate: "Accurate"
-        case .small: "Small"
-        }
-    }
-
-    var explanation: String {
-        switch self {
-        case .live: "Your words appear while you speak."
-        case .accurate: "Your words follow a moment later, read again as you go, which makes them more accurate."
-        case .small: "Smaller downloads, for a Mac short on space."
-        }
-    }
-}
-
 extension DictationModel {
     static func speedWord(_ level: Int) -> String {
         switch level {
@@ -877,3 +864,4 @@ extension SavedDictation {
         return "\(when) · \(appName)"
     }
 }
+#endif

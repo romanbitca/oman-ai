@@ -1,9 +1,12 @@
 import Foundation
 import OmanCore
+import os
 
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
+
+private let modelLog = Logger(subsystem: "com.romanbitca.oman", category: "apple-model")
 
 /// Runs a writing request on Apple's on-device model. It takes text only and has a small context.
 struct AppleOnDeviceClient {
@@ -17,9 +20,17 @@ struct AppleOnDeviceClient {
             case .available:
                 return nil
             case .unavailable(.deviceNotEligible):
+                #if os(macOS)
                 return "This Mac can't run Apple's on-device model."
+                #else
+                return "This iPhone can't run Apple's on-device model. Choose Claude in Settings."
+                #endif
             case .unavailable(.appleIntelligenceNotEnabled):
+                #if os(macOS)
                 return "Turn on Apple Intelligence in System Settings to use this model."
+                #else
+                return "Turn on Apple Intelligence in Settings to use this model."
+                #endif
             case .unavailable(.modelNotReady):
                 return "Apple's model is still getting ready. Try again in a little while."
             case .unavailable:
@@ -151,11 +162,38 @@ struct AppleOnDeviceClient {
                 } catch let error as WritingError {
                     continuation.finish(throwing: error)
                 } catch {
-                    continuation.finish(throwing: WritingError.localModel(error.localizedDescription))
+                    modelLog.error("Apple's model failed: \(String(describing: error), privacy: .public)")
+                    continuation.finish(throwing: WritingError.localModel(Self.sentence(for: error)))
                 }
             }
             continuation.onTermination = { _ in task.cancel() }
         }
+    }
+
+    /// What to tell the person when Apple's model fails, in place of the framework's own description, which
+    /// names its error type and a number.
+    static func sentence(for error: any Error) -> String {
+        #if canImport(FoundationModels)
+        if #available(macOS 26.0, *), let error = error as? LanguageModelSession.GenerationError {
+            switch error {
+            case .exceededContextWindowSize:
+                return "This is too long for Apple's on-device model. Try a shorter part, or Claude."
+            case .assetsUnavailable:
+                return "Apple's model is still getting ready. Try again in a little while."
+            case .guardrailViolation, .refusal:
+                return "Apple's model won't write this. Claude may."
+            case .unsupportedLanguageOrLocale:
+                return "Apple's on-device model doesn't know this language yet."
+            case .rateLimited, .concurrentRequests:
+                return "Apple's model is busy. Try again in a moment."
+            default:
+                break
+            }
+        }
+        #endif
+        // The model runs in another process, and an error that comes back from it can be a plain NSError in the
+        // framework's domain, with no more to say than a number.
+        return "Apple's on-device model couldn't write this. Try again, or choose Claude in Settings."
     }
 
     private static func run(_ request: WritingRequest, yield: (String) -> Void) async throws {
