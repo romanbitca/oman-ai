@@ -65,6 +65,12 @@ enum PromptBuilder {
         in the writing style above: match the sentence length and rhythm of its samples, their greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality
         """
 
+    /// Closes a rewrite that has an instruction: what the instruction asks wins over the text's length and form,
+    /// and over a template's long messages.
+    private static let instructionFirst = """
+        The instruction comes first. When it asks for a number of words, sentences or lines, write exactly that many, counting every word, and keep only the main point. When it asks for another length or a form such as a list, follow it exactly, even if that leaves most of the text, a greeting or a sign-off out.
+        """
+
     /// Opens every proofread. Without thinking first, the smallest model got about one proofread in four wrong.
     private static let takeCare = "This task needs care more than speed: think it through before you write."
 
@@ -296,7 +302,16 @@ enum PromptBuilder {
             }
             let habits = WritingHabits(of: style.samples.map(\.text))
             return proofreadInstruction(following: habits, lowerCase: habits.startsSentencesInLowerCase ?? inText)
-        case .rewrite:
+        case .rewrite(_, let instruction):
+            // An instruction, typed into Describe your change or saved as an action, comes first. Also told to keep
+            // the length, Haiku gave back the whole text when an action asked for five words.
+            if nonBlank(instruction) != nil {
+                return hasStyle
+                    ? "Rewrite the source text as the instruction asks, \(inStyle). \(instructionFirst)"
+                    : """
+                        Rewrite the source text as the instruction asks, in the writer's own voice as the text shows it: keep their level of formality and their habits with capital letters, punctuation and emoji. \(instructionFirst)
+                        """
+            }
             return hasStyle
                 ? "Rewrite the source text \(inStyle). Keep its meaning and roughly its length."
                 : """

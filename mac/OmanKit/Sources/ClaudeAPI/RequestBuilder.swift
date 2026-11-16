@@ -32,14 +32,24 @@ enum RequestBuilder {
         return urlRequest
     }
 
-    /// Proofread asks Haiku and Sonnet for their highest effort whatever quality is set. At lower effort they
-    /// start writing without thinking, and tried on eight kinds of text Haiku then got about one proofread in
-    /// four wrong; thinking first it got none wrong, for about a second more. Opus thinks at every effort.
+    /// Proofread, and anything that carries the person's own instruction, ask Haiku and Sonnet for their highest
+    /// effort whatever quality is set. At lower effort they start writing without thinking. Tried on eight kinds
+    /// of text, Haiku then got about one proofread in four wrong, and an action asking for five words gave seven
+    /// to twelve; thinking first it got no proofread wrong and one action in thirty, for about a second more.
+    /// Opus thinks at every effort.
     static func effort(for request: WritingRequest) -> String {
-        guard case .proofread = request.task else { return request.quality.effort }
+        guard takesCare(request) else { return request.quality.effort }
         switch request.model {
         case .haiku, .sonnet: return WritingQuality.best.effort
         case .opus, .appleOnDevice: return request.quality.effort
+        }
+    }
+
+    private static func takesCare(_ request: WritingRequest) -> Bool {
+        switch request.task {
+        case .proofread, .custom: true
+        case .rewrite(_, let instruction): instruction?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        case .compose, .explain: false
         }
     }
 

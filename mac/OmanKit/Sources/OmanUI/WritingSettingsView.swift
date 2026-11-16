@@ -36,7 +36,7 @@ struct WritingSettingsView: View {
                         "Apple's model runs on this Mac for free. It can't see the screen, only a few of your style messages fit, and it may not match your voice as closely as Claude."
                     )
                 } else {
-                    Text("Proofread always takes the time to check, whatever is chosen here.")
+                    Text("Proofread, Describe your change and your own actions always take the time to think, whatever is chosen here.")
                 }
             }
 

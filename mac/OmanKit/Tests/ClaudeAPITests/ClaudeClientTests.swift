@@ -208,11 +208,33 @@ struct ClaudeClientTests {
         #expect((json["output_config"] as? [String: Any])?["effort"] as? String == effort)
     }
 
+    /// An instruction of the person's own, typed into Describe your change or saved as an action, is thought
+    /// through as a proofread is: without thinking, Haiku wrote seven to twelve words when asked for five.
+    @Test(arguments: [
+        (WritingModel.haiku, WritingQuality.fast, "high"),
+        (WritingModel.sonnet, WritingQuality.balanced, "high"),
+        (WritingModel.opus, WritingQuality.fast, "low"),
+    ])
+    func anInstructionAsksTheSmallerModelsForTheirHighestEffort(model: WritingModel, quality: WritingQuality, effort: String) async throws {
+        let tasks: [WritingTask] = [
+            .rewrite(text: "hi", instruction: "in five words"),
+            .custom(text: "hi", instruction: "in five words", output: .paste),
+            .custom(text: "hi", instruction: "what does this ask?", output: .read),
+        ]
+        for task in tasks {
+            let (json, _) = try await capturedBody(of: WritingRequest(task: task, model: model, quality: quality))
+            #expect((json["output_config"] as? [String: Any])?["effort"] as? String == effort)
+        }
+    }
+
     @Test(arguments: [
         (WritingQuality.fast, "low"), (WritingQuality.balanced, "medium"), (WritingQuality.best, "high"),
     ])
     func everyOtherTaskUsesTheEffortOfItsQuality(quality: WritingQuality, effort: String) async throws {
-        let tasks: [WritingTask] = [.rewrite(text: "hi", instruction: nil), .compose(request: "say hi", selectedText: nil), .explain(text: "hi")]
+        let tasks: [WritingTask] = [
+            .rewrite(text: "hi", instruction: nil), .rewrite(text: "hi", instruction: "  "),
+            .compose(request: "say hi", selectedText: nil), .explain(text: "hi"),
+        ]
         for task in tasks {
             let (json, _) = try await capturedBody(of: WritingRequest(task: task, quality: quality))
             #expect((json["output_config"] as? [String: Any])?["effort"] as? String == effort)
@@ -399,7 +421,7 @@ struct ClaudeClientTests {
             try userText(json) == """
                 Tag code: CODE
 
-                <task-CODE>Rewrite the source text in the writing style above: match the sentence length and rhythm of its samples, their greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality. Keep its meaning and roughly its length.</task-CODE>
+                <task-CODE>Rewrite the source text as the instruction asks, in the writing style above: match the sentence length and rhythm of its samples, their greetings and sign-offs, punctuation and capitalization habits, emoji use, and level of formality. The instruction comes first. When it asks for a number of words, sentences or lines, write exactly that many, counting every word, and keep only the main point. When it asks for another length or a form such as a list, follow it exactly, even if that leaves most of the text, a greeting or a sign-off out.</task-CODE>
 
                 <instruction-CODE>shorter please</instruction-CODE>
 
@@ -412,6 +434,17 @@ struct ClaudeClientTests {
                 <source_text-CODE>  keep my spacing  </source_text-CODE>
                 """
         )
+    }
+
+    @Test func rewriteWithAnInstructionPutsItFirst() async throws {
+        let (json, _) = try await capturedBody(
+            of: WritingRequest(task: .rewrite(text: "so basically we should move the deadline", instruction: "in five words"))
+        )
+        let text = try userText(json)
+        #expect(text.contains("<task-CODE>Rewrite the source text as the instruction asks, in the writer's own voice"))
+        #expect(text.contains("The instruction comes first."))
+        #expect(!text.contains("roughly its length"))
+        #expect(text.contains("<instruction-CODE>in five words</instruction-CODE>"))
     }
 
     @Test func rewriteWithoutStyleUsesThePlainTask() async throws {

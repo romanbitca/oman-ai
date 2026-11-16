@@ -160,6 +160,39 @@ import Testing
         #expect(controller.lastText == "hey can u send it")
     }
 
+    /// The maintainer's own case: ✨ on a dictation, then an action that asks for five words. The words reach the
+    /// panel, and the action is sent with them as its text and the instruction as written.
+    @Test func anActionRunsOnTheWordsTheSparkleHandsOver() async throws {
+        let harness = Harness()
+        let fiveWords = CustomAction(name: "5 words short", instruction: "I need to make this in five words short")
+        harness.customActions.seed([fiveWords])
+        let panel = harness.makePanel()
+        let controller = harness.makeDictation()
+
+        controller.longPressed(into: nil)
+        let session = try await listening(harness, controller)
+        session.willFinish(with: "so basically i wanted to say we should move the deadline to next friday")
+        controller.improveNow()
+        #expect(await eventually { controller.phase == .idle })
+        let opening = try #require(harness.dictationPresenter.panelOpenings.first)
+
+        // What the shell does with the words: open the panel on them.
+        panel.begin(withDictatedText: opening.text, from: opening.app)
+        #expect(panel.customActions == [fiveWords])
+        panel.runCustomAction(fiveWords)
+        #expect(await eventually { panel.screen == .result })
+        let sent = try #require(harness.writing.requests.first)
+        #expect(sent.task == .custom(
+            text: "so basically i wanted to say we should move the deadline to next friday",
+            instruction: "I need to make this in five words short",
+            output: .paste
+        ))
+        #expect(panel.primaryActionTitle == "Insert")
+        panel.applyResult()
+        #expect(await eventually { harness.system.insertCalls.count == 1 })
+        #expect(harness.system.insertCalls.first?.app == Harness.slack)
+    }
+
     @Test func improveIsOnlyForAnotherApp() async throws {
         let harness = Harness()
         let panel = harness.makePanel()
