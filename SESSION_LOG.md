@@ -4,6 +4,15 @@ Date-stamped log of what each work session accomplished.
 
 ---
 
+## 2026-11-17 — "Copied" moves to the top of a result
+
+- The maintainer sent a screenshot of a result with an arrow from the "Copied" line under the text to the top bar, and asked for it to show there for a few seconds. Branch `panel-copied-at-top`, from `main` at 64ec520
+- Copy now shows "Copied" with a checkmark in the top bar, beside the pin, for two seconds, and adds nothing under the text, so the buttons don't move. A line already under the text stays, and a new result, Back or the panel opening again clears the mark. See DECISIONS.md
+- Three tests: Copied shows at the top and goes after a moment with nothing added under the text, a line under the text is kept, and Try again clears it. All 656 tests in the repository pass and the Mac app builds
+- Earlier the same day: the instruction fix and the pill's model switch are in PR #30 (`pill-model-switch`), and showing the pill's chip on screen moved to a session of its own
+
+---
+
 ## 2026-11-16 — 0.4.6 released, with the disk image
 
 - The maintainer said yes to releasing 0.4.6, and asked for its version to show on GitHub and for the installer to look good, with a small instruction to drag OmanAI to Applications

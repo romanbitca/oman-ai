@@ -34,6 +34,7 @@ public final class PanelViewModel {
     /// Set by the app shell, so the panel can show the last quick fix, and stop one still working when it opens.
     @ObservationIgnored public weak var quickFix: QuickFixController?
     @ObservationIgnored private var copiedTask: Task<Void, Never>?
+    @ObservationIgnored private var copiedResultTask: Task<Void, Never>?
     /// The last text written, as the Spending page counts it, until it is put back or another is written.
     @ObservationIgnored private var actionID: UUID?
 
@@ -80,6 +81,8 @@ public final class PanelViewModel {
     /// Whether there is a transcript for Copy last transcript, from a dictation or a kept transcript.
     private(set) var hasSavedTranscript = false
     private(set) var copiedTranscript = false
+    /// The result was just copied. The top of the panel says so for a moment, where it moves nothing below.
+    private(set) var copiedResult = false
     var showOriginal = false
     /// With changes shown, the words a proofread replaced are struck through beside the new ones.
     var showChanges = false
@@ -102,6 +105,7 @@ public final class PanelViewModel {
         isDictated = false
         showsQuickFixInPlace = false
         copiedTranscript = false
+        copiedResult = false
         hasSavedTranscript = dictation?.lastTranscript() != nil
         instruction = ""
         composePrompt = ""
@@ -400,6 +404,7 @@ public final class PanelViewModel {
     func goBack() {
         draft = ""
         notice = nil
+        copiedResult = false
         errorMessage = nil
         offersSettings = false
         adjustment = ""
@@ -576,6 +581,7 @@ public final class PanelViewModel {
         lastRequest = request
         actionID = nil
         notice = nil
+        copiedResult = false
         errorMessage = nil
         offersSettings = false
         showOriginal = false
@@ -772,7 +778,13 @@ public final class PanelViewModel {
 
     func copyResult() {
         services.system.copyToClipboard(draft)
-        notice = "Copied"
+        copiedResult = true
+        copiedResultTask?.cancel()
+        copiedResultTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.copiedResult = false
+        }
     }
 
     // MARK: Context

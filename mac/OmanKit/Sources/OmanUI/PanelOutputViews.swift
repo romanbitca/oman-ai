@@ -110,8 +110,16 @@ struct PanelResultView: View {
                     .frame(height: 30)
             }
             Spacer(minLength: 0)
+            if model.copiedResult {
+                Label("Copied", systemImage: "checkmark")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .transition(.opacity)
+            }
             PanelHeaderButtons(model: model)
         }
+        .animation(.easeOut(duration: 0.16), value: model.copiedResult)
     }
 
     private func headerToggle(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {

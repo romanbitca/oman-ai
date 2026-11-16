@@ -780,12 +780,35 @@ import Testing
         #expect(harness.presenter.hideCount == 0)
     }
 
-    @Test func copyPutsDraftOnClipboardAndShowsNotice() async {
+    @Test func copyPutsDraftOnClipboardAndSaysSoAtTheTopForAMoment() async {
         let harness = Harness()
         let model = await readyResult(harness)
         model.copyResult()
         #expect(harness.system.copied == ["Hello world"])
-        #expect(model.notice == "Copied")
+        #expect(model.copiedResult)
+        // Nothing appears under the text, so the buttons below it stay where they are.
+        #expect(model.notice == nil)
+        #expect(await eventually { !model.copiedResult })
+    }
+
+    @Test func copyLeavesALineUnderTheTextAsItIs() async {
+        let harness = Harness()
+        harness.writing.script(deltas: ["ok\u{E0068}\u{E0069}", " then\u{202E}\n"])
+        let model = await readyResult(harness)
+        #expect(model.notice == "Hidden characters were removed from this result.")
+        model.copyResult()
+        #expect(model.copiedResult)
+        #expect(model.notice == "Hidden characters were removed from this result.")
+    }
+
+    @Test func aNewResultDoesNotSayCopied() async {
+        let harness = Harness()
+        let model = await readyResult(harness)
+        model.copyResult()
+        model.tryAgain()
+        #expect(!model.copiedResult)
+        await finish(model)
+        #expect(!model.copiedResult)
     }
 
     @Test func hiddenCharactersAreRemovedAndSaidSo() async throws {
