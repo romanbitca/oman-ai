@@ -76,10 +76,19 @@ public struct DictationPillView: View {
     private let controller: DictationController
     private let state: DictationPillState
     @Environment(\.floatingBackdrop) private var backdrop
+    /// The model chip was clicked: the list of models shows where the words are, until one is chosen.
+    @State private var choosingModel = false
 
     public init(controller: DictationController, state: DictationPillState) {
         self.controller = controller
         self.state = state
+    }
+
+    /// `choosingModel` starts with the list of models open, for drawing the pill that way.
+    init(controller: DictationController, state: DictationPillState, choosingModel: Bool) {
+        self.controller = controller
+        self.state = state
+        _choosingModel = State(initialValue: choosingModel)
     }
 
     private var atTop: Bool { state.position == .menuBar }
@@ -111,7 +120,14 @@ public struct DictationPillView: View {
         .frame(width: DictationPillMetrics.width)
         .animation(.easeOut(duration: 0.16), value: controller.phase)
         .animation(.easeOut(duration: 0.16), value: controller.notice)
+        .animation(.easeOut(duration: 0.16), value: choosingModel)
+        .onChange(of: controller.offersModelSwitch) { _, offers in
+            if !offers { choosingModel = false }
+        }
     }
+
+    private var showsModelChip: Bool { controller.offersModelSwitch && !showsWaiting }
+    private var showsModelList: Bool { choosingModel && controller.offersModelSwitch }
 
     // MARK: Card: the wave, the seconds and Done on top, the words below in a glass card
 
@@ -132,12 +148,21 @@ public struct DictationPillView: View {
                         .liquidGlass(in: Capsule())
                         .transition(.opacity)
                 }
+                if showsModelChip {
+                    modelChip.transition(.opacity)
+                }
                 Spacer(minLength: 0)
                 buttons
             }
-            wordsArea(alignment: .leading, padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
-                .frame(width: DictationPillMetrics.width)
-                .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), reading: true)
+            Group {
+                if showsModelList {
+                    modelList
+                } else {
+                    wordsArea(alignment: .leading, padding: EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
+                }
+            }
+            .frame(width: DictationPillMetrics.width)
+            .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), reading: true)
         }
     }
 
@@ -151,16 +176,13 @@ public struct DictationPillView: View {
 
     private var floating: some View {
         VStack(spacing: 6) {
-            wordsArea(alignment: .center, padding: EdgeInsets(top: 14, leading: 28, bottom: 14, trailing: 28))
-                .shadow(color: .black.opacity(backdrop.shadowOpacity), radius: backdrop.shadowRadius, y: 0.5)
-                .frame(width: DictationPillMetrics.width)
-                .background {
-                    // Wider than the words, so the blur has faded away before its edge, with no rim to see.
-                    SoftBlur(look: backdrop)
-                        .padding(.horizontal, -30)
-                        .padding(.vertical, -16)
-                        .id(backdrop)
-                }
+            if showsModelList {
+                modelList
+                    .frame(width: DictationPillMetrics.width)
+                    .liquidGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous), reading: true)
+            } else {
+                floatingWords
+            }
             HStack(spacing: DictationPillMetrics.gap) {
                 HStack(spacing: 8) {
                     leadingSymbol
@@ -173,9 +195,96 @@ public struct DictationPillView: View {
                 .padding(.horizontal, 12)
                 .frame(height: DictationPillMetrics.control)
                 .liquidGlass(in: Capsule())
+                if showsModelChip {
+                    modelChip
+                }
                 buttons
             }
         }
+    }
+
+    private var floatingWords: some View {
+        wordsArea(alignment: .center, padding: EdgeInsets(top: 14, leading: 28, bottom: 14, trailing: 28))
+            .shadow(color: .black.opacity(backdrop.shadowOpacity), radius: backdrop.shadowRadius, y: 0.5)
+            .frame(width: DictationPillMetrics.width)
+            .background {
+                // Wider than the words, so the blur has faded away before its edge, with no rim to see.
+                SoftBlur(look: backdrop)
+                    .padding(.horizontal, -30)
+                    .padding(.vertical, -16)
+                    .id(backdrop)
+            }
+    }
+
+    // MARK: The model switch
+
+    /// The model listening, after the seconds. A click shows the models that are ready in place of the words.
+    private var modelChip: some View {
+        Button {
+            choosingModel.toggle()
+        } label: {
+            HStack(spacing: 4) {
+                // With ten minutes on the clock and Cancel, ✨ and Done beside it, the longest names are up to seven
+                // points too wide for the card's row, so they shrink a little then.
+                Text(controller.listeningModel.shortName)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+                    .rotationEffect(.degrees(choosingModel ? 180 : 0))
+            }
+            .padding(.horizontal, 10)
+            .frame(height: DictationPillMetrics.control)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(LiquidPressStyle())
+        .liquidGlass(in: Capsule(), interactive: true)
+        .help("The model listening. Click to listen with another one you have downloaded.")
+        .accessibilityLabel("Model, \(controller.listeningModel.displayName)")
+        .accessibilityHint("Shows the other models you can listen with")
+    }
+
+    /// The models that are ready, the one listening ticked. Choosing one switches at once: the words heard so far
+    /// stay, and the new model hears what follows.
+    private var modelList: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(controller.readyModels) { model in
+                    Button {
+                        choosingModel = false
+                        controller.switchModel(to: model)
+                    } label: {
+                        HStack(spacing: 10) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(model.displayName)
+                                    .font(.system(size: 13, weight: .medium))
+                                Text(model.pace)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            if model == controller.listeningModel {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(LiquidPressStyle())
+                    .accessibilityLabel("\(model.displayName), \(model.pace)")
+                    .accessibilityAddTraits(model == controller.listeningModel ? .isSelected : [])
+                }
+            }
+            .padding(6)
+        }
+        .scrollIndicators(.never)
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxHeight: DictationPillMetrics.wordsMaxHeight + 20)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: Pieces

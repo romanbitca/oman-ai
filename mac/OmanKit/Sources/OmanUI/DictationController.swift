@@ -78,6 +78,13 @@ public final class DictationController {
     @ObservationIgnored private var holdTask: Task<Void, Never>?
     /// The words waiting for a field, without the space Settings may add after them.
     @ObservationIgnored private var heldText: String?
+    /// What the models before this one heard, when the model was switched in the middle of a dictation.
+    @ObservationIgnored private var carriedText = ""
+    @ObservationIgnored private var switchTask: Task<Void, Never>?
+    /// Done, ✨ or the key let go while the model was being switched: the words go in once the old model has
+    /// given them, and the new one never starts.
+    @ObservationIgnored private var finishAfterSwitch = false
+    @ObservationIgnored private var readyTask: Task<Void, Never>?
 
     public private(set) var phase: DictationPhase = .idle
     public private(set) var mode: DictationMode?
@@ -95,6 +102,12 @@ public final class DictationController {
     /// The model is still loading. The microphone already listens, and its words follow once the model is ready.
     public private(set) var isLoadingModel = false
     public private(set) var modelName = DictationModel.default.displayName
+    /// The model listening now, for the pill's model switch.
+    public private(set) var listeningModel: DictationModel = .default
+    /// The models that can listen now, in the order Settings lists them, for the pill's model switch.
+    public private(set) var readyModels: [DictationModel] = []
+    /// Settings shows the model switch in the pill.
+    public private(set) var showsModelSwitch = true
     /// The words of the last dictation put in, for Copy last transcript, whether or not transcripts are kept.
     public private(set) var lastText: String?
 
@@ -107,6 +120,12 @@ public final class DictationController {
     /// Listening, or putting the words in. Words waiting for a field don't count: meanwhile the menu bar icon and the
     /// shortcuts work as usual, and copy the words before they start anything.
     public var isActive: Bool { phase != .idle && phase != .holding }
+
+    /// The pill offers its model switch: turned on in Settings, with another model ready, while a dictation into an
+    /// app starts or listens.
+    public var offersModelSwitch: Bool {
+        showsModelSwitch && readyModels.count > 1 && field == nil && (phase == .starting || phase == .listening)
+    }
 
     /// The words of the last dictation: this one's since OmanAI started, or else the newest transcript kept.
     func lastTranscript() -> String? {
@@ -172,6 +191,7 @@ public final class DictationController {
         let session = self.session
         startTask?.cancel()
         finishTask?.cancel()
+        switchTask?.cancel()
         if let field, let panel {
             panel.setText(panelBase, in: field)
         }
@@ -239,7 +259,14 @@ public final class DictationController {
         pillStyle = preferences.dictationPillStyle
         model = preferences.dictationModel
         modelName = model.displayName
+        listeningModel = model
         isLoadingModel = false
+        carriedText = ""
+        finishAfterSwitch = false
+        switchTask?.cancel()
+        switchTask = nil
+        showsModelSwitch = preferences.showsModelSwitch
+        refreshReadyModels(preferences)
         history = preferences.dictationHistory
         words = preferences.dictationWords
         removesFillers = preferences.removesFillerWords
@@ -339,15 +366,124 @@ public final class DictationController {
         case .idle, .finishing, .holding:
             return
         }
-        guard let session else { return }
+        guard let session else {
+            if switchTask != nil { finishAfterSwitch = true }
+            return
+        }
         phase = .finishing
+        let carried = carriedText
         finishTask = Task { [weak self] in
             do {
                 let text = try await session.finish()
-                await self?.deliver(text)
+                await self?.deliver(LiveTranscript.join(carried, text))
             } catch {
                 self?.fail(error)
             }
+        }
+    }
+
+    // MARK: Switching the model
+
+    /// The pill's model switch: another model listens from here on, and stays chosen for the next dictations. The
+    /// words heard so far stay, and the new model hears what follows.
+    public func switchModel(to newModel: DictationModel) {
+        guard newModel != model, readyModels.contains(newModel), field == nil,
+              phase == .starting || phase == .listening, switchTask == nil else { return }
+        var stored = (try? services.settings.preferences()) ?? preferences
+        stored.dictationModel = newModel
+        try? services.settings.setPreferences(stored)
+        preferences.dictationModel = newModel
+        model = newModel
+        modelName = newModel.displayName
+        listeningModel = newModel
+
+        guard phase == .listening else {
+            // Not listening yet: it starts again with the new model.
+            startTask?.cancel()
+            let preferences = self.preferences
+            startTask = Task { [weak self] in
+                await self?.begin(preferences: preferences)
+            }
+            return
+        }
+        guard let previous = session else { return }
+        session = nil
+        updatesTask?.cancel()
+        updatesTask = nil
+        isLoadingModel = true
+        switchTask = Task { [weak self] in
+            // The old model settles the last words it heard before it lets go of the microphone.
+            let heard = (try? await previous.finish()) ?? ""
+            await self?.listenAfterSwitch(heard: heard)
+        }
+    }
+
+    private func listenAfterSwitch(heard: String) async {
+        guard phase == .listening, let speech = services.speech else {
+            switchTask = nil
+            return
+        }
+        carriedText = LiveTranscript.join(carriedText, heard)
+        transcript = LiveTranscript(confirmed: tidy(carriedText))
+        if finishAfterSwitch {
+            finishAfterSwitch = false
+            switchTask = nil
+            isLoadingModel = false
+            phase = .finishing
+            await deliver(carriedText)
+            return
+        }
+        let language: DictationLanguage
+        if let chosen = preferences.dictationLanguage(for: model) {
+            language = chosen
+        } else {
+            language = await speech.defaultLanguage(for: model)
+        }
+        self.language = language
+        do {
+            let session = try await speech.startSession(model: model, language: language, words: words)
+            guard phase == .listening, !Task.isCancelled else {
+                await session.cancel()
+                return
+            }
+            self.session = session
+            isLoadingModel = false
+            switchTask = nil
+            updatesTask = Task { [weak self] in
+                for await update in session.updates {
+                    self?.receive(update)
+                }
+            }
+            if finishAfterSwitch {
+                finishAfterSwitch = false
+                finish()
+            }
+        } catch {
+            switchTask = nil
+            fail(error)
+        }
+    }
+
+    /// Which models can listen, asked of each with its language, while the dictation starts. Only for the switch.
+    private func refreshReadyModels(_ preferences: AppPreferences) {
+        readyTask?.cancel()
+        readyModels = []
+        guard preferences.showsModelSwitch, let speech = services.speech else { return }
+        readyTask = Task { [weak self] in
+            var ready: [DictationModel] = []
+            for model in DictationModel.allCases {
+                let language: DictationLanguage
+                if let chosen = preferences.dictationLanguage(for: model) {
+                    language = chosen
+                } else {
+                    language = await speech.defaultLanguage(for: model)
+                }
+                if case .ready = await speech.status(of: model, language: language) {
+                    ready.append(model)
+                }
+                guard !Task.isCancelled else { return }
+            }
+            self?.readyModels = ready
         }
     }
 
@@ -355,7 +491,10 @@ public final class DictationController {
         switch update {
         case .transcript(let heard):
             guard phase == .listening || phase == .finishing else { return }
-            let live = LiveTranscript(confirmed: tidy(heard.confirmed), tentative: tidy(heard.tentative))
+            let live = LiveTranscript(
+                confirmed: tidy(LiveTranscript.join(carriedText, heard.confirmed)),
+                tentative: tidy(heard.tentative)
+            )
             transcript = live
             if let field, let panel {
                 panel.setText(LiveTranscript.join(panelBase, live.text), in: field)
@@ -570,6 +709,12 @@ public final class DictationController {
         updatesTask = nil
         session = nil
         startTask = nil
+        switchTask?.cancel()
+        switchTask = nil
+        readyTask?.cancel()
+        readyTask = nil
+        carriedText = ""
+        finishAfterSwitch = false
         finishWhenStarted = false
         phase = .idle
         mode = nil

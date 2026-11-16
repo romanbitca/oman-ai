@@ -395,6 +395,9 @@ public struct AppPreferences: Codable, Equatable, Sendable {
     /// Proofread's global shortcut puts the corrected text straight back over the selection, without the panel.
     public var proofreadQuickFix = false
     public var dictationModel: DictationModel = .default
+    /// A chip in the pill shows the model listening, and switches to another one already downloaded. It only shows
+    /// when more than one model is ready.
+    public var showsModelSwitch = true
     /// The language chosen for each model, keyed by the model's identifier. The lists differ from model to model,
     /// so each keeps its own choice. A model without one listens for its default language.
     public var dictationLanguages: [String: DictationLanguage] = [:]
@@ -446,6 +449,8 @@ public struct AppPreferences: Codable, Equatable, Sendable {
             (try? values.decodeIfPresent(Bool.self, forKey: .proofreadQuickFix)) ?? defaults.proofreadQuickFix
         dictationModel =
             (try? values.decodeIfPresent(DictationModel.self, forKey: .dictationModel)) ?? defaults.dictationModel
+        showsModelSwitch =
+            (try? values.decodeIfPresent(Bool.self, forKey: .showsModelSwitch)) ?? defaults.showsModelSwitch
         dictationLanguages =
             (try? values.decodeIfPresent([String: DictationLanguage].self, forKey: .dictationLanguages))
             ?? defaults.dictationLanguages
